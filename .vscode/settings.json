@@ -1,0 +1,29 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cSpell.words": [
+      "APPDATA",
+      "BSTR",
+      "DLGPROC",
+      "HBRUSH",
+      "HICON",
+      "HMENU",
+      "HRESULT",
+      "HWND",
+      "IDCANCEL",
+      "IDOK",
+      "LPARAM",
+      "LPSTR",
+      "LPWSTR",
+      "LRESULT",
+      "MINTRAY",
+      "APP_NAMEW",
+      "REFRTRAY",
+      "WNDCLASSEX",
+      "cjson",
+      "lpfn",
+      "snwprintf"
+    ],
+    "files.associations": {
+      "xtree": "cpp"
+    }
+}
