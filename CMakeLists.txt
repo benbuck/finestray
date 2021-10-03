@@ -56,6 +56,25 @@ target_compile_options(MinTray
                 /GL # enable whole program optimization
             >
         >
+
+        $<$<CXX_COMPILER_ID:Clang>:
+            -fno-exceptions
+            -fno-rtti
+            -Wall
+            -Werror
+
+            # Debug compile options
+            $<$<CONFIG:Debug>:
+                -O0 # don't optimize
+                -g # enable debug info
+            >
+
+            # Release compile options
+            $<$<CONFIG:Release>:
+                -O3 # enable maximum speed optimizations
+                -flto # enable link time optimization
+            >
+        >
 )
 
 target_compile_definitions(MinTray
@@ -69,6 +88,13 @@ target_link_options(MinTray
             # Release link options
             $<$<CONFIG:Release>:
                 /LTCG # link time code generation
+            >
+        >
+
+        $<$<CXX_COMPILER_ID:Clang>:
+            # Release link options
+            $<$<CONFIG:Release>:
+                -flto # link time optimization
             >
         >
 )
