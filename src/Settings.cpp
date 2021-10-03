@@ -9,7 +9,7 @@
 #include <shellapi.h>
 #include <stdlib.h>
 
-static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
+// static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 static const char * getString(const cJSON * cjson, const char * key);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
 static bool classnameItemCallback(const cJSON * cjson, void * userData);

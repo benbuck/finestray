@@ -352,7 +352,7 @@ std::wstring getResourceString(UINT id)
     str.resize(256);
     LoadString(hInstance, id, &str[0], (int)str.size());
 
-    return std::move(str);
+    return str;
 }
 
 void errorMessage(UINT id)

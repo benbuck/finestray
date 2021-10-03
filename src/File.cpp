@@ -61,5 +61,5 @@ std::wstring getExecutablePath()
     std::wstring exePath;
     exePath.resize(pathChars);
     wcsncpy_s(&exePath[0], pathChars, path, pathChars - 1);
-    return std::move(exePath);
+    return exePath;
 }

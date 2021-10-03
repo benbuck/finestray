@@ -2,7 +2,7 @@
 
 #include <Windows.h>
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 void debugPrintf(char const * fmt, ...)
 {
