@@ -4,6 +4,9 @@
 
 #include <Windows.h>
 
+#include <string>
+#include <vector>
+
 struct Settings
 {
     Settings();
@@ -11,14 +14,34 @@ struct Settings
 
     void parseCommandLine();
     void parseJson(const char * json);
-    void addAutotray(const char * className);
+    void addAutoTray(const std::string & className, const std::string & titleRegex);
 
+    // "exit", command line only
     bool shouldExit_;
 
-    struct Autotray
+    // "auto-tray"
+    struct AutoTray
     {
-        WCHAR * className_;
+        // "class-name"
+        std::string className_;
+
+        // "title-regex"
+        std::string titleRegex_;
     };
-    Autotray * autotray_;
-    size_t autotraySize_;
+    std::vector<AutoTray> autoTrays_;
+
+    // "hotkey-minimize"
+    std::string hotkeyMinimize_;
+
+    // "hotkey-restore"
+    std::string hotkeyRestore_;
+
+    // "enum-windows-interval-ms"
+    unsigned int enumWindowsIntervalMs_;
+
+    // "password"
+    std::string password_;
+
+    // "tray-icon"
+    bool trayIcon_;
 };

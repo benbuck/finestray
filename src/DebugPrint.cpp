@@ -6,12 +6,16 @@
 
 void debugPrintf(char const * fmt, ...)
 {
-    char buf[1024];
+    char buf[65536];
 
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, ap);
+    int len = vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
+
+    if (len >= sizeof(buf)) {
+        __debugbreak();
+    }
 
     OutputDebugStringA(buf);
 }

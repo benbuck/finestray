@@ -9,23 +9,15 @@
 #include <shellapi.h>
 #include <stdlib.h>
 
-// static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
-static const char * getString(const cJSON * cjson, const char * key);
+static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
+static double getNumber(const cJSON * cjson, const char * key, double defaultValue);
+static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
-static bool classnameItemCallback(const cJSON * cjson, void * userData);
+static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 
-Settings::Settings() : shouldExit_(false), autotray_(nullptr), autotraySize_(0) {}
+Settings::Settings() : shouldExit_(false), autoTrays_(), enumWindowsIntervalMs_(500), password_(), trayIcon_(true) {}
 
-Settings::~Settings()
-{
-    if (autotray_) {
-        for (size_t i = 0; i < autotraySize_; ++i) {
-            free(autotray_[i].className_);
-        }
-
-        free(autotray_);
-    }
-}
+Settings::~Settings() {}
 
 void Settings::parseCommandLine()
 {
@@ -35,6 +27,13 @@ void Settings::parseCommandLine()
     for (int a = 0; a < argc; ++a) {
         if (!wcscmp(argv[a], L"--exit")) {
             shouldExit_ = true;
+        } else if (!wcscmp(argv[a], L"--enum-windows-interval-ms")) {
+            ++a;
+            if (a >= argc) {
+                DEBUG_PRINTF("Expected argument to --enum-windows-interval-ms missing\n");
+            } else {
+                enumWindowsIntervalMs_ = _wtoi(argv[a]);
+            }
         }
     }
 }
@@ -44,43 +43,26 @@ void Settings::parseJson(const char * json)
     const cJSON * cjson = cJSON_Parse(json);
     DEBUG_PRINTF("Parsed settings JSON: %s\n", cJSON_Print(cjson));
 
-    const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, "autotray");
+    const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, "auto-tray");
     if (autotray) {
-        iterateArray(autotray, classnameItemCallback, this);
+        iterateArray(autotray, autoTrayItemCallback, this);
     }
+
+    enumWindowsIntervalMs_ = (unsigned int)getNumber(cjson, "enum-windows-interval-ms", (double)enumWindowsIntervalMs_);
+    hotkeyMinimize_ = getString(cjson, "hotkey-minimize", hotkeyMinimize_.c_str());
+    hotkeyRestore_= getString(cjson, "hotkey-restore", hotkeyRestore_.c_str());
+    password_ = getString(cjson, "password", password_.c_str());
+    trayIcon_ = getBool(cjson, "tray-icon", trayIcon_);
 }
 
-void Settings::addAutotray(const char * className)
+void Settings::addAutoTray(const std::string & className, const std::string & titleRegex)
 {
-    size_t newAutotraySize = autotraySize_ + 1;
-    Autotray * newAutotray = (Autotray *)realloc(autotray_, sizeof(Autotray) * newAutotraySize);
-    if (!newAutotray) {
-        DEBUG_PRINTF("could not allocate %zu window specs\n", newAutotraySize);
-        free(autotray_);
-        autotray_ = nullptr;
-        autotraySize_ = 0;
-        return;
-    }
-
-    autotray_ = newAutotray;
-    autotraySize_ = newAutotraySize;
-
-    Autotray & autotray = autotray_[autotraySize_];
-
-    size_t len = strlen(className) + 1;
-    autotray.className_ = (WCHAR *)malloc(sizeof(WCHAR) * len);
-    if (!autotray.className_) {
-        DEBUG_PRINTF("could not allocate %zu wchars\n", len);
-    } else {
-        if (MultiByteToWideChar(CP_UTF8, 0, className, (int)len, autotray.className_, (int)len) <= 0) {
-            DEBUG_PRINTF("could not convert class name to wide chars\n");
-            free(autotray.className_);
-            autotray.className_ = nullptr;
-        }
-    }
+    AutoTray autoTray;
+    autoTray.className_ = className;
+    autoTray.titleRegex_ = titleRegex;
+    autoTrays_.emplace_back(autoTray);
 }
 
-#if 0
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
@@ -95,19 +77,33 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
 
     return cJSON_IsTrue(item) ? true : false;
 }
-#endif
 
-const char * getString(const cJSON * cjson, const char * key)
+double getNumber(const cJSON* cjson, const char* key, double defaultValue)
+{
+    const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
+    if (!item) {
+        return defaultValue;
+    }
+
+    if (!cJSON_IsNumber(item)) {
+        DEBUG_PRINTF("bad type for '%s'\n", item->string);
+        return defaultValue;
+    }
+
+    return cJSON_GetNumberValue(item);
+}
+
+const char * getString(const cJSON * cjson, const char * key, const char * defaultValue)
 {
     cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {
-        return nullptr;
+        return defaultValue;
     }
 
     const char * str = cJSON_GetStringValue(item);
     if (!str) {
         DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
-        return nullptr;
+        return defaultValue;
     }
 
     return str;
@@ -128,17 +124,18 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
     }
 }
 
-bool classnameItemCallback(const cJSON * cjson, void * userData)
+bool autoTrayItemCallback(const cJSON * cjson, void * userData)
 {
     if (!cJSON_IsObject(cjson)) {
         DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
         return false;
     }
 
-    const char * str = getString(cjson, "classname");
-    if (str) {
-        Settings * thisPtr = (Settings *)userData;
-        thisPtr->addAutotray(str);
+    const char * className = getString(cjson, "class-name", nullptr);
+    const char * titleRegex = getString(cjson, "title-regex", nullptr);
+    if (className || titleRegex) {
+        Settings * settings = (Settings *)userData;
+        settings->addAutoTray(className ? className : "", titleRegex ? titleRegex : "");
     }
-    return false;
+    return true;
 }

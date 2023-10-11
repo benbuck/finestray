@@ -7,10 +7,14 @@
 #include "Settings.h"
 #include "TrayIcon.h"
 #include "TrayWindow.h"
+#include "WindowList.h"
 
+// windows
 #include <Windows.h>
 // #include <oleacc.h>
-#include <string>
+
+// standard library
+#include <regex>
 
 static constexpr WCHAR APP_NAME[] = L"MinTray";
 static constexpr WORD IDM_EXIT = 0x1003;
@@ -23,15 +27,245 @@ enum class HotkeyID
 };
 
 static LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static void onNewWindow(HWND hwnd);
 static void showContextMenu(HWND hwnd);
 static std::wstring getResourceString(UINT id);
 static inline void errorMessage(UINT id);
+
+static Settings settings_;
+static HWND hwnd_;
+
+#if 0
+
+#define _WIN32_DCOM
+#include <iostream>
+using namespace std;
+#include <Wbemidl.h>
+#include <atlcomcli.h>
+#include <comdef.h>
+
+#pragma comment(lib, "wbemuuid.lib")
+namespace CreationEvent
+{
+void registerCreationCallback(void (*callback)(void));
+} // namespace CreationEvent
+
+class EventSink : public IWbemObjectSink
+{
+    friend void CreationEvent::registerCreationCallback(void (*callback)(void));
+
+    CComPtr<IWbemServices> pSvc;
+    CComPtr<IWbemObjectSink> pStubSink;
+    LONG m_IRef;
+    void (*m_callback)(void);
+
+public:
+    EventSink(void (*callback)(void)) : m_IRef(0), m_callback(callback) {}
+    ~EventSink() {}
+
+    virtual ULONG STDMETHODCALLTYPE AddRef() { return InterlockedIncrement(&m_IRef); }
+
+    virtual ULONG STDMETHODCALLTYPE Release()
+    {
+        LONG IRef = InterlockedDecrement(&m_IRef);
+        if (IRef == 0) delete this;
+        return IRef;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppv)
+    {
+        if (riid == IID_IUnknown || riid == IID_IWbemObjectSink) {
+            *ppv = (IWbemObjectSink *)this;
+            AddRef();
+            return WBEM_S_NO_ERROR;
+        } else
+            return E_NOINTERFACE;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Indicate(LONG lObjectCount, IWbemClassObject __RPC_FAR * __RPC_FAR * apObjArray)
+    {
+        for (int i = 0; i < lObjectCount; ++i) {
+            (void)lObjectCount;
+            (void)apObjArray;
+
+            m_callback();
+
+            HRESULT hr;
+
+            IWbemClassObject * obj = apObjArray[i];
+            BSTR objText = NULL;
+            hr = obj->GetObjectText(0, &objText);
+            if (SUCCEEDED(hr) && objText) {
+                DEBUG_PRINTF("objtext:\n-----\n%S\n-----\n", objText);
+                SysFreeString(objText);
+            }
+
+            SAFEARRAY * names = NULL;
+            hr = obj->GetNames(NULL, WBEM_FLAG_ALWAYS, NULL, &names);
+            if (FAILED(hr)) __debugbreak();
+            // UINT dim = SafeArrayGetDim(names);
+            LONG lstart, lend;
+            hr = SafeArrayGetLBound(names, 1, &lstart);
+            if (FAILED(hr)) __debugbreak();
+            hr = SafeArrayGetUBound(names, 1, &lend);
+            if (FAILED(hr)) __debugbreak();
+            BSTR * pbstr;
+            hr = SafeArrayAccessData(names, (void HUGEP **)&pbstr);
+            if (FAILED(hr)) __debugbreak();
+            for (LONG idx = lstart; idx < lend; ++idx) {
+                VARIANT v;
+
+                // VariantInit(&v);
+                // hr = SafeArrayGetElement(names, &idx, &v);
+                // if (FAILED(hr)) __debugbreak();
+                // if (V_VT(&v) == VT_BSTR) {
+                //     DEBUG_PRINTF("The class name is %S\n.", V_BSTR(&v));
+                // } else {
+                //     DEBUG_PRINTF("got %d\n", V_VT(&v));
+                // }
+
+                CIMTYPE pType;
+                hr = obj->Get(pbstr[idx], 0, &v, &pType, 0);
+                if (v.vt == VT_NULL) {
+                    continue;
+                }
+                if (pType == CIM_STRING && pType != CIM_EMPTY && pType != CIM_ILLEGAL) {
+                    DEBUG_PRINTF("OS Name : %d %S\n", idx, v.bstrVal);
+                }
+
+                VariantClear(&v);
+            }
+            hr = SafeArrayUnaccessData(names);
+            if (FAILED(hr)) __debugbreak();
+
+            SafeArrayDestroy(names);
+
+            hr = obj->BeginEnumeration(WBEM_FLAG_LOCAL_ONLY);
+            if (FAILED(hr)) __debugbreak();
+            while (true) {
+                BSTR name;
+                VARIANT val;
+                CIMTYPE type;
+                long flavor;
+                hr = obj->Next(0, &name, &val, &type, &flavor);
+                if (FAILED(hr)) __debugbreak();
+                if (hr == WBEM_S_NO_MORE_DATA) {
+                    break;
+                }
+                SysFreeString(name);
+                VariantClear(&val);
+            }
+            hr = obj->EndEnumeration();
+            if (FAILED(hr)) __debugbreak();
+
+            VARIANT v;
+            // hr = obj->Get(L"Name", 0, &v, 0, 0);
+            hr = obj->Get(L"TargetInstance", 0, &v, 0, 0);
+            // hr = obj->Get(L"this.TargetInstance.Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"TargetInstance.Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"TargetInstance::Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"TargetInstance\\Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"\\TargetInstance\\Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"TargetInstance/Name", 0, &v, 0, 0);
+            // hr = obj->Get(L"/TargetInstance/Name", 0, &v, 0, 0);
+            if (SUCCEEDED(hr)) {
+                if (V_VT(&v) == VT_BSTR)
+                    DEBUG_PRINTF("The class name is %S\n.", V_BSTR(&v));
+                else
+                    DEBUG_PRINTF("got %d\n", V_VT(&v));
+            } else {
+                DEBUG_PRINTF("Error in getting specified object\n");
+            }
+            VariantClear(&v);
+        }
+        /* Unregister event sink */
+        // pSvc->CancelAsyncCall(pStubSink);
+        return WBEM_S_NO_ERROR;
+    }
+    virtual HRESULT STDMETHODCALLTYPE
+    SetStatus(LONG /*IFlags*/, HRESULT /*hResult*/, BSTR /*strParam*/, IWbemClassObject __RPC_FAR * /*pObjParam*/)
+    {
+        return WBEM_S_NO_ERROR;
+    }
+};
+
+void CreationEvent::registerCreationCallback(void (*callback)(void))
+{
+    CComPtr<IWbemLocator> pLoc;
+    CoInitializeEx(0, COINIT_MULTITHREADED);
+    // CoInitialize(NULL);
+
+    HRESULT hres = CoInitializeSecurity(
+        NULL,
+        -1, // COM authentication
+        NULL, // Authentication services
+        NULL, // Reserved
+        RPC_C_AUTHN_LEVEL_DEFAULT, // Default authentication
+        RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation
+        NULL, // Authentication info
+        EOAC_NONE, // Additional capabilities
+        NULL // Reserved
+    );
+    if (FAILED(hres)) __debugbreak();
+
+    hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID *)&pLoc);
+    if (FAILED(hres)) __debugbreak();
+
+    CComPtr<EventSink> pSink(new EventSink(callback));
+
+    hres = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSink->pSvc);
+    if (FAILED(hres)) __debugbreak();
+
+    hres = CoSetProxyBlanket(
+        pSink->pSvc,
+        RPC_C_AUTHN_WINNT,
+        RPC_C_AUTHZ_NONE,
+        NULL,
+        RPC_C_AUTHN_LEVEL_CALL,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE);
+    if (FAILED(hres)) __debugbreak();
+
+    CComPtr<IUnsecuredApartment> pUnsecApp;
+    hres = CoCreateInstance(CLSID_UnsecuredApartment, NULL, CLSCTX_LOCAL_SERVER, IID_IUnsecuredApartment, (void **)&pUnsecApp);
+    CComPtr<IUnknown> pStubUnk;
+    pUnsecApp->CreateObjectStub(pSink, &pStubUnk);
+    pStubUnk->QueryInterface(IID_IWbemObjectSink, (void **)&pSink->pStubSink);
+
+    char const query[] = "SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'";
+    hres = pSink->pSvc->ExecNotificationQueryAsync(_bstr_t("WQL"), _bstr_t(query), WBEM_FLAG_SEND_STATUS, NULL, pSink->pStubSink);
+    if (FAILED(hres)) __debugbreak();
+
+    // FIX
+    // // Cleanup
+    // // ========
+    //
+    // hres = pSvc->CancelAsyncCall(pStubSink);
+    // pSvc->Release();
+    // pLoc->Release();
+    // pEnumerator->Release();
+    // CoUninitialize();
+}
+
+void k() { cout << "sadfdsa " << endl; }
+
+#endif
 
 #if 0
 VOID CALLBACK
 winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime)
 {
+    // unused
+    (void)hWinEventHook;
+    (void)idEventThread;
+    (void)dwmsEventTime;
+
     // DEBUG_PRINTF(".\n");
+
+    if (hwnd == hwnd_) {
+        return;
+    }
 
     switch (event) {
         case EVENT_SYSTEM_FOREGROUND:
@@ -43,10 +277,24 @@ winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject,
         case EVENT_OBJECT_REORDER:
         case EVENT_OBJECT_FOCUS:
         case EVENT_OBJECT_STATECHANGE:
-        case EVENT_OBJECT_LOCATIONCHANGE:
         case EVENT_OBJECT_NAMECHANGE:
         case EVENT_OBJECT_VALUECHANGE:
-        case EVENT_OBJECT_PARENTCHANGE: {
+        case EVENT_OBJECT_PARENTCHANGE:
+        case EVENT_OBJECT_CLOAKED:
+        case EVENT_OBJECT_UNCLOAKED: {
+            break;
+        }
+
+        case EVENT_OBJECT_LOCATIONCHANGE: {
+            WINDOWPLACEMENT wp;
+            memset(&wp, 0, sizeof(wp));
+            wp.length = sizeof(WINDOWPLACEMENT);
+            if (GetWindowPlacement(hwnd, &wp)) {
+                if (SW_SHOWMAXIMIZED == wp.showCmd) {
+                    DEBUG_PRINTF("Window is maximized.\n");
+                }
+            }
+
             break;
         }
 
@@ -54,28 +302,40 @@ winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject,
         case EVENT_OBJECT_DESTROY:
         case EVENT_SYSTEM_MINIMIZESTART:
         case EVENT_SYSTEM_MINIMIZEEND: {
+            char title[1024];
+            GetWindowTextA(hwnd, title, sizeof(title));
+            DEBUG_PRINTF("event %#X hwnd %#X (%s) ido %#X idc %#X\n", event, hwnd, title, idObject, idChild);
+
             IAccessible * pAcc = NULL;
             VARIANT varChild;
             HRESULT hr = AccessibleObjectFromEvent(hwnd, idObject, idChild, &pAcc, &varChild);
+            // if (FAILED(hr)) __debugbreak();
             if ((hr == S_OK) && (pAcc != NULL)) {
                 IDispatch * dispatch = nullptr;
-                pAcc->get_accParent(&dispatch);
+                hr = pAcc->get_accParent(&dispatch);
+                if (FAILED(hr)) __debugbreak();
                 if (dispatch) {
                     dispatch->Release();
                 } else {
                     BSTR bstrName;
-                    pAcc->get_accName(varChild, &bstrName);
-                    DEBUG_PRINTF("%S\n", bstrName);
-                    SysFreeString(bstrName);
+                    hr = pAcc->get_accName(varChild, &bstrName);
+                    if (FAILED(hr)) __debugbreak();
+                    if ((hr == S_OK) && bstrName) {
+                        DEBUG_PRINTF("str %S\n", bstrName);
+                        SysFreeString(bstrName);
+                    }
                 }
 
                 pAcc->Release();
+                VariantClear(&varChild);
             }
             break;
         }
 
         default: {
-            DEBUG_PRINTF("event %X\n", event);
+            char title[1024];
+            GetWindowTextA(hwnd, title, sizeof(title));
+            DEBUG_PRINTF("event %#X hwnd %#X (%s) ido %#X idc %#X\n", event, hwnd, title, idObject, idChild);
             break;
         }
     }
@@ -87,8 +347,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // unused
     (void)hPrevInstance;
     (void)pCmdLine;
-
-    Settings settings_;
 
     // get settings from file
     const WCHAR settingsFileName[] = L"MinTray.json";
@@ -150,28 +408,66 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     // register a hotkey that will be used to minimize windows
     Hotkey hotkeyMinimize;
-    if (!hotkeyMinimize.create((INT)HotkeyID::Minimize, hwnd, VK_DOWN, MOD_WIN | MOD_ALT | MOD_NOREPEAT)) {
+    UINT vkMinimize = VK_DOWN;
+    UINT modifiersMinimize = MOD_WIN | MOD_ALT;
+    if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
         return 0;
+    }
+    if (vkMinimize && modifiersMinimize) {
+        if (!hotkeyMinimize.create((INT)HotkeyID::Minimize, hwnd, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+            errorMessage(IDS_ERROR_REGISTER_HOTKEY);
+            return 0;
+        }
     }
 
     // register a hotkey that will be used to restore windows
     Hotkey hotkeyRestore;
-    if (!hotkeyRestore.create((INT)HotkeyID::Restore, hwnd, VK_UP, MOD_WIN | MOD_ALT | MOD_NOREPEAT)) {
+    UINT vkRestore = VK_UP;
+    UINT modifiersRestore = MOD_WIN | MOD_ALT;
+    if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
         return 0;
+    }
+    if (vkRestore && modifiersRestore) {
+        if (!hotkeyRestore.create((INT)HotkeyID::Restore, hwnd, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+            errorMessage(IDS_ERROR_REGISTER_HOTKEY);
+            return 0;
+        }
     }
 
     // create a tray icon for the app
     TrayIcon trayIcon;
-    if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
-        errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
-        return 0;
+    if (settings_.trayIcon_) {
+        if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
+            errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
+            return 0;
+        }
     }
 
-    // CoInitialize(NULL);
-    // HWINEVENTHOOK hWinEventHook =
-    //     SetWinEventHook(EVENT_MIN, EVENT_MAX, NULL, winEventProc, 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+#if 0
+    //CreationEvent::registerCreationCallback(k);
+    //cin.get();
+
+    CoInitialize(NULL);
+    //CoInitializeEx(0, COINIT_MULTITHREADED);
+    DWORD pid = 0; // GetCurrentProcessId();
+    DWORD tid = 0; // GetCurrentThreadId();
+    hwnd_ = hwnd;
+    HWINEVENTHOOK hWinEventHook = SetWinEventHook(
+        EVENT_OBJECT_LOCATIONCHANGE,
+        EVENT_OBJECT_LOCATIONCHANGE,
+        NULL,
+        winEventProc,
+        pid,
+        tid,
+        WINEVENT_OUTOFCONTEXT);
+    if (!hWinEventHook) __debugbreak();
+#endif
+
+    if (settings_.enumWindowsIntervalMs_ > 0) {
+        windowListStart(hwnd_, settings_.enumWindowsIntervalMs_, onNewWindow);
+    }
 
     // run the message loop
     MSG msg = {};
@@ -180,8 +476,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         DispatchMessage(&msg);
     }
 
-    // UnhookWinEvent(hWinEventHook);
-    // CoUninitialize();
+    windowListStop();
+
+#if 0
+    UnhookWinEvent(hWinEventHook);
+    CoUninitialize();
+#endif
 
     return 0;
 }
@@ -231,6 +531,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             HotkeyID hkid = (HotkeyID)wParam;
             switch (hkid) {
                 case HotkeyID::Minimize: {
+                    DEBUG_PRINTF("hotkey minimize\n");
                     // get the foreground window to minimize
                     HWND hwndFg = GetForegroundWindow();
                     if (hwndFg) {
@@ -254,6 +555,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case HotkeyID::Restore: {
+                    DEBUG_PRINTF("hotkey restore\n");
                     HWND hwndLast = trayWindowGetLast();
                     if (hwndLast) {
                         trayWindowRestore(hwndLast);
@@ -287,13 +589,13 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
-#if 0
                 case WM_MOUSEMOVE: {
                     HWND hwndTray = trayWindowGetFromID((UINT)wParam);
                     trayWindowRefresh(hwndTray);
                     break;
                 }
-#endif
+
+                default: DEBUG_PRINTF("traywindow message\n"); break;
             }
             break;
         }
@@ -309,6 +611,53 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+void onNewWindow(HWND hwnd)
+{
+    DEBUG_PRINTF("New window: %#x\n", hwnd);
+
+    CHAR windowText[128];
+    if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
+        // DEBUG_PRINTF("failed to get window text %#x\n", hwnd);
+    } else {
+        DEBUG_PRINTF("\ttitle: %s\n", windowText);
+    }
+
+    CHAR className[1024];
+    if (!GetClassNameA(hwnd, className, sizeof(className))) {
+        DEBUG_PRINTF("failed to get window class name %#x\n", hwnd);
+    } else {
+        DEBUG_PRINTF("\tclass: %s\n", className);
+    }
+
+    for (auto const & autoTray : settings_.autoTrays_) {
+        bool classMatch = false;
+        if (autoTray.className_.empty()) {
+            classMatch = true;
+        } else {
+            if (autoTray.className_ == className) {
+                DEBUG_PRINTF("\tclassname %s match\n", autoTray.className_.c_str());
+                classMatch = true;
+            }
+        }
+
+        bool titleMatch = false;
+        if (autoTray.titleRegex_.empty()) {
+            titleMatch = true;
+        } else {
+            std::regex re(autoTray.titleRegex_);
+            if (std::regex_match(windowText, re)) {
+                DEBUG_PRINTF("\ttitle regex %s match\n", autoTray.titleRegex_.c_str());
+                titleMatch = true;
+            }
+        }
+
+        if (classMatch && titleMatch) {
+            DEBUG_PRINTF("\t--- minimizing ---\n");
+            trayWindowMinimize(hwnd, hwnd_);
+        }
+    }
+}
+
 void showContextMenu(HWND hwnd)
 {
     // create popup menu
@@ -319,17 +668,35 @@ void showContextMenu(HWND hwnd)
     }
 
     // add menu entries
-    AppendMenu(hMenu, MF_STRING | MF_DISABLED, 0, APP_NAME);
-    AppendMenu(hMenu, MF_SEPARATOR, 0, nullptr);
-    AppendMenu(hMenu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str());
-    AppendMenu(hMenu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str());
+    if (!AppendMenu(hMenu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
+    if (!AppendMenu(hMenu, MF_SEPARATOR, 0, nullptr)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
+    if (!AppendMenu(hMenu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
+    if (!AppendMenu(hMenu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
 
     // activate our window
-    SetForegroundWindow(hwnd);
+    if (!SetForegroundWindow(hwnd)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
 
     // get the current mouse position
     POINT point = { 0, 0 };
-    GetCursorPos(&point);
+    if (!GetCursorPos(&point)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
 
     // show the popup menu
     if (!TrackPopupMenu(hMenu, 0, point.x, point.y, 0, hwnd, NULL)) {
@@ -339,9 +706,15 @@ void showContextMenu(HWND hwnd)
     }
 
     // force a task switch to our app
-    PostMessage(hwnd, WM_USER, 0, 0);
+    if (!PostMessage(hwnd, WM_USER, 0, 0)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
 
-    DestroyMenu(hMenu);
+    if (!DestroyMenu(hMenu)) {
+        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+        return;
+    }
 }
 
 std::wstring getResourceString(UINT id)
@@ -350,7 +723,9 @@ std::wstring getResourceString(UINT id)
 
     std::wstring str;
     str.resize(256);
-    LoadString(hInstance, id, &str[0], (int)str.size());
+    if (!LoadString(hInstance, id, &str[0], (int)str.size())) {
+        DEBUG_PRINTF("failed to load resources string %u\n", id);
+    }
 
     return str;
 }
@@ -358,5 +733,7 @@ std::wstring getResourceString(UINT id)
 void errorMessage(UINT id)
 {
     std::wstring const & err = getResourceString(id);
-    MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR);
+    if (!MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
+        DEBUG_PRINTF("failed to display error message %u\n", id);
+    }
 }

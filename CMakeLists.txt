@@ -27,10 +27,14 @@ add_executable(MinTray WIN32
     src/Resource.h
     src/Settings.cpp
     src/Settings.h
+    src/StringUtilities.cpp
+    src/StringUtilities.h
     src/TrayIcon.cpp
     src/TrayIcon.h
     src/TrayWindow.cpp
     src/TrayWindow.h
+    src/WindowList.cpp
+    src/WindowList.h
 )
 
 target_compile_options(MinTray
@@ -99,10 +103,10 @@ target_link_options(MinTray
         >
 )
 
-# target_link_libraries(MinTray
-#     PRIVATE
-#         OleAcc.lib
-# )
+target_link_libraries(MinTray
+ PRIVATE
+     OleAcc.lib
+)
 
 install(
     TARGETS MinTray

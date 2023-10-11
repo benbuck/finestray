@@ -66,11 +66,10 @@ void trayWindowClose(HWND hwnd)
     }
 }
 
-#if 0
 void trayWindowRefresh(HWND hwnd)
 {
     // find the window
-    TrayIcons::iterator it = trayIcons_.find(hwnd);
+    TrayIcons::iterator it = find(hwnd);
     if (it == trayIcons_.end()) {
         return;
     }
@@ -79,10 +78,9 @@ void trayWindowRefresh(HWND hwnd)
     if (!IsWindow(hwnd) || IsWindowVisible(hwnd)) {
         remove(hwnd);
     } else {
-        it->second->refresh();
+        it->trayIcon_->refresh();
     }
 }
-#endif
 
 void trayWindowAddAll()
 {

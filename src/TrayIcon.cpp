@@ -54,11 +54,9 @@ void TrayIcon::destroy()
     }
 }
 
-#if 0
 void TrayIcon::refresh()
 {
     nid_.uFlags = NIF_TIP;
     GetWindowText(nid_.hWnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
     Shell_NotifyIcon(NIM_MODIFY, &nid_);
 }
-#endif

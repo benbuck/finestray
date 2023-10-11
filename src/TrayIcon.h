@@ -15,7 +15,7 @@ public:
     bool create(HWND hwnd, UINT msg, HICON icon);
     void destroy();
 
-    // void refresh();
+    void refresh();
 
     inline UINT id() const { return nid_.uID; }
     inline HWND hwnd() const { return nid_.hWnd; }
