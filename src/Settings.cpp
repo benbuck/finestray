@@ -22,6 +22,7 @@ static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, vo
 enum SettingKeys : unsigned int
 {
     SK_AutoTray,
+    SK_Executable,
     SK_WindowClass,
     SK_WindowTitle,
     SK_HotkeyMinimize,
@@ -32,10 +33,10 @@ enum SettingKeys : unsigned int
     SK_Count
 };
 
-static const char * settingKeys_[SK_Count] = { "auto-tray",      "window-class",  "window-title", "hotkey-minimize",
-                                               "hotkey-restore", "poll-interval", "tray-icon" };
+static const char * settingKeys_[SK_Count] = { "auto-tray",       "executable",     "window-class",  "window-title",
+                                               "hotkey-minimize", "hotkey-restore", "poll-interval", "tray-icon" };
 
-Settings::Settings() : autoTrays_(), pollInterval_(500), trayIcon_(true) {}
+Settings::Settings() : autoTrays_(), hotkeyMinimize_(), hotkeyRestore_(), pollInterval_(500), trayIcon_(true) {}
 
 Settings::~Settings() {}
 
@@ -123,9 +124,10 @@ bool Settings::parseJson(const std::string & json)
     return true;
 }
 
-void Settings::addAutoTray(const std::string & windowClass, const std::string & windowTitle)
+void Settings::addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle)
 {
     AutoTray autoTray;
+    autoTray.executable_ = executable;
     autoTray.windowClass_ = windowClass;
     autoTray.windowTitle_ = windowTitle;
     autoTrays_.emplace_back(autoTray);
@@ -138,11 +140,12 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
         return false;
     }
 
+    const char * executable = getString(cjson, settingKeys_[SK_Executable], nullptr);
     const char * windowClass = getString(cjson, settingKeys_[SK_WindowClass], nullptr);
     const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
-    if (windowClass || windowTitle) {
+    if (executable || windowClass || windowTitle) {
         Settings * settings = (Settings *)userData;
-        settings->addAutoTray(windowClass ? windowClass : "", windowTitle ? windowTitle : "");
+        settings->addAutoTray(executable ? executable : "", windowClass ? windowClass : "", windowTitle ? windowTitle : "");
     }
 
     return true;

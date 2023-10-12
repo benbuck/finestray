@@ -20,6 +20,7 @@ public:
 
     struct AutoTray
     {
+        std::string executable_;
         std::string windowClass_;
         std::string windowTitle_;
     };
@@ -31,6 +32,6 @@ public:
 
 private:
     bool parseJson(const std::string & json);
-    void addAutoTray(const std::string & windowClass, const std::string & windowTitle);
+    void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
     static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };

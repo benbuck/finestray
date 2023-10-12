@@ -10,6 +10,7 @@
 #include "WindowList.h"
 
 // windows
+#include <Psapi.h>
 #include <Windows.h>
 
 // standard library
@@ -329,6 +330,24 @@ void onNewWindow(HWND hwnd)
         return;
     }
 
+    CHAR executable[MAX_PATH] = { 0 };
+    DWORD dwProcId = 0;
+    if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
+        DEBUG_PRINTF("GetWindowThreadProcessId() failed: %u\n", GetLastError());
+    } else {
+        HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
+        if (!hProc) {
+            DEBUG_PRINTF("OpenProcess() failed: %u\n", GetLastError());
+        } else {
+            if (!GetModuleFileNameExA((HMODULE)hProc, NULL, executable, MAX_PATH)) {
+                DEBUG_PRINTF("GetModuleFileNameA() failed: %u\n", GetLastError());
+            } else {
+                DEBUG_PRINTF("\texecutable: %s\n", executable);
+            }
+        }
+        CloseHandle(hProc);
+    }
+
     CHAR windowText[128];
     if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
         // DEBUG_PRINTF("failed to get window text %#x\n", hwnd);
@@ -344,6 +363,16 @@ void onNewWindow(HWND hwnd)
     }
 
     for (auto const & autoTray : settings_.autoTrays_) {
+        bool executableMatch = false;
+        if (autoTray.executable_.empty()) {
+            executableMatch = true;
+        } else {
+            if (autoTray.executable_ == executable) {
+                DEBUG_PRINTF("\texecutable %s match\n", autoTray.executable_.c_str());
+                executableMatch = true;
+            }
+        }
+
         bool classMatch = false;
         if (autoTray.windowClass_.empty()) {
             classMatch = true;
@@ -365,7 +394,7 @@ void onNewWindow(HWND hwnd)
             }
         }
 
-        if (classMatch && titleMatch) {
+        if (executableMatch && classMatch && titleMatch) {
             DEBUG_PRINTF("\t--- minimizing ---\n");
             trayWindowMinimize(hwnd, hwnd_);
             autoTrayedWindows_.insert(hwnd);
