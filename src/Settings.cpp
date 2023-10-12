@@ -59,8 +59,9 @@ bool Settings::parseCommandLine(int argc, char const * const * argv)
 
     if (!args.flags().empty()) {
         DEBUG_PRINTF("error, unexpected command line flags:\n");
-        for (const std::string & flag: args.flags()) {
+        for (const std::string & flag : args.flags()) {
             DEBUG_PRINTF("\t%s\n", flag.c_str());
+            (void)flag;
         }
         return false;
     }

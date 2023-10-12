@@ -45,8 +45,6 @@ void windowListStop()
 
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
-    DEBUG_PRINTF("tp\n");
-
     std::set<HWND> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
         DEBUG_PRINTF("EnumWindows() failed: %u\n", GetLastError());

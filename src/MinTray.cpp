@@ -452,6 +452,7 @@ void errorMessage(UINT id)
     DWORD lastError = GetLastError();
     std::wstring const & err = getResourceString(id);
     DEBUG_PRINTF("error: %ws: %u\n", err.c_str(), lastError);
+    (void)lastError;
     if (!MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u\n", id);
     }
