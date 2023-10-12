@@ -35,9 +35,6 @@ public:
     // "hotkey-restore"
     std::string hotkeyRestore_;
 
-    // "password"
-    // std::string password_;
-
     // "poll-millis"
     unsigned int pollMillis_;
 

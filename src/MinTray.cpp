@@ -529,75 +529,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     return 0;
 }
 
-#if 0
-static INT_PTR CALLBACK PasswordProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    TCHAR lpszPassword[16];
-    WORD cchPassword;
-
-    switch (message) {
-        case WM_INITDIALOG:
-            // Set password character to a plus sign (+)
-            // SendDlgItemMessage(hDlg, IDE_PASSWORDEDIT, EM_SETPASSWORDCHAR, (WPARAM)'+', (LPARAM)0);
-
-            // Set the default push button to "Cancel."
-            // SendMessage(hDlg, DM_SETDEFID, (WPARAM)IDCANCEL, (LPARAM)0);
-
-            return TRUE;
-
-        case WM_COMMAND:
-            // Set the default push button to "OK" when the user enters text.
-            if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == IDE_PASSWORDEDIT) {
-                SendMessage(hDlg, DM_SETDEFID, (WPARAM)IDOK, (LPARAM)0);
-            }
-            switch (wParam) {
-                case IDOK:
-                    // Get number of characters.
-                    cchPassword = (WORD)SendDlgItemMessage(hDlg, IDE_PASSWORDEDIT, EM_LINELENGTH, (WPARAM)0, (LPARAM)0);
-                    if (cchPassword >= 16) {
-                        MessageBox(hDlg, L"Too many characters.", L"Error", MB_OK);
-
-                        EndDialog(hDlg, TRUE);
-                        return FALSE;
-                    } else if (cchPassword == 0) {
-                        MessageBox(hDlg, L"No characters entered.", L"Error", MB_OK);
-
-                        EndDialog(hDlg, TRUE);
-                        return FALSE;
-                    }
-
-                    // Put the number of characters into first word of buffer.
-                    *((LPWORD)lpszPassword) = cchPassword;
-
-                    // Get the characters.
-                    SendDlgItemMessage(
-                        hDlg,
-                        IDE_PASSWORDEDIT,
-                        EM_GETLINE,
-                        (WPARAM)0, // line 0
-                        (LPARAM)lpszPassword);
-
-                    // Null-terminate the string.
-                    lpszPassword[cchPassword] = 0;
-
-                    MessageBox(hDlg, lpszPassword, L"Did it work?", MB_OK);
-
-                    // Call a local password-parsing function.
-                    // ParsePassword(lpszPassword);
-
-                    EndDialog(hDlg, TRUE);
-                    return TRUE;
-
-                case IDCANCEL: EndDialog(hDlg, TRUE); return TRUE;
-            }
-            return 0;
-    }
-    return FALSE;
-
-    UNREFERENCED_PARAMETER(lParam);
-}
-#endif
-
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static UINT taskbarCreatedMessage;
@@ -611,44 +542,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     std::wstring const & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
                     std::wstring const & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
                     MessageBox(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION);
-
-#if 0
-                    CREDUI_INFO ci = { sizeof(ci) };
-                    std::wstring promptCaption = L"MinTray";
-                    std::wstring promptMessage = L"Enter login credentials to allow";
-                    ci.pszCaptionText = (PCWSTR)promptCaption.c_str();
-                    ci.pszMessageText = (PCWSTR)promptMessage.c_str();
-
-                    WCHAR username[255] = {};
-                    WCHAR password[255] = {};
-                    DWORD result = 0;
-
-                    result = CredUIPromptForCredentialsW(&ci, L".", NULL, 5, username, 255, password, 255, FALSE, CREDUI_FLAGS_GENERIC_CREDENTIALS);
-                    if (result == ERROR_SUCCESS) {
-                        HANDLE newToken = NULL;
-                        BOOL credentialsValid = FALSE;
-
-                        credentialsValid =
-                            LogonUserW(username, NULL, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &newToken);
-                        if (credentialsValid) {
-                            // valid credentials provided
-                        } else {
-                            // invalid credentials provided
-                        }
-                    } else if (result == ERROR_CANCELLED) {
-                        // no credentials provided
-                    }
-#endif
-
-#if 0
-                    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
-                    DialogBox(
-                        hInstance, // application instance
-                        MAKEINTRESOURCE(IDD_PASSWORD), // dialog box resource
-                        hwnd, // owner window
-                        PasswordProc // dialog box window procedure
-                    );
-#endif
                     break;
                 }
 

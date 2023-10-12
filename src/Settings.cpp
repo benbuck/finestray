@@ -19,7 +19,7 @@ static double getNumber(const cJSON * cjson, const char * key, double defaultVal
 static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
 
-Settings::Settings() : autoTrays_(), /* password_(), */ pollMillis_(500), trayIcon_(true) {}
+Settings::Settings() : autoTrays_(), pollMillis_(500), trayIcon_(true) {}
 
 Settings::~Settings() {}
 
@@ -78,7 +78,6 @@ bool Settings::parseJson(const std::string & json)
 
     hotkeyMinimize_ = getString(cjson, "hotkey-minimize", hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, "hotkey-restore", hotkeyRestore_.c_str());
-    // password_ = getString(cjson, "password", password_.c_str());
     pollMillis_ = (unsigned int)getNumber(cjson, "poll-millis", (double)pollMillis_);
     trayIcon_ = getBool(cjson, "tray-icon", trayIcon_);
 
