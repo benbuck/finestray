@@ -72,13 +72,28 @@ set(LINK_CONFIG_OPTIONS
 )
 
 add_library(cJSON
-    src/cJSON.c
-    src/cJSON.h
+    src/cJSON/cJSON.c
+    src/cJSON/cJSON.h
+)
+
+target_include_directories(cJSON
+    INTERFACE
+        src/cJSON
 )
 
 target_compile_options(cJSON
     PRIVATE
         ${COMPILE_CONFIG_OPTIONS}
+)
+
+add_library(argh
+    INTERFACE
+        src/argh/argh.h
+)
+
+target_include_directories(argh
+    INTERFACE
+    src/argh
 )
 
 add_executable(MinTray WIN32
@@ -121,7 +136,7 @@ target_link_options(MinTray
 
 target_link_libraries(MinTray
     PRIVATE
-        # OleAcc.lib
+        argh
         cJSON
 )
 

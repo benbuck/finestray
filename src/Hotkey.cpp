@@ -67,14 +67,14 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
     key = 0;
     modifiers = 0;
 
-    if (StringUtilities::tolower(hotkeyStr) == "none") {
+    if (StringUtilities::toLower(hotkeyStr) == "none") {
         return true;
     }
 
     std::vector<std::string> tokens = StringUtilities::split(hotkeyStr, "+");
     for (auto token : tokens) {
         token = StringUtilities::trim(token);
-        token = StringUtilities::tolower(token);
+        token = StringUtilities::toLower(token);
 
         // look for modifier string
         const auto & mit = modifierMap_.find(token);

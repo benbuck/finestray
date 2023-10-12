@@ -3,8 +3,12 @@
 #include "Settings.h"
 
 #include "DebugPrint.h"
-#include "cJSON.h"
 #include "File.h"
+#include "StringUtilities.h"
+
+#include <argh.h>
+
+#include <cJSON.h>
 
 #include <Windows.h>
 #include <shellapi.h>
@@ -14,9 +18,8 @@ static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 static double getNumber(const cJSON * cjson, const char * key, double defaultValue);
 static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
-static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 
-Settings::Settings() : shouldExit_(false), autoTrays_(), enumWindowsIntervalMs_(500), password_(), trayIcon_(true) {}
+Settings::Settings() : autoTrays_(), /* password_(), */ pollMillis_(500), trayIcon_(true) {}
 
 Settings::~Settings() {}
 
@@ -30,22 +33,31 @@ bool Settings::readFromFile(const std::wstring & fileName)
     return parseJson(json);
 }
 
-void Settings::parseCommandLine()
+void Settings::parseCommandLine(int argc, char const * const * argv)
 {
-    int argc;
-    LPWSTR * argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    argh::parser args(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
-    for (int a = 0; a < argc; ++a) {
-        if (!wcscmp(argv[a], L"--exit")) {
-            shouldExit_ = true;
-        } else if (!wcscmp(argv[a], L"--enum-windows-interval-ms")) {
-            ++a;
-            if (a >= argc) {
-                DEBUG_PRINTF("expected argument to --enum-windows-interval-ms missing\n");
-            } else {
-                enumWindowsIntervalMs_ = _wtoi(argv[a]);
-            }
-        }
+    // note: "auto-tray" options are not supported on the command line, only in json, since the
+    // syntax to support the various selector strings would be ugly, inconvenient, and non-intuitive
+
+    argh::string_stream hotkeyMinimizeArg = args("hotkey-minimize", hotkeyMinimize_);
+    if (hotkeyMinimizeArg && !(hotkeyMinimizeArg >> hotkeyMinimize_)) {
+        DEBUG_PRINTF("error, bad hotkey-minimize argument: %s\n", hotkeyMinimizeArg.str().c_str());
+    }
+
+    argh::string_stream hotkeyRestoreArg = args("hotkey-restore", hotkeyRestore_);
+    if (hotkeyRestoreArg && !(hotkeyRestoreArg >> hotkeyRestore_)) {
+        DEBUG_PRINTF("error, bad hotkey-restore argument: %s\n", hotkeyRestoreArg.str().c_str());
+    }
+
+    argh::string_stream pollMillisArg = args("poll-millis", pollMillis_);
+    if (pollMillisArg && !(pollMillisArg >> pollMillis_)) {
+        DEBUG_PRINTF("error, bad poll-millis argument: %s\n", pollMillisArg.str().c_str());
+    }
+
+    argh::string_stream trayIconArg = args("tray-icon", trayIcon_);
+    if (trayIconArg && !StringUtilities::stringToBool(trayIconArg.str(), trayIcon_)) {
+        DEBUG_PRINTF("error, bad tray-icon argument: %s\n", trayIconArg.str().c_str());
     }
 }
 
@@ -64,10 +76,10 @@ bool Settings::parseJson(const std::string & json)
         iterateArray(autotray, autoTrayItemCallback, this);
     }
 
-    enumWindowsIntervalMs_ = (unsigned int)getNumber(cjson, "enum-windows-interval-ms", (double)enumWindowsIntervalMs_);
     hotkeyMinimize_ = getString(cjson, "hotkey-minimize", hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, "hotkey-restore", hotkeyRestore_.c_str());
-    password_ = getString(cjson, "password", password_.c_str());
+    // password_ = getString(cjson, "password", password_.c_str());
+    pollMillis_ = (unsigned int)getNumber(cjson, "poll-millis", (double)pollMillis_);
     trayIcon_ = getBool(cjson, "tray-icon", trayIcon_);
 
     return true;
@@ -79,6 +91,22 @@ void Settings::addAutoTray(const std::string & className, const std::string & ti
     autoTray.className_ = className;
     autoTray.titleRegex_ = titleRegex;
     autoTrays_.emplace_back(autoTray);
+}
+
+bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
+{
+    if (!cJSON_IsObject(cjson)) {
+        DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
+        return false;
+    }
+
+    const char * className = getString(cjson, "class-name", nullptr);
+    const char * titleRegex = getString(cjson, "title-regex", nullptr);
+    if (className || titleRegex) {
+        Settings * settings = (Settings *)userData;
+        settings->addAutoTray(className ? className : "", titleRegex ? titleRegex : "");
+    }
+    return true;
 }
 
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
@@ -140,20 +168,4 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
             }
         }
     }
-}
-
-bool autoTrayItemCallback(const cJSON * cjson, void * userData)
-{
-    if (!cJSON_IsObject(cjson)) {
-        DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
-        return false;
-    }
-
-    const char * className = getString(cjson, "class-name", nullptr);
-    const char * titleRegex = getString(cjson, "title-regex", nullptr);
-    if (className || titleRegex) {
-        Settings * settings = (Settings *)userData;
-        settings->addAutoTray(className ? className : "", titleRegex ? titleRegex : "");
-    }
-    return true;
 }

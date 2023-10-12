@@ -12,9 +12,11 @@
 // windows
 #include <Windows.h>
 // #include <oleacc.h>
+// #include <wincred.h>
 
 // standard library
 #include <regex>
+#include <set>
 
 static constexpr WCHAR APP_NAME[] = L"MinTray";
 static constexpr WORD IDM_EXIT = 0x1003;
@@ -26,7 +28,7 @@ enum class HotkeyID
     Restore
 };
 
-static LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static void onNewWindow(HWND hwnd);
 static void showContextMenu(HWND hwnd);
 static std::wstring getResourceString(UINT id);
@@ -342,6 +344,38 @@ winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject,
 }
 #endif
 
+
+static void get_command_line_args(int * argc, char *** argv)
+{
+    // Get the command line arguments as wchar_t strings
+    wchar_t ** wargv = CommandLineToArgvW(GetCommandLineW(), argc);
+    if (!wargv) {
+        *argc = 0;
+        *argv = NULL;
+        return;
+    }
+
+    // Count the number of bytes necessary to store the UTF-8 versions of those strings
+    int n = 0;
+    for (int i = 0; i < *argc; i++)
+        n += WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0, NULL, NULL) + 1;
+
+    // Allocate the argv[] array + all the UTF-8 strings
+    *argv = (char **)malloc((*argc + 1) * sizeof(char *) + n);
+    if (!*argv) {
+        *argc = 0;
+        return;
+    }
+
+    // Convert all wargv[] --> argv[]
+    char * arg = (char *)&((*argv)[*argc + 1]);
+    for (int i = 0; i < *argc; i++) {
+        (*argv)[i] = arg;
+        arg += WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, arg, n, NULL, NULL) + 1;
+    }
+    (*argv)[*argc] = NULL;
+}
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
     // unused
@@ -351,18 +385,25 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // get settings from file
     std::wstring fileName(std::wstring(APP_NAME) + L".json");
     if (settings_.readFromFile(fileName)) {
-        DEBUG_PRINTF("read setttings from %ls\n", fileName.c_str());
+        DEBUG_PRINTF("read setttings from %ws\n", fileName.c_str());
     } else {
         // no settings file in current directory, try in executable dir
         std::wstring exePath = getExecutablePath();
         fileName = exePath + L"\\" + std::wstring(APP_NAME) + L".json";
         if (settings_.readFromFile(fileName)) {
-            DEBUG_PRINTF("read setttings from %ls\n", fileName.c_str());
+            DEBUG_PRINTF("read setttings from %ws\n", fileName.c_str());
         }
     }
 
-    // get settings from command line (can override file)
-    settings_.parseCommandLine();
+    // get settings from command line (can override settings from file)
+    //int argc;
+    //LPWSTR * argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
+    int argc;
+    char ** argv;
+    get_command_line_args(&argc, &argv);
+
+    settings_.parseCommandLine(argc, argv);
+    // settings_.parseCommandLine(__argc, __argv);
 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
 
@@ -465,7 +506,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (!hWinEventHook) __debugbreak();
 #endif
 
-    windowListStart(hwnd, settings_.enumWindowsIntervalMs_, onNewWindow);
+    windowListStart(hwnd, settings_.pollMillis_, onNewWindow);
 
     // run the message loop
     MSG msg = {};
@@ -481,10 +522,83 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     CoUninitialize();
 #endif
 
+    if (!DestroyWindow(hwnd)) {
+        DEBUG_PRINTF("failed to destroy window: %#x\n", hwnd);
+    }
+
     return 0;
 }
 
-LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+#if 0
+static INT_PTR CALLBACK PasswordProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    TCHAR lpszPassword[16];
+    WORD cchPassword;
+
+    switch (message) {
+        case WM_INITDIALOG:
+            // Set password character to a plus sign (+)
+            // SendDlgItemMessage(hDlg, IDE_PASSWORDEDIT, EM_SETPASSWORDCHAR, (WPARAM)'+', (LPARAM)0);
+
+            // Set the default push button to "Cancel."
+            // SendMessage(hDlg, DM_SETDEFID, (WPARAM)IDCANCEL, (LPARAM)0);
+
+            return TRUE;
+
+        case WM_COMMAND:
+            // Set the default push button to "OK" when the user enters text.
+            if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == IDE_PASSWORDEDIT) {
+                SendMessage(hDlg, DM_SETDEFID, (WPARAM)IDOK, (LPARAM)0);
+            }
+            switch (wParam) {
+                case IDOK:
+                    // Get number of characters.
+                    cchPassword = (WORD)SendDlgItemMessage(hDlg, IDE_PASSWORDEDIT, EM_LINELENGTH, (WPARAM)0, (LPARAM)0);
+                    if (cchPassword >= 16) {
+                        MessageBox(hDlg, L"Too many characters.", L"Error", MB_OK);
+
+                        EndDialog(hDlg, TRUE);
+                        return FALSE;
+                    } else if (cchPassword == 0) {
+                        MessageBox(hDlg, L"No characters entered.", L"Error", MB_OK);
+
+                        EndDialog(hDlg, TRUE);
+                        return FALSE;
+                    }
+
+                    // Put the number of characters into first word of buffer.
+                    *((LPWORD)lpszPassword) = cchPassword;
+
+                    // Get the characters.
+                    SendDlgItemMessage(
+                        hDlg,
+                        IDE_PASSWORDEDIT,
+                        EM_GETLINE,
+                        (WPARAM)0, // line 0
+                        (LPARAM)lpszPassword);
+
+                    // Null-terminate the string.
+                    lpszPassword[cchPassword] = 0;
+
+                    MessageBox(hDlg, lpszPassword, L"Did it work?", MB_OK);
+
+                    // Call a local password-parsing function.
+                    // ParsePassword(lpszPassword);
+
+                    EndDialog(hDlg, TRUE);
+                    return TRUE;
+
+                case IDCANCEL: EndDialog(hDlg, TRUE); return TRUE;
+            }
+            return 0;
+    }
+    return FALSE;
+
+    UNREFERENCED_PARAMETER(lParam);
+}
+#endif
+
+LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static UINT taskbarCreatedMessage;
 
@@ -497,6 +611,44 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     std::wstring const & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
                     std::wstring const & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
                     MessageBox(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION);
+
+#if 0
+                    CREDUI_INFO ci = { sizeof(ci) };
+                    std::wstring promptCaption = L"MinTray";
+                    std::wstring promptMessage = L"Enter login credentials to allow";
+                    ci.pszCaptionText = (PCWSTR)promptCaption.c_str();
+                    ci.pszMessageText = (PCWSTR)promptMessage.c_str();
+
+                    WCHAR username[255] = {};
+                    WCHAR password[255] = {};
+                    DWORD result = 0;
+
+                    result = CredUIPromptForCredentialsW(&ci, L".", NULL, 5, username, 255, password, 255, FALSE, CREDUI_FLAGS_GENERIC_CREDENTIALS);
+                    if (result == ERROR_SUCCESS) {
+                        HANDLE newToken = NULL;
+                        BOOL credentialsValid = FALSE;
+
+                        credentialsValid =
+                            LogonUserW(username, NULL, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &newToken);
+                        if (credentialsValid) {
+                            // valid credentials provided
+                        } else {
+                            // invalid credentials provided
+                        }
+                    } else if (result == ERROR_CANCELLED) {
+                        // no credentials provided
+                    }
+#endif
+
+#if 0
+                    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
+                    DialogBox(
+                        hInstance, // application instance
+                        MAKEINTRESOURCE(IDD_PASSWORD), // dialog box resource
+                        hwnd, // owner window
+                        PasswordProc // dialog box window procedure
+                    );
+#endif
                     break;
                 }
 
@@ -539,11 +691,11 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #if !defined(NDEBUG)
                             WCHAR text[256];
                             GetWindowText(hwndFg, text, sizeof(text) / sizeof(text[0]));
-                            DEBUG_PRINTF("window text '%ls'\n", text);
+                            DEBUG_PRINTF("window text '%ws'\n", text);
 
                             WCHAR className[256];
                             GetClassName(hwndFg, className, sizeof(className) / sizeof(className[0]));
-                            DEBUG_PRINTF("window class name '%ls'\n", className);
+                            DEBUG_PRINTF("window class name '%ws'\n", className);
 #endif
 
                             trayWindowMinimize(hwndFg, hwnd);
@@ -610,9 +762,16 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+static std::set<HWND> autoTrayedWindows_;
+
 void onNewWindow(HWND hwnd)
 {
     DEBUG_PRINTF("new window: %#x\n", hwnd);
+
+    if (autoTrayedWindows_.find(hwnd) != autoTrayedWindows_.end()) {
+        DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
+        return;
+    }
 
     CHAR windowText[128];
     if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
@@ -653,6 +812,7 @@ void onNewWindow(HWND hwnd)
         if (classMatch && titleMatch) {
             DEBUG_PRINTF("\t--- minimizing ---\n");
             trayWindowMinimize(hwnd, hwnd_);
+            autoTrayedWindows_.insert(hwnd);
         }
     }
 }
@@ -660,26 +820,26 @@ void onNewWindow(HWND hwnd)
 void showContextMenu(HWND hwnd)
 {
     // create popup menu
-    HMENU hMenu = CreatePopupMenu();
-    if (!hMenu) {
+    HMENU menu = CreatePopupMenu();
+    if (!menu) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
 
     // add menu entries
-    if (!AppendMenu(hMenu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
+    if (!AppendMenu(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(hMenu, MF_SEPARATOR, 0, nullptr)) {
+    if (!AppendMenu(menu, MF_SEPARATOR, 0, nullptr)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(hMenu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
+    if (!AppendMenu(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(hMenu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
+    if (!AppendMenu(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
@@ -698,9 +858,11 @@ void showContextMenu(HWND hwnd)
     }
 
     // show the popup menu
-    if (!TrackPopupMenu(hMenu, 0, point.x, point.y, 0, hwnd, NULL)) {
+    if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, NULL)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        DestroyMenu(hMenu);
+        if (!DestroyMenu(menu)) {
+            DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
+        }
         return;
     }
 
@@ -710,7 +872,7 @@ void showContextMenu(HWND hwnd)
         return;
     }
 
-    if (!DestroyMenu(hMenu)) {
+    if (!DestroyMenu(menu)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
@@ -733,7 +895,7 @@ void errorMessage(UINT id)
 {
     DWORD lastError = GetLastError();
     std::wstring const & err = getResourceString(id);
-    DEBUG_PRINTF("error: %ls: %u\n", err.c_str(), lastError);
+    DEBUG_PRINTF("error: %ws: %u\n", err.c_str(), lastError);
     if (!MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u\n", id);
     }

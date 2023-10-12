@@ -10,19 +10,19 @@ static VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
 static BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 static HWND hwnd_;
-static UINT intervalMs_;
+static UINT pollMillis_;
 static void (*newWindowCallback_)(HWND);
 static UINT_PTR timer_;
 static std::set<HWND> windowList_;
 
-void windowListStart(HWND hwnd, UINT intervalMs, void (*newWindowCallback)(HWND))
+void windowListStart(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND))
 {
     hwnd_ = hwnd;
-    intervalMs_ = intervalMs;
+    pollMillis_ = pollMillis;
     newWindowCallback_ = newWindowCallback;
 
-    if (intervalMs_ > 0) {
-        timer_ = SetTimer(hwnd_, 1, intervalMs_, timerProc);
+    if (pollMillis_ > 0) {
+        timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
         if (!timer_) {
             DEBUG_PRINTF("SetTimer() failed: %u\n", GetLastError());
         }
@@ -39,12 +39,14 @@ void windowListStop()
     }
 
     newWindowCallback_ = nullptr;
-    intervalMs_ = 0;
+    pollMillis_ = 0;
     hwnd_ = nullptr;
 }
 
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
+    DEBUG_PRINTF("tp\n");
+
     std::set<HWND> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
         DEBUG_PRINTF("EnumWindows() failed: %u\n", GetLastError());

@@ -10,7 +10,7 @@ std::string fileRead(const std::wstring & fileName)
 
     HANDLE file = CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file == INVALID_HANDLE_VALUE) {
-        DEBUG_PRINTF("could not open '%ls' for reading\n", fileName.c_str());
+        DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
     } else {
         DWORD fileSize = GetFileSize(file, NULL);
         DWORD bufferSize = fileSize + 1;
@@ -21,12 +21,12 @@ std::string fileRead(const std::wstring & fileName)
         } else {
             DWORD bytesRead = 0;
             if (!ReadFile(file, buffer, fileSize, &bytesRead, NULL)) {
-                DEBUG_PRINTF("could not read %d bytes from '%ls'\n", fileSize, fileName.c_str());
+                DEBUG_PRINTF("could not read %d bytes from '%ws'\n", fileSize, fileName.c_str());
                 delete[] buffer;
                 buffer = nullptr;
             } else {
                 if (bytesRead < fileSize) {
-                    DEBUG_PRINTF("only read %d bytes from '%ls', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+                    DEBUG_PRINTF("only read %d bytes from '%ws', expected %d\n", bytesRead, fileName.c_str(), fileSize);
                     delete[] buffer;
                     buffer = nullptr;
                 } else {

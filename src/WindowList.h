@@ -4,5 +4,5 @@
 
 #include <Windows.h>
 
-void windowListStart(HWND hwnd, UINT intervalMs, void (*newWindowCallback)(HWND));
+void windowListStart(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND));
 void windowListStop();

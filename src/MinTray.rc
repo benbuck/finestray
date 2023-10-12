@@ -5,8 +5,8 @@
 #include "Resource.h"
 
 #define APP_NAME "MinTray"
-#define APP_VERSION 0,1
-#define APP_VERSION_STRING "0.1"
+#define APP_VERSION 0,1,0,0
+#define APP_VERSION_STRING "0.1.0.0"
 #define APP_COPYRIGHT "Copyright 2020 Benbuck Nason"
 
 IDI_MINTRAY ICON "MinTray.ico"
@@ -26,29 +26,27 @@ BEGIN
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
 END
 
-#ifdef DEBUG
-#define VER_DEBUG VS_FF_DEBUG
-#else
-#define VER_DEBUG 0
-#endif
-
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION    APP_VERSION##,0,0
- PRODUCTVERSION APP_VERSION##,0,0
- FILEFLAGSMASK  VS_FF_DEBUG
- FILEFLAGS      VER_DEBUG
+ FILEVERSION    APP_VERSION
+ PRODUCTVERSION APP_VERSION
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+ FILEFLAGS      VS_FF_DEBUG
+#else
+ FILEFLAGS      0
+#endif
  FILEOS         VOS__WINDOWS32
- FILETYPE       VFT_DLL
+ FILETYPE       VFT_APP
  FILESUBTYPE    VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904B0"
+        BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", APP_NAME
             VALUE "LegalCopyright", APP_COPYRIGHT
             VALUE "ProductName", APP_NAME
-            VALUE "ProductVersion", APP_VERSION_STRING ".0.0"
+            VALUE "ProductVersion", APP_VERSION_STRING
         END
     END
 
@@ -57,3 +55,16 @@ BEGIN
         VALUE "Translation", 0x409, 1252
     END
 END
+
+#if 0
+IDD_PASSWORD DIALOGEX 0, 0, 167, 63
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,56,42,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,110,42,50,14
+    EDITTEXT        IDE_PASSWORDEDIT,7,17,154,14,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT           "Enter your password:",IDC_STATIC,7,7,70,8
+END
+#endif

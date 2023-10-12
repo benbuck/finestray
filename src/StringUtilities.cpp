@@ -4,20 +4,12 @@
 
 #include <algorithm>
 
+#include <Windows.h>
+
 namespace StringUtilities
 {
 
-#if 0 // !defined(NDEBUG)
-static std::string ws2s(const std::wstring & wstr)
-{
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-    return converterX.to_bytes(wstr);
-}
-#endif
-
-std::string tolower(const std::string & s)
+std::string toLower(const std::string & s)
 {
     std::string lower(s);
     std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return (char)std::tolower(c); });
@@ -47,25 +39,49 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
         strings.push_back(s.substr(start, end - start));
     }
     return strings;
+}
 
-    // std::vector<std::string> tokens;
-    // size_t startIndex = 0;
-    // do {
-    //     size_t endIndex = s.find_first_of(delimiters, startIndex);
-    //     if (endIndex != std::string::npos) {
-    //         std::string token(&s[startIndex], &s[endIndex]);
-    //     }
-    //     startIndex = endIndex;
-    // } while (startIndex < s.size());
+std::wstring stringToWideString(const std::string & s)
+{
+    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    std::wstring ws;
+    ws.resize(sizeNeeded);
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &ws[0], sizeNeeded);
+    return ws;
+}
 
-    // std::string::const_iterator start = std::cbegin(s);
-    // while (start != std::cend(s)) {
-    //     std::string::const_iterator finish = std::find_first_of(start, std::cend(s), delimiters);
-    //     tokens.push_back(s);
-    //     start = finish;
-    //     if (start != std::cend(s)) {
-    //         ++start;
-    //     }
+std::string wideStringToString(const std::wstring & ws)
+{
+    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), nullptr, 0, nullptr, nullptr);
+    std::string s;
+    s.resize(sizeNeeded);
+    WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), &s[0], sizeNeeded, nullptr, nullptr);
+    return s;
+}
+
+bool stringToBool(const std::string s, bool & b)
+{
+    if (toLower(s) == "true") {
+        b = true;
+        return true;
+    }
+
+    if (toLower(s) == "false") {
+        b = false;
+        return true;
+    }
+
+    if (s == "1") {
+        b = true;
+        return true;
+    }
+
+    if (s == "0") {
+        b = false;
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace StringUtilities

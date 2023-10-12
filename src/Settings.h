@@ -7,18 +7,16 @@
 #include <string>
 #include <vector>
 
-struct Settings
+struct cJSON;
+
+class Settings
 {
+public:
     Settings();
     ~Settings();
 
     bool readFromFile(const std::wstring & fileName);
-    void parseCommandLine();
-    bool parseJson(const std::string & json);
-    void addAutoTray(const std::string & className, const std::string & titleRegex);
-
-    // "exit", command line only
-    bool shouldExit_;
+    void parseCommandLine(int argc, char const * const * argv);
 
     // "auto-tray"
     struct AutoTray
@@ -37,12 +35,17 @@ struct Settings
     // "hotkey-restore"
     std::string hotkeyRestore_;
 
-    // "enum-windows-interval-ms"
-    unsigned int enumWindowsIntervalMs_;
-
     // "password"
-    std::string password_;
+    // std::string password_;
+
+    // "poll-millis"
+    unsigned int pollMillis_;
 
     // "tray-icon"
     bool trayIcon_;
+
+private:
+    bool parseJson(const std::string & json);
+    void addAutoTray(const std::string & className, const std::string & titleRegex);
+    static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };
