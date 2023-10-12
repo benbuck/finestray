@@ -2,11 +2,14 @@
 
 #include "Hotkey.h"
 
+// MinTray
 #include "DebugPrint.h"
 #include "StringUtilities.h"
 
+// windows
 #include <Windows.h>
 
+// standard library
 #include <map>
 #include <string>
 #include <vector>

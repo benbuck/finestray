@@ -2,8 +2,10 @@
 
 #pragma once
 
+// windows
 #include <Windows.h>
 
+// standard library
 #include <string>
 
 class Hotkey

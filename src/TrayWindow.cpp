@@ -2,9 +2,11 @@
 
 #include "TrayWindow.h"
 
+// MinTray
 #include "DebugPrint.h"
 #include "TrayIcon.h"
 
+// standard library
 #include <list>
 #include <memory>
 

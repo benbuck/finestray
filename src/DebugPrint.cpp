@@ -1,8 +1,11 @@
 // Copyright 2020 Benbuck Nason
 
+// windows
 #include <Windows.h>
-#include <stdio.h>
+
+// standard library
 #include <stdarg.h>
+#include <stdio.h>
 
 void debugPrintf(char const * fmt, ...)
 {

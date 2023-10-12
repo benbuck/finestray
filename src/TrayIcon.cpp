@@ -2,6 +2,7 @@
 
 #include "TrayIcon.h"
 
+// MinTray
 #include "DebugPrint.h"
 
 volatile LONG TrayIcon::gid_ = 0;

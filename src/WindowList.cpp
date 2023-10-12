@@ -2,8 +2,10 @@
 
 #include "WindowList.h"
 
+// MinTray
 #include "DebugPrint.h"
 
+// standard library
 #include <set>
 
 static VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);

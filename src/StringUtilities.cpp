@@ -2,9 +2,11 @@
 
 #include "StringUtilities.h"
 
-#include <algorithm>
-
+// windows
 #include <Windows.h>
+
+// standard library
+#include <algorithm>
 
 namespace StringUtilities
 {

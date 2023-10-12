@@ -2,14 +2,18 @@
 
 #include "Settings.h"
 
+// MinTray
 #include "DebugPrint.h"
 #include "File.h"
 #include "StringUtilities.h"
 
+// argh
 #include <argh.h>
 
+// cJSON
 #include <cJSON.h>
 
+// windows
 #include <Windows.h>
 #include <shellapi.h>
 #include <stdlib.h>

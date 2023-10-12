@@ -1,5 +1,6 @@
 // Copyright 2020 Benbuck Nason
 
+// MinTray
 #include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"

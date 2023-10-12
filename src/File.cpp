@@ -2,13 +2,15 @@
 
 #include "File.h"
 
+// MinTray
 #include "DebugPrint.h"
 
 std::string fileRead(const std::wstring & fileName)
 {
     std::string contents;
 
-    HANDLE file = CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE file =
+        CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
     } else {
