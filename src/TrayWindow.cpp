@@ -2,6 +2,7 @@
 
 #include "TrayWindow.h"
 
+#include "DebugPrint.h"
 #include "TrayIcon.h"
 
 #include <list>
@@ -24,15 +25,28 @@ static HICON getIcon(HWND hwnd);
 
 void trayWindowMinimize(HWND hwnd, HWND messageWnd)
 {
+    DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
+
     // hide window
-    ShowWindow(hwnd, SW_HIDE);
+    if (!ShowWindow(hwnd, SW_HIDE)) {
+        DEBUG_PRINTF("failed to hide window %#x\n", hwnd);
+    }
 
     // add tray icon
     if (find(hwnd) == trayIcons_.end()) {
         if (!add(hwnd, messageWnd)) {
             // restore window on failure
-            ShowWindow(hwnd, SW_SHOW);
-            SetForegroundWindow(hwnd);
+
+            DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
+
+            if (!ShowWindow(hwnd, SW_SHOW)) {
+                DEBUG_PRINTF("failed to show window %#x\n", hwnd);
+            }
+
+            if (!SetForegroundWindow(hwnd)) {
+                DEBUG_PRINTF("failed to set foreground window %#x\n", hwnd);
+            }
+
             return;
         }
     }
@@ -40,15 +54,26 @@ void trayWindowMinimize(HWND hwnd, HWND messageWnd)
 
 void trayWindowRestore(HWND hwnd)
 {
-    ShowWindow(hwnd, SW_SHOW);
-    SetForegroundWindow(hwnd);
+    DEBUG_PRINTF("tray window restore %#x\n", hwnd);
+
+    if (!ShowWindow(hwnd, SW_SHOW)) {
+        DEBUG_PRINTF("failed to show window %#x\n", hwnd);
+    }
+
+    if (!SetForegroundWindow(hwnd)) {
+        DEBUG_PRINTF("failed to set foreground window %#x\n", hwnd);
+    }
     remove(hwnd);
 }
 
 void trayWindowClose(HWND hwnd)
 {
+    DEBUG_PRINTF("tray window close %#x\n", hwnd);
+
     // close the window
-    PostMessage(hwnd, WM_CLOSE, 0, 0);
+    if (!PostMessage(hwnd, WM_CLOSE, 0, 0)) {
+        DEBUG_PRINTF("failed to post close to %#x\n", hwnd);
+    }
 
     // wait for close to complete
     unsigned int counter = 0;
@@ -68,6 +93,8 @@ void trayWindowClose(HWND hwnd)
 
 void trayWindowRefresh(HWND hwnd)
 {
+    DEBUG_PRINTF("tray window refresh %#x\n", hwnd);
+
     // find the window
     TrayIcons::iterator it = find(hwnd);
     if (it == trayIcons_.end()) {
@@ -94,8 +121,14 @@ void trayWindowRestoreAll()
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
         IconData const & iconData = *cit;
-        ShowWindow(iconData.hwnd_, SW_SHOW);
-        SetForegroundWindow(iconData.hwnd_);
+
+        if (!ShowWindow(iconData.hwnd_, SW_SHOW)) {
+            DEBUG_PRINTF("failed to show window %#x\n", iconData.hwnd_);
+        }
+
+        if (!SetForegroundWindow(iconData.hwnd_)) {
+            DEBUG_PRINTF("failed to set foreground window %#x\n", iconData.hwnd_);
+        }
     }
 
     trayIcons_.clear();
@@ -139,6 +172,7 @@ bool add(HWND hwnd, HWND messageWnd)
     // make sure window isn't already tracked
     TrayIcons::iterator it = find(hwnd);
     if (it != trayIcons_.end()) {
+        DEBUG_PRINTF("not adding already tracked tray window %#x\n", hwnd);
         return false;
     }
 
@@ -152,6 +186,7 @@ bool remove(HWND hwnd)
     // find the window
     TrayIcons::iterator it = find(hwnd);
     if (it == trayIcons_.end()) {
+        DEBUG_PRINTF("failed to remove unknown tray window %#x\n", hwnd);
         return false;
     }
 
@@ -189,5 +224,5 @@ HICON getIcon(HWND hwnd)
         return icon;
     }
 
-    return LoadIcon(NULL, IDI_WINLOGO);
+    return LoadIcon(NULL, IDI_APPLICATION);
 }

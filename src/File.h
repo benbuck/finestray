@@ -5,5 +5,5 @@
 #include <Windows.h>
 #include <string>
 
-const char * fileRead(const WCHAR * fileName);
+std::string fileRead(const std::wstring & fileName);
 std::wstring getExecutablePath(void);

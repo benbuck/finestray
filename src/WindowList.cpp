@@ -21,9 +21,11 @@ void windowListStart(HWND hwnd, UINT intervalMs, void (*newWindowCallback)(HWND)
     intervalMs_ = intervalMs;
     newWindowCallback_ = newWindowCallback;
 
-    timer_ = SetTimer(hwnd_, 1, intervalMs_, timerProc);
-    if (!timer_) {
-        DEBUG_PRINTF("SetTimer() failed: %u\n", GetLastError());
+    if (intervalMs_ > 0) {
+        timer_ = SetTimer(hwnd_, 1, intervalMs_, timerProc);
+        if (!timer_) {
+            DEBUG_PRINTF("SetTimer() failed: %u\n", GetLastError());
+        }
     }
 }
 
@@ -33,6 +35,7 @@ void windowListStop()
 
     if (timer_) {
         KillTimer(hwnd_, timer_);
+        timer_ = 0;
     }
 
     newWindowCallback_ = nullptr;
@@ -43,7 +46,9 @@ void windowListStop()
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
     std::set<HWND> newWindowList;
-    EnumWindows(enumWindowsProc, (LPARAM)&newWindowList);
+    if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
+        DEBUG_PRINTF("EnumWindows() failed: %u\n", GetLastError());
+    }
 
     // Check for new windows
     for (auto const & hwnd : newWindowList) {
@@ -60,11 +65,12 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
     if (!IsWindowVisible(hwnd)) {
-        // DEBUG_PRINTF("Ignoring invisible window: %#x\n", hwnd);
+        // DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
         return TRUE;
     }
 
     std::set<HWND> & windowList = *(std::set<HWND> *)lParam;
     windowList.insert(hwnd);
+
     return TRUE;
 }

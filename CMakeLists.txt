@@ -12,9 +12,76 @@ project(MinTray
     VERSION 0.1
 )
 
-add_executable(MinTray WIN32
+set(COMPILE_CONFIG_OPTIONS
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /GR- # disable run-time type information (RTTI)
+        /GS # enable security checks
+        /MP # build with multiple processes
+        /W4 # maximum warning levels
+        /WX # treat warnings as errors
+
+        # Debug compile options
+        $<$<CONFIG:Debug>:
+            /Od # don't optimize
+            /RTC1 # enable all run-time checks
+            /Zi # enable debug info in pdb format
+        >
+
+        # Release compile options
+        $<$<CONFIG:Release>:
+            /O2 # enable maximum speed optimizations
+            /Ot # favor fast code
+            /GL # enable whole program optimization
+        >
+    >
+
+    $<$<CXX_COMPILER_ID:Clang>:
+        -fno-exceptions
+        -fno-rtti
+        -Wall
+        -Werror
+
+        # Debug compile options
+        $<$<CONFIG:Debug>:
+            -O0 # don't optimize
+            -g # enable debug info
+        >
+
+        # Release compile options
+        $<$<CONFIG:Release>:
+            -O3 # enable maximum speed optimizations
+            -flto # enable link time optimization
+        >
+    >
+)
+
+set(LINK_CONFIG_OPTIONS
+    $<$<CXX_COMPILER_ID:MSVC>:
+        # Release link options
+        $<$<CONFIG:Release>:
+            /LTCG # link time code generation
+        >
+    >
+
+    $<$<CXX_COMPILER_ID:Clang>:
+        # Release link options
+        $<$<CONFIG:Release>:
+            -flto # link time optimization
+        >
+    >
+)
+
+add_library(cJSON
     src/cJSON.c
     src/cJSON.h
+)
+
+target_compile_options(cJSON
+    PRIVATE
+        ${COMPILE_CONFIG_OPTIONS}
+)
+
+add_executable(MinTray WIN32
     src/DebugPrint.cpp
     src/DebugPrint.h
     src/File.cpp
@@ -39,46 +106,7 @@ add_executable(MinTray WIN32
 
 target_compile_options(MinTray
     PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:
-            /GR- # disable run-time type information (RTTI)
-            /GS # enable security checks
-            /MP # build with multiple processes
-            /W4 # maximum warning levels
-            /WX # treat warnings as errors
-
-            # Debug compile options
-            $<$<CONFIG:Debug>:
-                /Od # don't optimize
-                /RTC1 # enable all run-time checks
-                /Zi # enable debug info in pdb format
-            >
-
-            # Release compile options
-            $<$<CONFIG:Release>:
-                /O2 # enable maximum speed optimizations
-                /Ot # favor fast code
-                /GL # enable whole program optimization
-            >
-        >
-
-        $<$<CXX_COMPILER_ID:Clang>:
-            -fno-exceptions
-            -fno-rtti
-            -Wall
-            -Werror
-
-            # Debug compile options
-            $<$<CONFIG:Debug>:
-                -O0 # don't optimize
-                -g # enable debug info
-            >
-
-            # Release compile options
-            $<$<CONFIG:Release>:
-                -O3 # enable maximum speed optimizations
-                -flto # enable link time optimization
-            >
-        >
+        ${COMPILE_CONFIG_OPTIONS}
 )
 
 target_compile_definitions(MinTray
@@ -88,24 +116,13 @@ target_compile_definitions(MinTray
 
 target_link_options(MinTray
     PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:
-            # Release link options
-            $<$<CONFIG:Release>:
-                /LTCG # link time code generation
-            >
-        >
-
-        $<$<CXX_COMPILER_ID:Clang>:
-            # Release link options
-            $<$<CONFIG:Release>:
-                -flto # link time optimization
-            >
-        >
+        ${LINK_CONFIG_OPTIONS}
 )
 
 target_link_libraries(MinTray
- PRIVATE
-     OleAcc.lib
+    PRIVATE
+        # OleAcc.lib
+        cJSON
 )
 
 install(

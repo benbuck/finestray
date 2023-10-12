@@ -119,7 +119,7 @@ public:
                 // hr = SafeArrayGetElement(names, &idx, &v);
                 // if (FAILED(hr)) __debugbreak();
                 // if (V_VT(&v) == VT_BSTR) {
-                //     DEBUG_PRINTF("The class name is %S\n.", V_BSTR(&v));
+                //     DEBUG_PRINTF("the class name is %S\n.", V_BSTR(&v));
                 // } else {
                 //     DEBUG_PRINTF("got %d\n", V_VT(&v));
                 // }
@@ -130,7 +130,7 @@ public:
                     continue;
                 }
                 if (pType == CIM_STRING && pType != CIM_EMPTY && pType != CIM_ILLEGAL) {
-                    DEBUG_PRINTF("OS Name : %d %S\n", idx, v.bstrVal);
+                    DEBUG_PRINTF("os Name : %d %S\n", idx, v.bstrVal);
                 }
 
                 VariantClear(&v);
@@ -170,11 +170,11 @@ public:
             // hr = obj->Get(L"/TargetInstance/Name", 0, &v, 0, 0);
             if (SUCCEEDED(hr)) {
                 if (V_VT(&v) == VT_BSTR)
-                    DEBUG_PRINTF("The class name is %S\n.", V_BSTR(&v));
+                    DEBUG_PRINTF("the class name is %S\n.", V_BSTR(&v));
                 else
                     DEBUG_PRINTF("got %d\n", V_VT(&v));
             } else {
-                DEBUG_PRINTF("Error in getting specified object\n");
+                DEBUG_PRINTF("error in getting specified object\n");
             }
             VariantClear(&v);
         }
@@ -291,7 +291,7 @@ winEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject,
             wp.length = sizeof(WINDOWPLACEMENT);
             if (GetWindowPlacement(hwnd, &wp)) {
                 if (SW_SHOWMAXIMIZED == wp.showCmd) {
-                    DEBUG_PRINTF("Window is maximized.\n");
+                    DEBUG_PRINTF("window is maximized.\n");
                 }
             }
 
@@ -349,18 +349,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)pCmdLine;
 
     // get settings from file
-    const WCHAR settingsFileName[] = L"MinTray.json";
-    const char * json = fileRead(settingsFileName);
-    if (!json) {
+    std::wstring fileName(std::wstring(APP_NAME) + L".json");
+    if (settings_.readFromFile(fileName)) {
+        DEBUG_PRINTF("read setttings from %ls\n", fileName.c_str());
+    } else {
         // no settings file in current directory, try in executable dir
-        WCHAR fileName[MAX_PATH];
         std::wstring exePath = getExecutablePath();
-        _snwprintf_s(fileName, MAX_PATH, L"%s\\%s", exePath.c_str(), settingsFileName);
-        json = fileRead(fileName);
-    }
-    if (json) {
-        settings_.parseJson(json);
-        delete[] json;
+        fileName = exePath + L"\\" + std::wstring(APP_NAME) + L".json";
+        if (settings_.readFromFile(fileName)) {
+            DEBUG_PRINTF("read setttings from %ls\n", fileName.c_str());
+        }
     }
 
     // get settings from command line (can override file)
@@ -401,6 +399,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         errorMessage(IDS_ERROR_CREATE_WINDOW);
         return 0;
     }
+
+    hwnd_ = hwnd;
 
     // we intentionally don't show the window
     // ShowWindow(hwnd, nCmdShow);
@@ -465,9 +465,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (!hWinEventHook) __debugbreak();
 #endif
 
-    if (settings_.enumWindowsIntervalMs_ > 0) {
-        windowListStart(hwnd_, settings_.enumWindowsIntervalMs_, onNewWindow);
-    }
+    windowListStart(hwnd, settings_.enumWindowsIntervalMs_, onNewWindow);
 
     // run the message loop
     MSG msg = {};
@@ -573,29 +571,30 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         // message from the tray (taskbar) icon
         case WM_TRAYWINDOW: {
             switch ((UINT)lParam) {
-                // user selected and activated icon
-                case NIN_SELECT: {
-                    HWND hwndTray = trayWindowGetFromID((UINT)wParam);
-                    trayWindowRestore(hwndTray);
+                // user activated context menu
+                case WM_CONTEXTMENU: {
+                    showContextMenu(hwnd);
                     break;
                 }
 
-                // user activated context menu
-                case WM_CONTEXTMENU: {
+                // user selected and activated icon
+                case NIN_SELECT: {
                     HWND hwndTray = trayWindowGetFromID((UINT)wParam);
-                    if (!hwndTray) {
-                        showContextMenu(hwnd);
+                    if (hwndTray) {
+                        trayWindowRestore(hwndTray);
                     }
                     break;
                 }
 
                 case WM_MOUSEMOVE: {
                     HWND hwndTray = trayWindowGetFromID((UINT)wParam);
-                    trayWindowRefresh(hwndTray);
+                    if (hwndTray) {
+                        trayWindowRefresh(hwndTray);
+                    }
                     break;
                 }
 
-                default: DEBUG_PRINTF("traywindow message\n"); break;
+                default: DEBUG_PRINTF("traywindow message %ld\n", lParam); break;
             }
             break;
         }
@@ -613,7 +612,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void onNewWindow(HWND hwnd)
 {
-    DEBUG_PRINTF("New window: %#x\n", hwnd);
+    DEBUG_PRINTF("new window: %#x\n", hwnd);
 
     CHAR windowText[128];
     if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
@@ -732,7 +731,9 @@ std::wstring getResourceString(UINT id)
 
 void errorMessage(UINT id)
 {
+    DWORD lastError = GetLastError();
     std::wstring const & err = getResourceString(id);
+    DEBUG_PRINTF("error: %ls: %u\n", err.c_str(), lastError);
     if (!MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u\n", id);
     }

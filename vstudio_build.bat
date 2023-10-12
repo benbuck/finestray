@@ -18,6 +18,7 @@ cmake ..\..
 cmake --build . --config %BUILD_CONFIG%%
 
 :: for release builds, also make the package
-if "%BUILD_CONFIG%"=="Release" cpack
+:: FIX - this isn't working yet
+:: if "%BUILD_CONFIG%"=="Release" cpack
 
 popd

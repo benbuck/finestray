@@ -4,6 +4,7 @@
 
 #include "DebugPrint.h"
 #include "cJSON.h"
+#include "File.h"
 
 #include <Windows.h>
 #include <shellapi.h>
@@ -19,6 +20,16 @@ Settings::Settings() : shouldExit_(false), autoTrays_(), enumWindowsIntervalMs_(
 
 Settings::~Settings() {}
 
+bool Settings::readFromFile(const std::wstring & fileName)
+{
+    std::string json = fileRead(fileName);
+    if (json.empty()) {
+        return false;
+    }
+
+    return parseJson(json);
+}
+
 void Settings::parseCommandLine()
 {
     int argc;
@@ -30,7 +41,7 @@ void Settings::parseCommandLine()
         } else if (!wcscmp(argv[a], L"--enum-windows-interval-ms")) {
             ++a;
             if (a >= argc) {
-                DEBUG_PRINTF("Expected argument to --enum-windows-interval-ms missing\n");
+                DEBUG_PRINTF("expected argument to --enum-windows-interval-ms missing\n");
             } else {
                 enumWindowsIntervalMs_ = _wtoi(argv[a]);
             }
@@ -38,10 +49,15 @@ void Settings::parseCommandLine()
     }
 }
 
-void Settings::parseJson(const char * json)
+bool Settings::parseJson(const std::string & json)
 {
-    const cJSON * cjson = cJSON_Parse(json);
-    DEBUG_PRINTF("Parsed settings JSON: %s\n", cJSON_Print(cjson));
+    const cJSON * cjson = cJSON_Parse(json.c_str());
+    if (!cjson) {
+        DEBUG_PRINTF("failed to parse settings JSON: %s\n", json.c_str());
+        return false;
+    }
+
+    DEBUG_PRINTF("parsed settings JSON: %s\n", cJSON_Print(cjson));
 
     const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, "auto-tray");
     if (autotray) {
@@ -50,9 +66,11 @@ void Settings::parseJson(const char * json)
 
     enumWindowsIntervalMs_ = (unsigned int)getNumber(cjson, "enum-windows-interval-ms", (double)enumWindowsIntervalMs_);
     hotkeyMinimize_ = getString(cjson, "hotkey-minimize", hotkeyMinimize_.c_str());
-    hotkeyRestore_= getString(cjson, "hotkey-restore", hotkeyRestore_.c_str());
+    hotkeyRestore_ = getString(cjson, "hotkey-restore", hotkeyRestore_.c_str());
     password_ = getString(cjson, "password", password_.c_str());
     trayIcon_ = getBool(cjson, "tray-icon", trayIcon_);
+
+    return true;
 }
 
 void Settings::addAutoTray(const std::string & className, const std::string & titleRegex)
@@ -78,7 +96,7 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
     return cJSON_IsTrue(item) ? true : false;
 }
 
-double getNumber(const cJSON* cjson, const char* key, double defaultValue)
+double getNumber(const cJSON * cjson, const char * key, double defaultValue)
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {

@@ -12,8 +12,9 @@ struct Settings
     Settings();
     ~Settings();
 
+    bool readFromFile(const std::wstring & fileName);
     void parseCommandLine();
-    void parseJson(const char * json);
+    bool parseJson(const std::string & json);
     void addAutoTray(const std::string & className, const std::string & titleRegex);
 
     // "exit", command line only
