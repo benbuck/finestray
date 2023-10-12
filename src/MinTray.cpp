@@ -226,7 +226,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY: {
             // if there are any minimized windows, restore them
-            trayWindowRestoreAll();
+            TrayWindow::restoreAll();
 
             // exit
             PostQuitMessage(0);
@@ -255,7 +255,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             DEBUG_PRINTF("window class name '%ws'\n", className);
 #endif
 
-                            trayWindowMinimize(hwndFg, hwnd);
+                            TrayWindow::minimize(hwndFg, hwnd);
                         }
                     }
                     break;
@@ -263,9 +263,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case HotkeyID::Restore: {
                     DEBUG_PRINTF("hotkey restore\n");
-                    HWND hwndLast = trayWindowGetLast();
+                    HWND hwndLast = TrayWindow::getLast();
                     if (hwndLast) {
-                        trayWindowRestore(hwndLast);
+                        TrayWindow::restore(hwndLast);
                     }
                     break;
                 }
@@ -288,9 +288,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 // user selected and activated icon
                 case NIN_SELECT: {
-                    HWND hwndTray = trayWindowGetFromID((UINT)wParam);
+                    HWND hwndTray = TrayWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
-                        trayWindowRestore(hwndTray);
+                        TrayWindow::restore(hwndTray);
                     }
                     break;
                 }
@@ -302,7 +302,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         default: {
             if (uMsg == taskbarCreatedMessage) {
-                trayWindowAddAll();
+                TrayWindow::addAll();
             }
             break;
         }
@@ -388,7 +388,7 @@ void onNewWindow(HWND hwnd)
 
         if (executableMatch && classMatch && titleMatch) {
             DEBUG_PRINTF("\t--- minimizing ---\n");
-            trayWindowMinimize(hwnd, hwnd_);
+            TrayWindow::minimize(hwnd, hwnd_);
             autoTrayedWindows_.insert(hwnd);
         }
     }

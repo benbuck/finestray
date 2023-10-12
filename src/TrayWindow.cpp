@@ -8,6 +8,9 @@
 #include <list>
 #include <memory>
 
+namespace TrayWindow
+{
+
 struct IconData
 {
     IconData(HWND hwnd, TrayIcon * trayIcon) : hwnd_(hwnd), trayIcon_(trayIcon) {}
@@ -23,7 +26,7 @@ static bool add(HWND hwnd, HWND messageWnd);
 static bool remove(HWND hwnd);
 static HICON getIcon(HWND hwnd);
 
-void trayWindowMinimize(HWND hwnd, HWND messageWnd)
+void minimize(HWND hwnd, HWND messageWnd)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
 
@@ -52,7 +55,7 @@ void trayWindowMinimize(HWND hwnd, HWND messageWnd)
     }
 }
 
-void trayWindowRestore(HWND hwnd)
+void restore(HWND hwnd)
 {
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
@@ -66,7 +69,7 @@ void trayWindowRestore(HWND hwnd)
     remove(hwnd);
 }
 
-void trayWindowClose(HWND hwnd)
+void close(HWND hwnd)
 {
     DEBUG_PRINTF("tray window close %#x\n", hwnd);
 
@@ -91,7 +94,7 @@ void trayWindowClose(HWND hwnd)
     }
 }
 
-void trayWindowAddAll()
+void addAll()
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
         IconData const & iconData = *cit;
@@ -99,7 +102,7 @@ void trayWindowAddAll()
     }
 }
 
-void trayWindowRestoreAll()
+void restoreAll()
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
         IconData const & iconData = *cit;
@@ -116,7 +119,7 @@ void trayWindowRestoreAll()
     trayIcons_.clear();
 }
 
-HWND trayWindowGetFromID(UINT id)
+HWND getFromID(UINT id)
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
         IconData const & iconData = *cit;
@@ -128,7 +131,7 @@ HWND trayWindowGetFromID(UINT id)
     return NULL;
 }
 
-HWND trayWindowGetLast()
+HWND getLast()
 {
     if (trayIcons_.empty()) {
         return NULL;
@@ -208,3 +211,5 @@ HICON getIcon(HWND hwnd)
 
     return LoadIcon(NULL, IDI_APPLICATION);
 }
+
+} // namespace TrayWindow

@@ -6,10 +6,15 @@
 
 #define WM_TRAYWINDOW (WM_USER + 1)
 
-void trayWindowMinimize(HWND hwnd, HWND messageWnd);
-void trayWindowRestore(HWND hwnd);
-void trayWindowClose(HWND hwnd);
-void trayWindowAddAll();
-void trayWindowRestoreAll();
-HWND trayWindowGetFromID(UINT id);
-HWND trayWindowGetLast();
+namespace TrayWindow
+{
+
+void minimize(HWND hwnd, HWND messageWnd);
+void restore(HWND hwnd);
+void close(HWND hwnd);
+void addAll();
+void restoreAll();
+HWND getFromID(UINT id);
+HWND getLast();
+
+} // namespace TrayWindow
