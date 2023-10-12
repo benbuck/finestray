@@ -88,9 +88,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     int argc;
     char ** argv;
     get_command_line_args(&argc, &argv);
-
-    settings_.parseCommandLine(argc, argv);
-    // settings_.parseCommandLine(__argc, __argv);
+    if (!settings_.parseCommandLine(argc, argv)) {
+        errorMessage(IDS_ERROR_COMMAND_LINE);
+        return 0;
+    }
 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
 

@@ -24,6 +24,7 @@ BEGIN
     IDS_ERROR_REGISTER_HOTKEY       "Couldn't register hotkey"
     IDS_ERROR_CREATE_TRAY_ICON      "Couldn't create tray icon"
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
+    IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
 END
 
 VS_VERSION_INFO VERSIONINFO
