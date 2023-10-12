@@ -174,7 +174,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    windowListStart(hwnd, settings_.pollMillis_, onNewWindow);
+    windowListStart(hwnd, settings_.pollInterval_, onNewWindow);
 
     // run the message loop
     MSG msg = {};
@@ -345,22 +345,22 @@ void onNewWindow(HWND hwnd)
 
     for (auto const & autoTray : settings_.autoTrays_) {
         bool classMatch = false;
-        if (autoTray.className_.empty()) {
+        if (autoTray.windowClass_.empty()) {
             classMatch = true;
         } else {
-            if (autoTray.className_ == className) {
-                DEBUG_PRINTF("\tclassname %s match\n", autoTray.className_.c_str());
+            if (autoTray.windowClass_ == className) {
+                DEBUG_PRINTF("\twindow class %s match\n", autoTray.windowClass_.c_str());
                 classMatch = true;
             }
         }
 
         bool titleMatch = false;
-        if (autoTray.titleRegex_.empty()) {
+        if (autoTray.windowTitle_.empty()) {
             titleMatch = true;
         } else {
-            std::regex re(autoTray.titleRegex_);
+            std::regex re(autoTray.windowTitle_);
             if (std::regex_match(windowText, re)) {
-                DEBUG_PRINTF("\ttitle regex %s match\n", autoTray.titleRegex_.c_str());
+                DEBUG_PRINTF("\twindow title %s match\n", autoTray.windowTitle_.c_str());
                 titleMatch = true;
             }
         }

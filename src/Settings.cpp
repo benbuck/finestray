@@ -22,20 +22,20 @@ static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, vo
 enum SettingKeys : unsigned int
 {
     SK_AutoTray,
-    SK_ClassName,
-    SK_TitleRegex,
+    SK_WindowClass,
+    SK_WindowTitle,
     SK_HotkeyMinimize,
     SK_HotkeyRestore,
-    SK_PollMillis,
+    SK_PollInterval,
     SK_TrayIcon,
 
     SK_Count
 };
 
-static const char * settingKeys_[SK_Count] = { "auto-tray",      "class-name",  "title-regex", "hotkey-minimize",
-                                               "hotkey-restore", "poll-millis", "tray-icon" };
+static const char * settingKeys_[SK_Count] = { "auto-tray",      "window-class",  "window-title", "hotkey-minimize",
+                                               "hotkey-restore", "poll-interval", "tray-icon" };
 
-Settings::Settings() : autoTrays_(), pollMillis_(500), trayIcon_(true) {}
+Settings::Settings() : autoTrays_(), pollInterval_(500), trayIcon_(true) {}
 
 Settings::~Settings() {}
 
@@ -87,9 +87,9 @@ bool Settings::parseCommandLine(int argc, char const * const * argv)
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestoreArg.str().c_str());
     }
 
-    argh::string_stream pollMillisArg = args(settingKeys_[SK_PollMillis], pollMillis_);
-    if (pollMillisArg && !(pollMillisArg >> pollMillis_)) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollMillis], pollMillisArg.str().c_str());
+    argh::string_stream pollIntervalArg = args(settingKeys_[SK_PollInterval], pollInterval_);
+    if (pollIntervalArg && !(pollIntervalArg >> pollInterval_)) {
+        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
     argh::string_stream trayIconArg = args(settingKeys_[SK_TrayIcon], trayIcon_);
@@ -117,17 +117,17 @@ bool Settings::parseJson(const std::string & json)
 
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
-    pollMillis_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollMillis], (double)pollMillis_);
+    pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
     trayIcon_ = getBool(cjson, settingKeys_[SK_TrayIcon], trayIcon_);
 
     return true;
 }
 
-void Settings::addAutoTray(const std::string & className, const std::string & titleRegex)
+void Settings::addAutoTray(const std::string & windowClass, const std::string & windowTitle)
 {
     AutoTray autoTray;
-    autoTray.className_ = className;
-    autoTray.titleRegex_ = titleRegex;
+    autoTray.windowClass_ = windowClass;
+    autoTray.windowTitle_ = windowTitle;
     autoTrays_.emplace_back(autoTray);
 }
 
@@ -138,12 +138,13 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
         return false;
     }
 
-    const char * className = getString(cjson, settingKeys_[SK_ClassName], nullptr);
-    const char * titleRegex = getString(cjson, settingKeys_[SK_TitleRegex], nullptr);
-    if (className || titleRegex) {
+    const char * windowClass = getString(cjson, settingKeys_[SK_WindowClass], nullptr);
+    const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
+    if (windowClass || windowTitle) {
         Settings * settings = (Settings *)userData;
-        settings->addAutoTray(className ? className : "", titleRegex ? titleRegex : "");
+        settings->addAutoTray(windowClass ? windowClass : "", windowTitle ? windowTitle : "");
     }
+
     return true;
 }
 
