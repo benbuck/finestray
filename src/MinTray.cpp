@@ -295,14 +295,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
-                case WM_MOUSEMOVE: {
-                    HWND hwndTray = trayWindowGetFromID((UINT)wParam);
-                    if (hwndTray) {
-                        trayWindowRefresh(hwndTray);
-                    }
-                    break;
-                }
-
                 default: DEBUG_PRINTF("traywindow message %ld\n", lParam); break;
             }
             break;

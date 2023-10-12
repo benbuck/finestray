@@ -9,7 +9,6 @@
 void trayWindowMinimize(HWND hwnd, HWND messageWnd);
 void trayWindowRestore(HWND hwnd);
 void trayWindowClose(HWND hwnd);
-void trayWindowRefresh(HWND hwnd);
 void trayWindowAddAll();
 void trayWindowRestoreAll();
 HWND trayWindowGetFromID(UINT id);

@@ -91,24 +91,6 @@ void trayWindowClose(HWND hwnd)
     }
 }
 
-void trayWindowRefresh(HWND hwnd)
-{
-    DEBUG_PRINTF("tray window refresh %#x\n", hwnd);
-
-    // find the window
-    TrayIcons::iterator it = find(hwnd);
-    if (it == trayIcons_.end()) {
-        return;
-    }
-
-    // refresh the window
-    if (!IsWindow(hwnd) || IsWindowVisible(hwnd)) {
-        remove(hwnd);
-    } else {
-        it->trayIcon_->refresh();
-    }
-}
-
 void trayWindowAddAll()
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
