@@ -58,6 +58,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
+    // get settings from command line
     int argc;
     char ** argv;
     if (!CommandLine::getArgs(&argc, &argv)) {
@@ -70,6 +71,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         errorMessage(IDS_ERROR_COMMAND_LINE);
         return IDS_ERROR_COMMAND_LINE;
     }
+
+    DEBUG_PRINTF("final settings:\n");
+    settings_.dump();
 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
 

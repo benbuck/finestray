@@ -20,6 +20,8 @@ public:
     bool readFromFile(const std::string & fileName);
     bool parseCommandLine(int argc, const char * const * argv);
 
+    void dump();
+
     struct AutoTray
     {
         std::string executable_;
