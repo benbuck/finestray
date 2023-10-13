@@ -34,7 +34,7 @@ void minimize(HWND hwnd, HWND messageWnd)
 
     // hide window
     if (!ShowWindow(hwnd, SW_HIDE)) {
-        DEBUG_PRINTF("failed to hide window %#x\n", hwnd);
+        DEBUG_PRINTF("failed to hide window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
     }
 
     // add tray icon
@@ -45,11 +45,11 @@ void minimize(HWND hwnd, HWND messageWnd)
             DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
 
             if (!ShowWindow(hwnd, SW_SHOW)) {
-                DEBUG_PRINTF("failed to show window %#x\n", hwnd);
+                DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
             }
 
             if (!SetForegroundWindow(hwnd)) {
-                DEBUG_PRINTF("failed to set foreground window %#x\n", hwnd);
+                DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: \n", hwnd, GetLastError());
             }
 
             return;
@@ -62,12 +62,13 @@ void restore(HWND hwnd)
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
     if (!ShowWindow(hwnd, SW_SHOW)) {
-        DEBUG_PRINTF("failed to show window %#x\n", hwnd);
+        DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
     }
 
     if (!SetForegroundWindow(hwnd)) {
-        DEBUG_PRINTF("failed to set foreground window %#x\n", hwnd);
+        DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: %u\n", hwnd, GetLastError());
     }
+
     remove(hwnd);
 }
 
@@ -77,7 +78,7 @@ void close(HWND hwnd)
 
     // close the window
     if (!PostMessage(hwnd, WM_CLOSE, 0, 0)) {
-        DEBUG_PRINTF("failed to post close to %#x\n", hwnd);
+        DEBUG_PRINTF("failed to post close to %#x, PostMessage() failed: %u\n", hwnd, GetLastError());
     }
 
     // wait for close to complete
@@ -110,11 +111,11 @@ void restoreAll()
         IconData const & iconData = *cit;
 
         if (!ShowWindow(iconData.hwnd_, SW_SHOW)) {
-            DEBUG_PRINTF("failed to show window %#x\n", iconData.hwnd_);
+            DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", iconData.hwnd_, GetLastError());
         }
 
         if (!SetForegroundWindow(iconData.hwnd_)) {
-            DEBUG_PRINTF("failed to set foreground window %#x\n", iconData.hwnd_);
+            DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: %u\n", iconData.hwnd_, GetLastError());
         }
     }
 

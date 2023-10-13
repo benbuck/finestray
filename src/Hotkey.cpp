@@ -39,7 +39,7 @@ Hotkey::~Hotkey() { destroy(); }
 bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
 {
     if (!RegisterHotKey(hwnd, id, hotkeyModifiers, hotkey)) {
-        DEBUG_PRINTF("failed to register hotkey %d\n", id_);
+        DEBUG_PRINTF("failed to register hotkey %d, RegisterHotKey() failed: %u\n", id_, GetLastError());
         return false;
     }
 
@@ -53,7 +53,7 @@ void Hotkey::destroy()
 {
     if (id_ >= 0) {
         if (!UnregisterHotKey(hwnd_, id_)) {
-            DEBUG_PRINTF("failed to unregister hotkey %d\n", id_);
+            DEBUG_PRINTF("failed to unregister hotkey %d, UnregisterHotKey failed: %u\n", id_, GetLastError());
         }
 
         id_ = -1;

@@ -23,7 +23,7 @@ private:
     TrayIcon(const TrayIcon &) = delete;
     TrayIcon & operator=(const TrayIcon &) = delete;
 
-    NOTIFYICONDATA nid_;
+    NOTIFYICONDATAA nid_;
 
     static volatile LONG gid_;
 };

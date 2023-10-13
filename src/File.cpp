@@ -5,6 +5,7 @@
 // MinTray
 #include "DebugPrint.h"
 
+// standard library
 #include <cstring>
 
 std::string fileRead(const std::string & fileName)
@@ -14,22 +15,25 @@ std::string fileRead(const std::string & fileName)
     HANDLE file =
         CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
-        DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
+        DEBUG_PRINTF("could not open '%s' for reading, CreateFileA() failed: %u\n", fileName.c_str(), GetLastError());
     } else {
-        DWORD fileSize = GetFileSize(file, nullptr);
-
-        std::string buffer;
-        buffer.resize(fileSize + 1);
-        buffer[buffer.size() - 1] = '\0';
-
-        DWORD bytesRead = 0;
-        if (!ReadFile(file, &buffer[0], fileSize, &bytesRead, nullptr)) {
-            DEBUG_PRINTF("could not read %d bytes from '%ws'\n", fileSize, fileName.c_str());
+        LARGE_INTEGER fileSize;
+        if (!GetFileSizeEx(file, &fileSize)) {
+            DEBUG_PRINTF("could not get file size for '%s', GetFileSizeEx() failed: %u\n", fileName.c_str(), GetLastError());
         } else {
-            if (bytesRead < fileSize) {
-                DEBUG_PRINTF("only read %d bytes from '%ws', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+            std::string buffer;
+            buffer.resize(fileSize.QuadPart + 1);
+            buffer[buffer.size() - 1] = '\0';
+
+            DWORD bytesRead = 0;
+            if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
+                DEBUG_PRINTF("could not read %d bytes from '%s', ReadFile() failed: %u\n", fileSize, fileName.c_str(), GetLastError());
             } else {
-                contents = buffer;
+                if (bytesRead < fileSize.LowPart) {
+                    DEBUG_PRINTF("only read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+                } else {
+                    contents = buffer;
+                }
             }
         }
 
@@ -43,13 +47,13 @@ std::string getExecutablePath()
 {
     CHAR path[MAX_PATH];
     if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
-        DEBUG_PRINTF("GetModuleFileName() failed\n");
+        DEBUG_PRINTF("could not get executable path, GetModuleFileNameA() failed: %u\n", GetLastError());
         return std::string();
     }
 
     char * sep = strrchr(path, '\\');
     if (!sep) {
-        DEBUG_PRINTF("path '%ws' has no separator\n", path);
+        DEBUG_PRINTF("path '%s' has no separator\n", path);
         return std::string();
     }
 

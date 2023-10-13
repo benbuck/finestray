@@ -2,12 +2,6 @@
 
 #include "StringUtilities.h"
 
-// MinTray
-#include "DebugPrint.h"
-
-// windows
-#include <Windows.h>
-
 // standard library
 #include <algorithm>
 

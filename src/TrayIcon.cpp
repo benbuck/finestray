@@ -8,12 +8,13 @@
 volatile LONG TrayIcon::gid_ = 0;
 
 TrayIcon::TrayIcon() { ZeroMemory(&nid_, sizeof(nid_)); }
+
 TrayIcon::~TrayIcon() { destroy(); }
 
 bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
 {
     if (nid_.uID) {
-        DEBUG_PRINTF("attempt to re-create tray icon\n");
+        DEBUG_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
         return false;
     }
 
@@ -26,17 +27,19 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid_.uCallbackMessage = msg;
     nid_.hIcon = icon;
-    GetWindowText(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
+    if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
+        DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %u\n", GetLastError());
+    }
     nid_.uVersion = NOTIFYICON_VERSION;
 
-    if (!Shell_NotifyIcon(NIM_ADD, &nid_)) {
-        DEBUG_PRINTF("Shell_NotifyIcon(NIM_ADD) failed\n");
+    if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
+        DEBUG_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %u\n", GetLastError());
         ZeroMemory(&nid_, sizeof(nid_));
         return false;
     }
 
-    if (!Shell_NotifyIcon(NIM_SETVERSION, &nid_)) {
-        DEBUG_PRINTF("Shell_NotifyIcon(NIM_SETVERSION) failed\n");
+    if (!Shell_NotifyIconA(NIM_SETVERSION, &nid_)) {
+        DEBUG_PRINTF("could not set tray icon version, Shell_NotifyIcon() failed: %u\n", GetLastError());
         destroy();
         return false;
     }
@@ -47,8 +50,8 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
 void TrayIcon::destroy()
 {
     if (nid_.uID) {
-        if (!Shell_NotifyIcon(NIM_DELETE, &nid_)) {
-            DEBUG_PRINTF("Shell_NotifyIcon(NIM_DELETE) failed\n");
+        if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
+            DEBUG_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %u\n", GetLastError());
         }
 
         ZeroMemory(&nid_, sizeof(nid_));

@@ -102,11 +102,11 @@ bool Settings::parseJson(const std::string & json)
 {
     const cJSON * cjson = cJSON_Parse(json.c_str());
     if (!cjson) {
-        DEBUG_PRINTF("failed to parse settings JSON: %s\n", json.c_str());
+        DEBUG_PRINTF("failed to parse settings JSON:\n%s\n", cJSON_GetErrorPtr());
         return false;
     }
 
-    DEBUG_PRINTF("parsed settings JSON: %s\n", cJSON_Print(cjson));
+    DEBUG_PRINTF("parsed settings JSON:\n%s\n", cJSON_Print(cjson));
 
     const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);
     if (autotray) {

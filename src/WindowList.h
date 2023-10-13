@@ -5,5 +5,10 @@
 // windows
 #include <Windows.h>
 
-void windowListStart(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND));
-void windowListStop();
+namespace WindowList
+{
+
+void start(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND));
+void stop();
+
+} // namespace WindowList

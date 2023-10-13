@@ -8,6 +8,9 @@
 // standard library
 #include <set>
 
+namespace WindowList
+{
+
 static VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
 static BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
@@ -17,7 +20,7 @@ static void (*newWindowCallback_)(HWND);
 static UINT_PTR timer_;
 static std::set<HWND> windowList_;
 
-void windowListStart(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND))
+void start(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND))
 {
     hwnd_ = hwnd;
     pollMillis_ = pollMillis;
@@ -31,7 +34,7 @@ void windowListStart(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND)
     }
 }
 
-void windowListStop()
+void stop()
 {
     windowList_.clear();
 
@@ -49,7 +52,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
     std::set<HWND> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
-        DEBUG_PRINTF("EnumWindows() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("could not list windows: EnumWindows() failed: %u\n", GetLastError());
     }
 
     // Check for new windows
@@ -76,3 +79,5 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 
     return TRUE;
 }
+
+} // namespace WindowList

@@ -8,6 +8,30 @@
 // windows
 #include <Windows.h>
 
+// standard library
+#include <algorithm>
+
+char * wideStringToString(const wchar_t * ws)
+{
+    int ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, nullptr, 0, nullptr, nullptr);
+    if (ret <= 0) {
+        DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
+        return nullptr;
+    }
+
+    size_t len = (size_t)ret + 1;
+    char * s = new char[len];
+
+    ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, s, (int)len, nullptr, nullptr);
+    if (ret <= 0) {
+        DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
+        delete[] s;
+        return nullptr;
+    }
+
+    return s;
+}
+
 namespace CommandLine
 {
 
@@ -36,42 +60,21 @@ bool getArgs(int * argc, char *** argv)
         }
         return false;
     }
-    (*argv)[*argc] = nullptr;
 
-    bool failure = false;
+    std::fill_n(*argv, *argc + 1, nullptr);
 
-    for (int a = 0; !failure && (a < *argc); a++) {
-        int ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, nullptr, 0, nullptr, nullptr);
-        if (ret <= 0) {
-            DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-            failure = true;
-            break;
+    for (int a = 0; a < *argc; ++a) {
+        (*argv)[a] = wideStringToString(wargv[a]);
+        if (!(*argv)[a]) {
+            freeArgs(*argc, *argv);
+            *argv = nullptr;
+            *argc = 0;
+            return false;
         }
-
-        size_t argLen = (size_t)ret + 1;
-        char * arg = new char[argLen];
-
-        ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, arg, (int)argLen, nullptr, nullptr);
-        if (ret <= 0) {
-            DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-            failure = true;
-            delete[] arg;
-            break;
-        }
-
-        (*argv)[a] = arg;
     }
 
     if (LocalFree(wargv)) {
         DEBUG_PRINTF("LocalFree() failed: %u\n", GetLastError());
-    }
-
-    if (failure) {
-        delete[] *argv;
-        *argv = nullptr;
-        *argc = 0;
-
-        return false;
     }
 
     return true;
