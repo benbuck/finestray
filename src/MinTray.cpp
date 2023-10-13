@@ -7,6 +7,7 @@
 #include "Hotkey.h"
 #include "Resource.h"
 #include "Settings.h"
+#include "StringUtilities.h"
 #include "TrayIcon.h"
 #include "TrayWindow.h"
 #include "WindowList.h"
@@ -19,7 +20,7 @@
 #include <regex>
 #include <set>
 
-static constexpr WCHAR APP_NAME[] = L"MinTray";
+static constexpr CHAR APP_NAME[] = "MinTray";
 static constexpr WORD IDM_EXIT = 0x1003;
 static constexpr WORD IDM_ABOUT = 0x1004;
 
@@ -32,7 +33,7 @@ enum class HotkeyID
 static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static void onNewWindow(HWND hwnd);
 static void showContextMenu(HWND hwnd);
-static std::wstring getResourceString(UINT id);
+static std::string getResourceString(UINT id);
 static inline void errorMessage(UINT id);
 
 static Settings settings_;
@@ -45,13 +46,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)pCmdLine;
 
     // get settings from file
-    std::wstring fileName(std::wstring(APP_NAME) + L".json");
+    std::string fileName(std::string(APP_NAME) + ".json");
     if (settings_.readFromFile(fileName)) {
         DEBUG_PRINTF("read settings from %ws\n", fileName.c_str());
     } else {
         // no settings file in current directory, try in executable dir
-        std::wstring exePath = getExecutablePath();
-        fileName = exePath + L"\\" + std::wstring(APP_NAME) + L".json";
+        std::string exePath = getExecutablePath();
+        fileName = exePath + "\\" + std::string(APP_NAME) + ".json";
         if (settings_.readFromFile(fileName)) {
             DEBUG_PRINTF("read settings from %ws\n", fileName.c_str());
         }
@@ -73,7 +74,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
 
     // create the window class
-    WNDCLASSEX wc;
+    WNDCLASSEXA wc;
     memset(&wc, 0, sizeof(WNDCLASSEX));
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.lpfnWndProc = wndProc;
@@ -81,14 +82,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     wc.lpszClassName = APP_NAME;
     wc.hIcon = icon;
     wc.hIconSm = icon;
-    ATOM atom = RegisterClassEx(&wc);
+    ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
         errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
 
     // create the window
-    HWND hwnd = CreateWindow(
+    HWND hwnd = CreateWindowA(
         APP_NAME, // class name
         APP_NAME, // window name
         WS_OVERLAPPEDWINDOW, // style
@@ -179,9 +180,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch (LOWORD(wParam)) {
                 // about dialog
                 case IDM_ABOUT: {
-                    std::wstring const & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-                    std::wstring const & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-                    MessageBox(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION);
+                    std::string const & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
+                    std::string const & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
+                    MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION);
                     break;
                 }
 
@@ -380,19 +381,19 @@ void showContextMenu(HWND hwnd)
     }
 
     // add menu entries
-    if (!AppendMenu(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
+    if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(menu, MF_SEPARATOR, 0, nullptr)) {
+    if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
+    if (!AppendMenuA(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
-    if (!AppendMenu(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
+    if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         return;
     }
@@ -431,13 +432,13 @@ void showContextMenu(HWND hwnd)
     }
 }
 
-std::wstring getResourceString(UINT id)
+std::string getResourceString(UINT id)
 {
     HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
 
-    std::wstring str;
+    std::string str;
     str.resize(256);
-    if (!LoadString(hInstance, id, &str[0], (int)str.size())) {
+    if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
         DEBUG_PRINTF("failed to load resources string %u\n", id);
     }
 
@@ -447,10 +448,10 @@ std::wstring getResourceString(UINT id)
 void errorMessage(UINT id)
 {
     DWORD lastError = GetLastError();
-    std::wstring const & err = getResourceString(id);
-    DEBUG_PRINTF("error: %ws: %u\n", err.c_str(), lastError);
+    std::string const & err = getResourceString(id);
+    DEBUG_PRINTF("error: %s: %u\n", err.c_str(), lastError);
     (void)lastError;
-    if (!MessageBox(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
+    if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u\n", id);
     }
 }

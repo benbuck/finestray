@@ -46,44 +46,6 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
     return strings;
 }
 
-std::wstring stringToWideString(const std::string & s)
-{
-    std::wstring ws;
-
-    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
-    if (sizeNeeded <= 0) {
-        DEBUG_PRINTF("MultiByteToWideChar() failed: %u\n", GetLastError());
-    } else {
-        ws.resize(sizeNeeded);
-
-        int ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &ws[0], sizeNeeded);
-        if (ret <= 0) {
-            DEBUG_PRINTF("MultiByteToWideChar() failed: %u\n", GetLastError());
-        }
-    }
-
-    return ws;
-}
-
-std::string wideStringToString(const std::wstring & ws)
-{
-    std::string s;
-
-    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), nullptr, 0, nullptr, nullptr);
-    if (sizeNeeded <= 0) {
-        DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-    } else {
-        s.resize(sizeNeeded);
-
-        int ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), &s[0], sizeNeeded, nullptr, nullptr);
-        if (ret <= 0) {
-            DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-        }
-    }
-
-    return s;
-}
-
 bool stringToBool(const std::string s, bool & b)
 {
     if ((s == "1") || (toLower(s) == "true")) {

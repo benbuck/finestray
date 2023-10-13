@@ -44,7 +44,7 @@ Settings::Settings() : autoTrays_(), hotkeyMinimize_(), hotkeyRestore_(), pollIn
 
 Settings::~Settings() {}
 
-bool Settings::readFromFile(const std::wstring & fileName)
+bool Settings::readFromFile(const std::string & fileName)
 {
     std::string json = fileRead(fileName);
     if (json.empty()) {

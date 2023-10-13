@@ -67,7 +67,7 @@ bool getArgs(int * argc, char *** argv)
     }
 
     if (failure) {
-        delete[] * argv;
+        delete[] *argv;
         *argv = nullptr;
         *argc = 0;
 

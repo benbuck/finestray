@@ -5,12 +5,14 @@
 // MinTray
 #include "DebugPrint.h"
 
-std::string fileRead(const std::wstring & fileName)
+#include <cstring>
+
+std::string fileRead(const std::string & fileName)
 {
     std::string contents;
 
     HANDLE file =
-        CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
     } else {
@@ -37,24 +39,24 @@ std::string fileRead(const std::wstring & fileName)
     return contents;
 }
 
-std::wstring getExecutablePath()
+std::string getExecutablePath()
 {
-    TCHAR path[MAX_PATH];
-    if (GetModuleFileName(nullptr, path, MAX_PATH) <= 0) {
+    CHAR path[MAX_PATH];
+    if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
         DEBUG_PRINTF("GetModuleFileName() failed\n");
-        return std::wstring();
+        return std::string();
     }
 
-    TCHAR * sep = wcsrchr(path, L'\\');
+    char * sep = strrchr(path, '\\');
     if (!sep) {
         DEBUG_PRINTF("path '%ws' has no separator\n", path);
-        return std::wstring();
+        return std::string();
     }
 
     size_t pathChars = sep - path;
-    std::wstring exePath;
+    std::string exePath;
     exePath.reserve(pathChars + 1);
     exePath.resize(pathChars);
-    wcsncpy_s(&exePath[0], pathChars + 1, path, pathChars);
+    strncpy_s(&exePath[0], pathChars + 1, path, pathChars);
     return exePath;
 }

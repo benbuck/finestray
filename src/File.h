@@ -8,5 +8,5 @@
 // standard library
 #include <string>
 
-std::string fileRead(const std::wstring & fileName);
-std::wstring getExecutablePath(void);
+std::string fileRead(const std::string & fileName);
+std::string getExecutablePath(void);
