@@ -38,6 +38,7 @@ static inline void errorMessage(UINT id);
 
 static Settings settings_;
 static HWND hwnd_;
+static std::set<HWND> autoTrayedWindows_;
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
@@ -271,18 +272,18 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
+                // mouse moved over icon
+                case WM_MOUSEMOVE: {
+                    // nothing to do
+                    break;
+                }
+
                 // user selected and activated icon
                 case NIN_SELECT: {
                     HWND hwndTray = TrayWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
                         TrayWindow::restore(hwndTray);
                     }
-                    break;
-                }
-
-                // mouse moved over icon
-                case WM_MOUSEMOVE: {
-                    // nothing to do
                     break;
                 }
 
@@ -304,8 +305,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
-
-static std::set<HWND> autoTrayedWindows_;
 
 void onNewWindow(HWND hwnd)
 {
