@@ -123,6 +123,7 @@ bool Settings::parseJson(const std::string & json)
 
 void Settings::dump()
 {
+#if !defined(NDEBUG)
     for (const auto & autoTray : autoTrays_) {
         DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
         DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
@@ -133,6 +134,7 @@ void Settings::dump()
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_TrayIcon], trayIcon_ ? "true" : "false");
+#endif
 }
 
 void Settings::addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle)
