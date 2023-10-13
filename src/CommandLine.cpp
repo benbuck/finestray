@@ -11,7 +11,7 @@
 namespace CommandLine
 {
 
-void getArgs(int * argc, char *** argv)
+bool getArgs(int * argc, char *** argv)
 {
     *argc = 0;
     *argv = nullptr;
@@ -19,13 +19,13 @@ void getArgs(int * argc, char *** argv)
     LPWSTR commandLine = GetCommandLineW();
     if (!commandLine) {
         DEBUG_PRINTF("GetCommandLine() failed: %u\n", GetLastError());
-        return;
+        return false;
     }
 
     wchar_t ** wargv = CommandLineToArgvW(commandLine, argc);
     if (!*argc || !wargv) {
         DEBUG_PRINTF("CommandLineToArgvW() failed: %u\n", GetLastError());
-        return;
+        return false;
     }
 
     *argv = new char *[*argc + 1];
@@ -34,7 +34,7 @@ void getArgs(int * argc, char *** argv)
         if (LocalFree(wargv)) {
             DEBUG_PRINTF("LocalFree() failed: %u\n", GetLastError());
         }
-        return;
+        return false;
     }
     (*argv)[*argc] = nullptr;
 
@@ -70,7 +70,11 @@ void getArgs(int * argc, char *** argv)
         delete[] * argv;
         *argv = nullptr;
         *argc = 0;
+
+        return false;
     }
+
+    return true;
 }
 
 void freeArgs(int argc, char ** argv)

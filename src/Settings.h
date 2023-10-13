@@ -18,7 +18,7 @@ public:
     ~Settings();
 
     bool readFromFile(const std::wstring & fileName);
-    bool parseCommandLine(int argc, char const * const * argv);
+    bool parseCommandLine(int argc, const char * const * argv);
 
     struct AutoTray
     {

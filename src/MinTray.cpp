@@ -59,12 +59,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     int argc;
     char ** argv;
-    CommandLine::getArgs(&argc, &argv);
+    if (!CommandLine::getArgs(&argc, &argv)) {
+        errorMessage(IDS_ERROR_COMMAND_LINE);
+        return IDS_ERROR_COMMAND_LINE;
+    }
     bool parsed = settings_.parseCommandLine(argc, argv);
     CommandLine::freeArgs(argc, argv);
     if (!parsed) {
         errorMessage(IDS_ERROR_COMMAND_LINE);
-        return 0;
+        return IDS_ERROR_COMMAND_LINE;
     }
 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
@@ -81,7 +84,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     ATOM atom = RegisterClassEx(&wc);
     if (!atom) {
         errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
-        return 0;
+        return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
 
     // create the window
@@ -100,7 +103,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     );
     if (!hwnd) {
         errorMessage(IDS_ERROR_CREATE_WINDOW);
-        return 0;
+        return IDS_ERROR_CREATE_WINDOW;
     }
 
     hwnd_ = hwnd;
@@ -115,12 +118,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     UINT modifiersMinimize = MOD_WIN | MOD_ALT;
     if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-        return 0;
+        return IDS_ERROR_REGISTER_HOTKEY;
     }
     if (vkMinimize && modifiersMinimize) {
         if (!hotkeyMinimize.create((INT)HotkeyID::Minimize, hwnd, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
             errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-            return 0;
+            return IDS_ERROR_REGISTER_HOTKEY;
         }
     }
 
@@ -130,12 +133,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     UINT modifiersRestore = MOD_WIN | MOD_ALT;
     if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-        return 0;
+        return IDS_ERROR_REGISTER_HOTKEY;
     }
     if (vkRestore && modifiersRestore) {
         if (!hotkeyRestore.create((INT)HotkeyID::Restore, hwnd, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
             errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-            return 0;
+            return IDS_ERROR_REGISTER_HOTKEY;
         }
     }
 
@@ -144,7 +147,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (settings_.trayIcon_) {
         if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
             errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
-            return 0;
+            return IDS_ERROR_CREATE_TRAY_ICON;
         }
     }
 

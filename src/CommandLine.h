@@ -5,7 +5,7 @@
 namespace CommandLine
 {
 
-void getArgs(int * argc, char *** argv);
+bool getArgs(int * argc, char *** argv);
 void freeArgs(int argc, char ** argv);
 
 } // namespace CommandLine

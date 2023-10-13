@@ -54,7 +54,7 @@ bool Settings::readFromFile(const std::wstring & fileName)
     return parseJson(json);
 }
 
-bool Settings::parseCommandLine(int argc, char const * const * argv)
+bool Settings::parseCommandLine(int argc, const char * const * argv)
 {
     argh::parser args;
     for (const char * settingKey : settingKeys_) {
@@ -80,25 +80,18 @@ bool Settings::parseCommandLine(int argc, char const * const * argv)
     }
 
     // note: "auto-tray" options are not supported on the command line, only in json, since the
-    // syntax to support the various selector strings would be ugly, inconvenient, and non-intuitive
+    // complexity of the syntax to support the various selector strings would be unwieldy
 
-    argh::string_stream hotkeyMinimizeArg = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_);
-    if (hotkeyMinimizeArg && !(hotkeyMinimizeArg >> hotkeyMinimize_)) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimizeArg.str().c_str());
-    }
-
-    argh::string_stream hotkeyRestoreArg = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_);
-    if (hotkeyRestoreArg && !(hotkeyRestoreArg >> hotkeyRestore_)) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestoreArg.str().c_str());
-    }
+    hotkeyMinimize_ = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_).str();
+    hotkeyRestore_ = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_).str();
 
     argh::string_stream pollIntervalArg = args(settingKeys_[SK_PollInterval], pollInterval_);
-    if (pollIntervalArg && !(pollIntervalArg >> pollInterval_)) {
+    if (!(pollIntervalArg >> pollInterval_)) {
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
     argh::string_stream trayIconArg = args(settingKeys_[SK_TrayIcon], trayIcon_);
-    if (trayIconArg && !StringUtilities::stringToBool(trayIconArg.str(), trayIcon_)) {
+    if (!StringUtilities::stringToBool(trayIconArg.str(), trayIcon_)) {
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_TrayIcon], trayIconArg.str().c_str());
     }
 
