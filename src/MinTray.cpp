@@ -47,13 +47,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // get settings from file
     std::wstring fileName(std::wstring(APP_NAME) + L".json");
     if (settings_.readFromFile(fileName)) {
-        DEBUG_PRINTF("read setttings from %ws\n", fileName.c_str());
+        DEBUG_PRINTF("read settings from %ws\n", fileName.c_str());
     } else {
         // no settings file in current directory, try in executable dir
         std::wstring exePath = getExecutablePath();
         fileName = exePath + L"\\" + std::wstring(APP_NAME) + L".json";
         if (settings_.readFromFile(fileName)) {
-            DEBUG_PRINTF("read setttings from %ws\n", fileName.c_str());
+            DEBUG_PRINTF("read settings from %ws\n", fileName.c_str());
         }
     }
 

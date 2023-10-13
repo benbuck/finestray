@@ -15,25 +15,19 @@ std::string fileRead(const std::wstring & fileName)
         DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
     } else {
         DWORD fileSize = GetFileSize(file, NULL);
-        DWORD bufferSize = fileSize + 1;
-        char * buffer = new char[bufferSize];
-        buffer[bufferSize - 1] = '\0';
-        if (!buffer) {
-            DEBUG_PRINTF("could not allocate buffer size %d for reading\n", bufferSize);
+
+        std::string buffer;
+        buffer.resize(fileSize + 1);
+        buffer[buffer.size() - 1] = '\0';
+
+        DWORD bytesRead = 0;
+        if (!ReadFile(file, &buffer[0], fileSize, &bytesRead, NULL)) {
+            DEBUG_PRINTF("could not read %d bytes from '%ws'\n", fileSize, fileName.c_str());
         } else {
-            DWORD bytesRead = 0;
-            if (!ReadFile(file, buffer, fileSize, &bytesRead, NULL)) {
-                DEBUG_PRINTF("could not read %d bytes from '%ws'\n", fileSize, fileName.c_str());
-                delete[] buffer;
-                buffer = nullptr;
+            if (bytesRead < fileSize) {
+                DEBUG_PRINTF("only read %d bytes from '%ws', expected %d\n", bytesRead, fileName.c_str(), fileSize);
             } else {
-                if (bytesRead < fileSize) {
-                    DEBUG_PRINTF("only read %d bytes from '%ws', expected %d\n", bytesRead, fileName.c_str(), fileSize);
-                    delete[] buffer;
-                    buffer = nullptr;
-                } else {
-                    contents = buffer;
-                }
+                contents = buffer;
             }
         }
 
@@ -48,13 +42,13 @@ std::wstring getExecutablePath()
     TCHAR path[MAX_PATH];
     if (GetModuleFileName(NULL, path, MAX_PATH) <= 0) {
         DEBUG_PRINTF("GetModuleFileName() failed\n");
-        return L"";
+        return std::wstring();
     }
 
     TCHAR * sep = wcsrchr(path, L'\\');
     if (!sep) {
-        DEBUG_PRINTF("path has no separator\n");
-        return L"";
+        DEBUG_PRINTF("path '%ws' has no separator\n", path);
+        return std::wstring();
     }
 
     size_t pathChars = sep - path;
