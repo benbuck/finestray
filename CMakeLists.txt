@@ -97,6 +97,8 @@ target_include_directories(argh
 )
 
 add_executable(MinTray WIN32
+    src/CommandLine.cpp
+    src/CommandLine.h
     src/DebugPrint.cpp
     src/DebugPrint.h
     src/File.cpp
