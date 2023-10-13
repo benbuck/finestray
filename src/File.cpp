@@ -10,18 +10,18 @@ std::string fileRead(const std::wstring & fileName)
     std::string contents;
 
     HANDLE file =
-        CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF("could not open '%ws' for reading\n", fileName.c_str());
     } else {
-        DWORD fileSize = GetFileSize(file, NULL);
+        DWORD fileSize = GetFileSize(file, nullptr);
 
         std::string buffer;
         buffer.resize(fileSize + 1);
         buffer[buffer.size() - 1] = '\0';
 
         DWORD bytesRead = 0;
-        if (!ReadFile(file, &buffer[0], fileSize, &bytesRead, NULL)) {
+        if (!ReadFile(file, &buffer[0], fileSize, &bytesRead, nullptr)) {
             DEBUG_PRINTF("could not read %d bytes from '%ws'\n", fileSize, fileName.c_str());
         } else {
             if (bytesRead < fileSize) {
@@ -40,7 +40,7 @@ std::string fileRead(const std::wstring & fileName)
 std::wstring getExecutablePath()
 {
     TCHAR path[MAX_PATH];
-    if (GetModuleFileName(NULL, path, MAX_PATH) <= 0) {
+    if (GetModuleFileName(nullptr, path, MAX_PATH) <= 0) {
         DEBUG_PRINTF("GetModuleFileName() failed\n");
         return std::wstring();
     }

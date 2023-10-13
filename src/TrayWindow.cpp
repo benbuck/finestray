@@ -130,13 +130,13 @@ HWND getFromID(UINT id)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 HWND getLast()
 {
     if (trayIcons_.empty()) {
-        return NULL;
+        return nullptr;
     }
 
     return trayIcons_.back().hwnd_;
@@ -211,7 +211,7 @@ HICON getIcon(HWND hwnd)
         return icon;
     }
 
-    return LoadIcon(NULL, IDI_APPLICATION);
+    return LoadIcon(nullptr, IDI_APPLICATION);
 }
 
 } // namespace TrayWindow

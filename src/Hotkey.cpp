@@ -32,7 +32,7 @@ static const std::map<std::string, UINT> vkeyMap_ = {
     { "del", VK_DELETE },
 };
 
-Hotkey::Hotkey() : hwnd_(NULL), id_(-1) {}
+Hotkey::Hotkey() : hwnd_(nullptr), id_(-1) {}
 
 Hotkey::~Hotkey() { destroy(); }
 
@@ -57,7 +57,7 @@ void Hotkey::destroy()
         }
 
         id_ = -1;
-        hwnd_ = NULL;
+        hwnd_ = nullptr;
     }
 }
 

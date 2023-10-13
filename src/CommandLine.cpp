@@ -41,7 +41,7 @@ void getArgs(int * argc, char *** argv)
     bool failure = false;
 
     for (int a = 0; !failure && (a < *argc); a++) {
-        int ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, NULL, 0, NULL, NULL);
+        int ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, nullptr, 0, nullptr, nullptr);
         if (ret <= 0) {
             DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
             failure = true;
@@ -51,7 +51,7 @@ void getArgs(int * argc, char *** argv)
         size_t argLen = (size_t)ret + 1;
         char * arg = new char[argLen];
 
-        ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, arg, (int)argLen, NULL, NULL);
+        ret = WideCharToMultiByte(CP_UTF8, 0, wargv[a], -1, arg, (int)argLen, nullptr, nullptr);
         if (ret <= 0) {
             DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
             failure = true;

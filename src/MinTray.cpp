@@ -93,10 +93,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         0, // y
         0, // w
         0, // h
-        NULL, // parent
-        NULL, // menu
+        nullptr, // parent
+        nullptr, // menu
         hInstance, // instance
-        NULL // application data
+        nullptr // application data
     );
     if (!hwnd) {
         errorMessage(IDS_ERROR_CREATE_WINDOW);
@@ -152,7 +152,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     // run the message loop
     MSG msg = {};
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage(&msg, nullptr, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -304,7 +304,7 @@ void onNewWindow(HWND hwnd)
         if (!hProc) {
             DEBUG_PRINTF("OpenProcess() failed: %u\n", GetLastError());
         } else {
-            if (!GetModuleFileNameExA((HMODULE)hProc, NULL, executable, MAX_PATH)) {
+            if (!GetModuleFileNameExA((HMODULE)hProc, nullptr, executable, MAX_PATH)) {
                 DEBUG_PRINTF("GetModuleFileNameA() failed: %u\n", GetLastError());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
@@ -408,7 +408,7 @@ void showContextMenu(HWND hwnd)
     }
 
     // show the popup menu
-    if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, NULL)) {
+    if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, nullptr)) {
         errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         if (!DestroyMenu(menu)) {
             DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
@@ -430,7 +430,7 @@ void showContextMenu(HWND hwnd)
 
 std::wstring getResourceString(UINT id)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
+    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
 
     std::wstring str;
     str.resize(256);
@@ -447,7 +447,7 @@ void errorMessage(UINT id)
     std::wstring const & err = getResourceString(id);
     DEBUG_PRINTF("error: %ws: %u\n", err.c_str(), lastError);
     (void)lastError;
-    if (!MessageBox(NULL, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
+    if (!MessageBox(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u\n", id);
     }
 }
