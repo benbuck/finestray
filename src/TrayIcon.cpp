@@ -7,9 +7,15 @@
 
 volatile LONG TrayIcon::gid_ = 0;
 
-TrayIcon::TrayIcon() { ZeroMemory(&nid_, sizeof(nid_)); }
+TrayIcon::TrayIcon()
+{
+    ZeroMemory(&nid_, sizeof(nid_));
+}
 
-TrayIcon::~TrayIcon() { destroy(); }
+TrayIcon::~TrayIcon()
+{
+    destroy();
+}
 
 bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
 {

@@ -27,7 +27,11 @@ std::string fileRead(const std::string & fileName)
 
             DWORD bytesRead = 0;
             if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
-                DEBUG_PRINTF("could not read %d bytes from '%s', ReadFile() failed: %u\n", fileSize, fileName.c_str(), GetLastError());
+                DEBUG_PRINTF(
+                    "could not read %d bytes from '%s', ReadFile() failed: %u\n",
+                    fileSize,
+                    fileName.c_str(),
+                    GetLastError());
             } else {
                 if (bytesRead < fileSize.LowPart) {
                     DEBUG_PRINTF("only read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);

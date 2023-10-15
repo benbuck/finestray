@@ -31,7 +31,18 @@ enum class HotkeyID
 };
 
 static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static void onNewWindow(HWND hwnd);
+static bool modifiersActive(UINT modifiers);
+static bool isAutoTrayWindow(HWND hwnd);
+static void onAddWindow(HWND hwnd);
+static void onRemoveWindow(HWND hwnd);
+static void onMinimizeEvent(
+    HWINEVENTHOOK hook,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD dwEventThread,
+    DWORD dwmsEventTime);
 static void showContextMenu(HWND hwnd);
 static std::string getResourceString(UINT id);
 static inline void errorMessage(UINT id);
@@ -39,6 +50,7 @@ static inline void errorMessage(UINT id);
 static Settings settings_;
 static HWND hwnd_;
 static std::set<HWND> autoTrayedWindows_;
+static UINT modifiersOverride_;
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
@@ -123,7 +135,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // register a hotkey that will be used to minimize windows
     Hotkey hotkeyMinimize;
     UINT vkMinimize = VK_DOWN;
-    UINT modifiersMinimize = MOD_WIN | MOD_ALT;
+    UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
         return IDS_ERROR_REGISTER_HOTKEY;
@@ -138,7 +150,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // register a hotkey that will be used to restore windows
     Hotkey hotkeyRestore;
     UINT vkRestore = VK_UP;
-    UINT modifiersRestore = MOD_WIN | MOD_ALT;
+    UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
         errorMessage(IDS_ERROR_REGISTER_HOTKEY);
         return IDS_ERROR_REGISTER_HOTKEY;
@@ -150,6 +162,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
+    UINT vkOverride = 0;
+    modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
+        errorMessage(IDS_ERROR_REGISTER_MODIFIER);
+        return IDS_ERROR_REGISTER_MODIFIER;
+    }
+    if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
+        DEBUG_PRINTF("invalid override modifers\n");
+        errorMessage(IDS_ERROR_REGISTER_MODIFIER);
+        return IDS_ERROR_REGISTER_MODIFIER;
+    }
+
     // create a tray icon for the app
     TrayIcon trayIcon;
     if (settings_.trayIcon_) {
@@ -159,7 +183,21 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    WindowList::start(hwnd, settings_.pollInterval_, onNewWindow);
+    WindowList::start(hwnd, settings_.pollInterval_, onAddWindow, onRemoveWindow);
+
+    HWINEVENTHOOK hWinEventHook = SetWinEventHook(
+        EVENT_SYSTEM_MINIMIZESTART,
+        EVENT_SYSTEM_MINIMIZESTART,
+        nullptr,
+        onMinimizeEvent,
+        0,
+        0,
+        WINEVENT_OUTOFCONTEXT);
+    if (!hWinEventHook) {
+        DEBUG_PRINTF("failed to hook win event %#x, SetWinEventHook() failed: %u\n", hwnd, GetLastError());
+        errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
+        return IDS_ERROR_REGISTER_EVENTHOOK;
+    }
 
     // run the message loop
     MSG msg = {};
@@ -168,7 +206,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         DispatchMessage(&msg);
     }
 
+    if (!UnhookWinEvent(hWinEventHook)) {
+        DEBUG_PRINTF("failed to unhook win event %#x, UnhookWinEvent() failed: %u\n", hwnd, GetLastError());
+    }
+
     WindowList::stop();
+
+    hotkeyRestore.destroy();
+    hotkeyMinimize.destroy();
 
     if (!DestroyWindow(hwnd)) {
         DEBUG_PRINTF("failed to destroy window %#x, DestroyWindow() failed: %u\n", hwnd, GetLastError());
@@ -187,8 +232,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch (LOWORD(wParam)) {
                 // about dialog
                 case IDM_ABOUT: {
-                    std::string const & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-                    std::string const & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
+                    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
+                    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
                     if (!MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION)) {
                         DEBUG_PRINTF("could not create about dialog, MessageBoxA() failed: %u\n", GetLastError());
                     }
@@ -306,16 +351,51 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-void onNewWindow(HWND hwnd)
+bool modifiersActive(UINT modifiers)
 {
-    DEBUG_PRINTF("new window: %#x\n", hwnd);
-
-    if (autoTrayedWindows_.find(hwnd) != autoTrayedWindows_.end()) {
-        DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
-        return;
+    if (!modifiers) {
+        return false;
     }
 
-    CHAR executable[MAX_PATH] = { 0 };
+    if (modifiers & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT)) {
+        DEBUG_PRINTF("invalid modifers: %#x\n", modifiers);
+        return false;
+    }
+
+    if (modifiers & MOD_ALT) {
+        if (!(GetKeyState(VK_MENU) & 0x8000)) {
+            DEBUG_PRINTF("alt modifier not down\n");
+            return false;
+        }
+    }
+
+    if (modifiers & MOD_CONTROL) {
+        if (!(GetKeyState(VK_CONTROL) & 0x8000)) {
+            DEBUG_PRINTF("ctrl modifier not down\n");
+            return false;
+        }
+    }
+
+    if (modifiers & MOD_SHIFT) {
+        if (!(GetKeyState(VK_SHIFT) & 0x8000)) {
+            DEBUG_PRINTF("shift modifier not down\n");
+            return false;
+        }
+    }
+
+    if (modifiers & MOD_WIN) {
+        if (!(GetKeyState(VK_LWIN) & 0x8000) && !(GetKeyState(VK_RWIN) & 0x8000)) {
+            DEBUG_PRINTF("win modifier not down\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool isAutoTrayWindow(HWND hwnd)
+{
+    CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
     if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
         DEBUG_PRINTF("GetWindowThreadProcessId() failed: %u\n", GetLastError());
@@ -324,7 +404,7 @@ void onNewWindow(HWND hwnd)
         if (!hProc) {
             DEBUG_PRINTF("OpenProcess() failed: %u\n", GetLastError());
         } else {
-            if (!GetModuleFileNameExA((HMODULE)hProc, nullptr, executable, MAX_PATH)) {
+            if (!GetModuleFileNameExA((HMODULE)hProc, nullptr, executable, sizeof(executable))) {
                 DEBUG_PRINTF("GetModuleFileNameA() failed: %u\n", GetLastError());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
@@ -347,42 +427,108 @@ void onNewWindow(HWND hwnd)
         DEBUG_PRINTF("\tclass: %s\n", className);
     }
 
-    for (auto const & autoTray : settings_.autoTrays_) {
+    for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
         bool executableMatch = false;
         if (autoTray.executable_.empty()) {
+            // DEBUG_PRINTF("\texecutable match (empty)\n");
             executableMatch = true;
         } else {
             if (autoTray.executable_ == executable) {
-                DEBUG_PRINTF("\texecutable %s match\n", autoTray.executable_.c_str());
+                // DEBUG_PRINTF("\texecutable %s match\n", autoTray.executable_.c_str());
                 executableMatch = true;
             }
         }
 
         bool classMatch = false;
         if (autoTray.windowClass_.empty()) {
+            // DEBUG_PRINTF("\twindow class match (empty)\n");
             classMatch = true;
         } else {
             if (autoTray.windowClass_ == className) {
-                DEBUG_PRINTF("\twindow class %s match\n", autoTray.windowClass_.c_str());
+                // DEBUG_PRINTF("\twindow class %s match\n", autoTray.windowClass_.c_str());
                 classMatch = true;
             }
         }
 
         bool titleMatch = false;
         if (autoTray.windowTitle_.empty()) {
+            // DEBUG_PRINTF("\twindow title match (empty)\n");
             titleMatch = true;
         } else {
             std::regex re(autoTray.windowTitle_);
             if (std::regex_match(windowText, re)) {
-                DEBUG_PRINTF("\twindow title %s match\n", autoTray.windowTitle_.c_str());
+                // DEBUG_PRINTF("\twindow title %s match\n", autoTray.windowTitle_.c_str());
                 titleMatch = true;
             }
         }
 
         if (executableMatch && classMatch && titleMatch) {
-            DEBUG_PRINTF("\t--- minimizing ---\n");
+            DEBUG_PRINTF("\tauto-tray match\n");
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void onAddWindow(HWND hwnd)
+{
+    DEBUG_PRINTF("added window: %#x\n", hwnd);
+
+    if (autoTrayedWindows_.find(hwnd) != autoTrayedWindows_.end()) {
+        DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
+        return;
+    }
+
+    if (isAutoTrayWindow(hwnd)) {
+        DEBUG_PRINTF("\tminimizing\n");
+        TrayWindow::minimize(hwnd, hwnd_);
+        autoTrayedWindows_.insert(hwnd);
+    }
+}
+
+void onRemoveWindow(HWND hwnd)
+{
+    DEBUG_PRINTF("removed window: %#x\n", hwnd);
+
+    auto it = autoTrayedWindows_.find(hwnd);
+    if (it == autoTrayedWindows_.end()) {
+        DEBUG_PRINTF("\tignoring, not auto-trayed\n");
+        return;
+    }
+
+    if (!TrayWindow::exists(hwnd)) {
+        DEBUG_PRINTF("\tcleaning up\n");
+        autoTrayedWindows_.erase(hwnd);
+    }
+}
+
+void onMinimizeEvent(
+    HWINEVENTHOOK /*hook*/,
+    DWORD event,
+    HWND hwnd,
+    LONG /*idObject*/,
+    LONG /*idChild*/,
+    DWORD /*dwEventThread*/,
+    DWORD /*dwmsEventTime*/)
+{
+    if (event != EVENT_SYSTEM_MINIMIZESTART) {
+        DEBUG_PRINTF("unexpected non-minimize event %#x\n", event);
+        return;
+    }
+
+    DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
+    if (!isAutoTrayWindow(hwnd)) {
+        if (modifiersActive(modifiersOverride_)) {
+            DEBUG_PRINTF("\tmodifiers active, minimizing\n");
             TrayWindow::minimize(hwnd, hwnd_);
-            autoTrayedWindows_.insert(hwnd);
+        }
+    } else {
+        if (modifiersActive(modifiersOverride_)) {
+            DEBUG_PRINTF("\tmodifier active, not minimizing\n");
+        } else {
+            DEBUG_PRINTF("\tminimizing\n");
+            TrayWindow::minimize(hwnd, hwnd_);
         }
     }
 }
@@ -471,7 +617,7 @@ std::string getResourceString(UINT id)
 
 void errorMessage(UINT id)
 {
-    std::string const & err = getResourceString(id);
+    const std::string & err = getResourceString(id);
     DEBUG_PRINTF("error: %s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         DEBUG_PRINTF("failed to display error message %u, MessageBoxA() failed\n", id, GetLastError());

@@ -15,7 +15,12 @@ namespace TrayWindow
 
 struct IconData
 {
-    IconData(HWND hwnd, TrayIcon * trayIcon) : hwnd_(hwnd), trayIcon_(trayIcon) {}
+    IconData(HWND hwnd, TrayIcon * trayIcon)
+        : hwnd_(hwnd)
+        , trayIcon_(trayIcon)
+    {
+    }
+
     HWND hwnd_;
     std::unique_ptr<TrayIcon> trayIcon_;
 };
@@ -31,6 +36,11 @@ static HICON getIcon(HWND hwnd);
 void minimize(HWND hwnd, HWND messageWnd)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
+
+    // minimize window
+    if (!ShowWindow(hwnd, SW_MINIMIZE)) {
+        DEBUG_PRINTF("failed to minimize window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+    }
 
     // hide window
     if (!ShowWindow(hwnd, SW_HIDE)) {
@@ -63,6 +73,10 @@ void restore(HWND hwnd)
 
     if (!ShowWindow(hwnd, SW_SHOW)) {
         DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+    }
+
+    if (!ShowWindow(hwnd, SW_RESTORE)) {
+        DEBUG_PRINTF("failed to restore window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
     }
 
     if (!SetForegroundWindow(hwnd)) {
@@ -100,32 +114,22 @@ void close(HWND hwnd)
 void addAll()
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
-        IconData const & iconData = *cit;
+        const IconData & iconData = *cit;
         add(iconData.hwnd_, iconData.trayIcon_->hwnd());
     }
 }
 
 void restoreAll()
 {
-    for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
-        IconData const & iconData = *cit;
-
-        if (!ShowWindow(iconData.hwnd_, SW_SHOW)) {
-            DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", iconData.hwnd_, GetLastError());
-        }
-
-        if (!SetForegroundWindow(iconData.hwnd_)) {
-            DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: %u\n", iconData.hwnd_, GetLastError());
-        }
+    while (!trayIcons_.empty()) {
+        restore(trayIcons_.front().hwnd_);
     }
-
-    trayIcons_.clear();
 }
 
 HWND getFromID(UINT id)
 {
     for (TrayIcons::const_iterator cit = trayIcons_.cbegin(); cit != trayIcons_.cend(); ++cit) {
-        IconData const & iconData = *cit;
+        const IconData & iconData = *cit;
         if (iconData.trayIcon_->id() == id) {
             return iconData.hwnd_;
         }
@@ -146,13 +150,18 @@ HWND getLast()
 TrayIcons::iterator find(HWND hwnd)
 {
     for (TrayIcons::iterator it = trayIcons_.begin(); it != trayIcons_.end(); ++it) {
-        IconData const & iconData = *it;
+        const IconData & iconData = *it;
         if (iconData.hwnd_ == hwnd) {
             return it;
         }
     }
 
     return trayIcons_.end();
+}
+
+bool exists(HWND hwnd)
+{
+    return find(hwnd) != trayIcons_.end();
 }
 
 bool add(HWND hwnd, HWND messageWnd)

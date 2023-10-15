@@ -16,15 +16,17 @@ static BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 static HWND hwnd_;
 static UINT pollMillis_;
-static void (*newWindowCallback_)(HWND);
+static void (*addWindowCallback_)(HWND);
+static void (*removeWindowCallback_)(HWND);
 static UINT_PTR timer_;
 static std::set<HWND> windowList_;
 
-void start(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND))
+void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND), void (*removeWindowCallback)(HWND))
 {
     hwnd_ = hwnd;
     pollMillis_ = pollMillis;
-    newWindowCallback_ = newWindowCallback;
+    addWindowCallback_ = addWindowCallback;
+    removeWindowCallback_ = removeWindowCallback;
 
     if (pollMillis_ > 0) {
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
@@ -43,7 +45,8 @@ void stop()
         timer_ = 0;
     }
 
-    newWindowCallback_ = nullptr;
+    removeWindowCallback_ = nullptr;
+    addWindowCallback_ = nullptr;
     pollMillis_ = 0;
     hwnd_ = nullptr;
 }
@@ -55,15 +58,27 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
         DEBUG_PRINTF("could not list windows: EnumWindows() failed: %u\n", GetLastError());
     }
 
-    // Check for new windows
-    for (auto const & hwnd : newWindowList) {
-        if (windowList_.find(hwnd) == windowList_.end()) {
-            // New window found
-            newWindowCallback_(hwnd);
+    // check for removed windows
+    if (removeWindowCallback_) {
+        for (HWND hwnd : windowList_) {
+            if (newWindowList.find(hwnd) == newWindowList.end()) {
+                // removed window found
+                removeWindowCallback_(hwnd);
+            }
         }
     }
 
-    // Update the list
+    // check for added windows
+    if (addWindowCallback_) {
+        for (HWND hwnd : newWindowList) {
+            if (windowList_.find(hwnd) == windowList_.end()) {
+                // added window found
+                addWindowCallback_(hwnd);
+            }
+        }
+    }
+
+    // update the list
     windowList_ = newWindowList;
 }
 

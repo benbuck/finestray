@@ -28,9 +28,11 @@ public:
         std::string windowClass_;
         std::string windowTitle_;
     };
+
     std::vector<AutoTray> autoTrays_;
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
+    std::string modifiersOverride_;
     unsigned int pollInterval_;
     bool trayIcon_;
 

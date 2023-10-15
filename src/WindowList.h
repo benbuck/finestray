@@ -8,7 +8,7 @@
 namespace WindowList
 {
 
-void start(HWND hwnd, UINT pollMillis, void (*newWindowCallback)(HWND));
+void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND), void (*removeWindowCallback)(HWND));
 void stop();
 
 } // namespace WindowList

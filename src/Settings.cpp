@@ -31,18 +31,30 @@ enum SettingKeys : unsigned int
     SK_WindowTitle,
     SK_HotkeyMinimize,
     SK_HotkeyRestore,
+    SK_ModifiersOverride,
     SK_PollInterval,
     SK_TrayIcon,
 
     SK_Count
 };
 
-static const char * settingKeys_[SK_Count] = { "auto-tray",       "executable",     "window-class",  "window-title",
-                                               "hotkey-minimize", "hotkey-restore", "poll-interval", "tray-icon" };
+static const char * settingKeys_[SK_Count] = { "auto-tray",          "executable",      "window-class",
+                                               "window-title",       "hotkey-minimize", "hotkey-restore",
+                                               "modifiers-override", "poll-interval",   "tray-icon" };
 
-Settings::Settings() : autoTrays_(), hotkeyMinimize_(), hotkeyRestore_(), pollInterval_(500), trayIcon_(true) {}
+Settings::Settings()
+    : autoTrays_()
+    , hotkeyMinimize_()
+    , hotkeyRestore_()
+    , modifiersOverride_()
+    , pollInterval_(500)
+    , trayIcon_(true)
+{
+}
 
-Settings::~Settings() {}
+Settings::~Settings()
+{
+}
 
 bool Settings::readFromFile(const std::string & fileName)
 {
@@ -84,6 +96,7 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
 
     hotkeyMinimize_ = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_).str();
     hotkeyRestore_ = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_).str();
+    modifiersOverride_ = args(settingKeys_[SK_ModifiersOverride], modifiersOverride_).str();
 
     argh::string_stream pollIntervalArg = args(settingKeys_[SK_PollInterval], pollInterval_);
     if (!(pollIntervalArg >> pollInterval_)) {
@@ -115,6 +128,7 @@ bool Settings::parseJson(const std::string & json)
 
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
     trayIcon_ = getBool(cjson, settingKeys_[SK_TrayIcon], trayIcon_);
 
@@ -124,7 +138,7 @@ bool Settings::parseJson(const std::string & json)
 void Settings::dump()
 {
 #if !defined(NDEBUG)
-    for (const auto & autoTray : autoTrays_) {
+    for (const AutoTray & autoTray : autoTrays_) {
         DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
         DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
         DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
@@ -132,6 +146,7 @@ void Settings::dump()
     }
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_TrayIcon], trayIcon_ ? "true" : "false");
 #endif

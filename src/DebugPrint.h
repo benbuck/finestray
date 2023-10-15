@@ -5,6 +5,6 @@
 #if defined(NDEBUG)
 #define DEBUG_PRINTF(fmt, ...)
 #else
-void debugPrintf(char const * fmt, ...);
+void debugPrintf(const char * fmt, ...);
 #define DEBUG_PRINTF(fmt, ...) debugPrintf(fmt, ##__VA_ARGS__)
 #endif

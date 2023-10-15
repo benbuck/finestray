@@ -11,7 +11,9 @@ namespace StringUtilities
 std::string toLower(const std::string & s)
 {
     std::string lower(s);
-    std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return (char)std::tolower(c); });
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) {
+        return (char)std::tolower(c);
+    });
     return lower;
 }
 

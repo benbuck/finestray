@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void debugPrintf(char const * fmt, ...)
+void debugPrintf(const char * fmt, ...)
 {
     char buf[65536];
 

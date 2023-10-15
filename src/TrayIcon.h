@@ -17,6 +17,7 @@ public:
     void destroy();
 
     inline UINT id() const { return nid_.uID; }
+
     inline HWND hwnd() const { return nid_.hWnd; }
 
 private:

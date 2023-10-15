@@ -17,5 +17,6 @@ void addAll();
 void restoreAll();
 HWND getFromID(UINT id);
 HWND getLast();
+bool exists(HWND hwnd);
 
 } // namespace TrayWindow

@@ -22,6 +22,8 @@ BEGIN
     IDS_ERROR_REGISTER_WINDOW_CLASS "Error creating window class"
     IDS_ERROR_CREATE_WINDOW         "Error creating window"
     IDS_ERROR_REGISTER_HOTKEY       "Couldn't register hotkey"
+    IDS_ERROR_REGISTER_MODIFIER     "Couldn't register modifier"
+    IDS_ERROR_REGISTER_EVENTHOOK    "Couldn't register event hook"
     IDS_ERROR_CREATE_TRAY_ICON      "Couldn't create tray icon"
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
     IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
