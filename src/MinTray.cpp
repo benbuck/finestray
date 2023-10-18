@@ -43,7 +43,7 @@ static void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
-static void showContextMenu(HWND hwnd);
+static bool showContextMenu(HWND hwnd);
 static std::string getResourceString(UINT id);
 static inline void errorMessage(UINT id);
 
@@ -313,7 +313,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch ((UINT)lParam) {
                 // user activated context menu
                 case WM_CONTEXTMENU: {
-                    showContextMenu(hwnd);
+                    if (!showContextMenu(hwnd)) {
+                        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+                    }
                     break;
                 }
 
@@ -533,73 +535,69 @@ void onMinimizeEvent(
     }
 }
 
-void showContextMenu(HWND hwnd)
+bool showContextMenu(HWND hwnd)
 {
     // create popup menu
     HMENU menu = CreatePopupMenu();
     if (!menu) {
         DEBUG_PRINTF("failed to create context menu, CreatePopupMenu() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
 
     // add menu entries
     if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
     if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
 
     // activate our window
     if (!SetForegroundWindow(hwnd)) {
         DEBUG_PRINTF("failed to activate context menu, SetForegroundWindow() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
 
     // get the current mouse position
     POINT point = { 0, 0 };
     if (!GetCursorPos(&point)) {
         DEBUG_PRINTF("failed to get menu position, GetCursorPos() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        return false;
     }
 
     // show the popup menu
     if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, nullptr)) {
         DEBUG_PRINTF("failed to show context menu, TrackPopupMenu() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
         if (!DestroyMenu(menu)) {
             DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
         }
-        return;
+        return false;
     }
 
     // force a task switch to our app
     if (!PostMessage(hwnd, WM_USER, 0, 0)) {
         DEBUG_PRINTF("failed to activate app, PostMessage() failed: %u\n", GetLastError());
-        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
-        return;
+        if (!DestroyMenu(menu)) {
+            DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
+        }
+        return false;
     }
 
     if (!DestroyMenu(menu)) {
         DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
     }
+
+    return true;
 }
 
 std::string getResourceString(UINT id)
