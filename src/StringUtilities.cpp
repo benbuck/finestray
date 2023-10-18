@@ -42,19 +42,19 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
     return strings;
 }
 
-bool stringToBool(const std::string s, bool & b)
-{
-    if ((s == "1") || (toLower(s) == "true")) {
-        b = true;
-        return true;
-    }
-
-    if ((s == "0") || (toLower(s) == "false")) {
-        b = false;
-        return true;
-    }
-
-    return false;
-}
+// bool stringToBool(const std::string s, bool & b)
+// {
+//     if ((s == "1") || (toLower(s) == "true")) {
+//         b = true;
+//         return true;
+//     }
+//
+//     if ((s == "0") || (toLower(s) == "false")) {
+//         b = false;
+//         return true;
+//     }
+//
+//     return false;
+// }
 
 } // namespace StringUtilities

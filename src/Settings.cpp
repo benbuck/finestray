@@ -18,7 +18,7 @@
 #include <shellapi.h>
 #include <stdlib.h>
 
-static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
+// static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 static double getNumber(const cJSON * cjson, const char * key, double defaultValue);
 static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
@@ -33,14 +33,13 @@ enum SettingKeys : unsigned int
     SK_HotkeyRestore,
     SK_ModifiersOverride,
     SK_PollInterval,
-    SK_TrayIcon,
 
     SK_Count
 };
 
 static const char * settingKeys_[SK_Count] = { "auto-tray",          "executable",      "window-class",
                                                "window-title",       "hotkey-minimize", "hotkey-restore",
-                                               "modifiers-override", "poll-interval",   "tray-icon" };
+                                               "modifiers-override", "poll-interval" };
 
 Settings::Settings()
     : autoTrays_()
@@ -48,7 +47,6 @@ Settings::Settings()
     , hotkeyRestore_()
     , modifiersOverride_()
     , pollInterval_(500)
-    , trayIcon_(true)
 {
 }
 
@@ -103,11 +101,6 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
-    argh::string_stream trayIconArg = args(settingKeys_[SK_TrayIcon], trayIcon_);
-    if (!StringUtilities::stringToBool(trayIconArg.str(), trayIcon_)) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_TrayIcon], trayIconArg.str().c_str());
-    }
-
     return true;
 }
 
@@ -130,7 +123,6 @@ bool Settings::parseJson(const std::string & json)
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
-    trayIcon_ = getBool(cjson, settingKeys_[SK_TrayIcon], trayIcon_);
 
     return true;
 }
@@ -148,7 +140,6 @@ void Settings::dump()
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_TrayIcon], trayIcon_ ? "true" : "false");
 #endif
 }
 
@@ -179,20 +170,20 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
     return true;
 }
 
-bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
-{
-    const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
-    if (!item) {
-        return defaultValue;
-    }
-
-    if (!cJSON_IsBool(item)) {
-        DEBUG_PRINTF("bad type for '%s'\n", item->string);
-        return defaultValue;
-    }
-
-    return cJSON_IsTrue(item) ? true : false;
-}
+// bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
+// {
+//     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
+//     if (!item) {
+//         return defaultValue;
+//     }
+//
+//     if (!cJSON_IsBool(item)) {
+//         DEBUG_PRINTF("bad type for '%s'\n", item->string);
+//         return defaultValue;
+//     }
+//
+//     return cJSON_IsTrue(item) ? true : false;
+// }
 
 double getNumber(const cJSON * cjson, const char * key, double defaultValue)
 {

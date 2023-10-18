@@ -176,11 +176,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     // create a tray icon for the app
     TrayIcon trayIcon;
-    if (settings_.trayIcon_) {
-        if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
-            errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
-            return IDS_ERROR_CREATE_TRAY_ICON;
-        }
+    if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
+        errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
+        return IDS_ERROR_CREATE_TRAY_ICON;
     }
 
     WindowList::start(hwnd, settings_.pollInterval_, onAddWindow, onRemoveWindow);

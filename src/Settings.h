@@ -34,7 +34,6 @@ public:
     std::string hotkeyRestore_;
     std::string modifiersOverride_;
     unsigned int pollInterval_;
-    bool trayIcon_;
 
 private:
     bool parseJson(const std::string & json);
