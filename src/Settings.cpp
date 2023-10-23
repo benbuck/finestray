@@ -46,7 +46,7 @@ Settings::Settings()
     , hotkeyMinimize_()
     , hotkeyRestore_()
     , modifiersOverride_()
-    , pollInterval_(500)
+    , pollInterval_(0)
 {
 }
 

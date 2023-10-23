@@ -7,6 +7,7 @@
 #include "Hotkey.h"
 #include "Resource.h"
 #include "Settings.h"
+#include "SettingsDialog.h"
 #include "StringUtilities.h"
 #include "TrayIcon.h"
 #include "TrayWindow.h"
@@ -21,8 +22,9 @@
 #include <set>
 
 static constexpr CHAR APP_NAME[] = "MinTray";
-static constexpr WORD IDM_EXIT = 0x1003;
+static constexpr WORD IDM_SETTINGS = 0x1003;
 static constexpr WORD IDM_ABOUT = 0x1004;
+static constexpr WORD IDM_EXIT = 0x1005;
 
 enum class HotkeyID
 {
@@ -43,12 +45,14 @@ static void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
+static void onSettingsDialogComplete(bool success, const Settings & settings);
 static bool showContextMenu(HWND hwnd);
 static std::string getResourceString(UINT id);
 static inline void errorMessage(UINT id);
 
-static Settings settings_;
 static HWND hwnd_;
+static HWND settingsDialog_;
+static Settings settings_;
 static std::set<HWND> autoTrayedWindows_;
 static UINT modifiersOverride_;
 
@@ -57,6 +61,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // unused
     (void)hPrevInstance;
     (void)pCmdLine;
+
+    // set default settings
+    settings_.hotkeyMinimize_ = "alt+ctrl+shift+down";
+    settings_.hotkeyRestore_ = "alt+ctrl+shift+up";
+    settings_.modifiersOverride_ = "alt+ctrl+shift";
+    settings_.pollInterval_ = 500;
 
     // get settings from file
     std::string fileName(std::string(APP_NAME) + ".json");
@@ -200,6 +210,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // run the message loop
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
+        // needed to have working tab stops in the dialog
+        if (settingsDialog_ && IsDialogMessageA(settingsDialog_, &msg)) {
+            continue;
+        }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -228,6 +242,11 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         // command from context menu
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
+                case IDM_SETTINGS: {
+                    settingsDialog_ = SettingsDialog::show(hwnd_, settings_, onSettingsDialogComplete);
+                    break;
+                }
+
                 // about dialog
                 case IDM_ABOUT: {
                     const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
@@ -240,7 +259,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 // exit the app
                 case IDM_EXIT: {
-                    SendMessage(hwnd, WM_DESTROY, 0, 0);
+                    PostQuitMessage(0);
                     break;
                 }
             }
@@ -533,6 +552,15 @@ void onMinimizeEvent(
     }
 }
 
+void onSettingsDialogComplete(bool success, const Settings & settings)
+{
+    if (success) {
+        settings_ = settings;
+    }
+
+    settingsDialog_ = nullptr;
+}
+
 bool showContextMenu(HWND hwnd)
 {
     // create popup menu
@@ -548,6 +576,10 @@ bool showContextMenu(HWND hwnd)
         return false;
     }
     if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        return false;
+    }
+    if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
         return false;
     }

@@ -15,6 +15,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 STRINGTABLE
 BEGIN
+    IDS_MENU_SETTINGS               "Settings"
     IDS_MENU_ABOUT                  "About"
     IDS_MENU_EXIT                   "Exit"
     IDS_ABOUT_CAPTION               "About " APP_NAME
@@ -27,6 +28,23 @@ BEGIN
     IDS_ERROR_CREATE_TRAY_ICON      "Couldn't create tray icon"
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
     IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
+END
+
+IDD_DIALOG_SETTINGS DIALOGEX 0, 0, 200, 100
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "MinTray Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Minimize Hotkey",IDC_STATIC,10,9,52,8
+    EDITTEXT        IDC_HOTKEY_MINIMIZE,61,7,130,14, WS_TABSTOP
+    LTEXT           "Restore Hotkey",IDC_STATIC,10,27,52,8
+    EDITTEXT        IDC_HOTKEY_RESTORE,61,25,130,14, WS_TABSTOP
+    LTEXT           "Override Modifier",IDC_STATIC,10,45,52,8
+    EDITTEXT        IDC_MODIFIER_OVERRIDE,61,43,130,14, WS_TABSTOP
+    LTEXT           "Poll Interval",IDC_STATIC,10,63,52,8
+    EDITTEXT        IDC_POLL_INTERVAL,61,61,130,14, WS_TABSTOP | ES_NUMBER
+    PUSHBUTTON      "Cancel",IDCANCEL,85,80,50,14
+    DEFPUSHBUTTON   "OK",IDOK,140,80,50,14
 END
 
 VS_VERSION_INFO VERSIONINFO

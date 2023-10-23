@@ -111,6 +111,8 @@ add_executable(MinTray WIN32
     src/Resource.h
     src/Settings.cpp
     src/Settings.h
+    src/SettingsDialog.cpp
+    src/SettingsDialog.h
     src/StringUtilities.cpp
     src/StringUtilities.h
     src/TrayIcon.cpp
