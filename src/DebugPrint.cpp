@@ -9,7 +9,7 @@
 
 void debugPrintf(const char * fmt, ...)
 {
-    char buf[65536];
+    char buf[1024];
 
     va_list ap;
     va_start(ap, fmt);

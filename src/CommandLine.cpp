@@ -52,7 +52,7 @@ bool getArgs(int * argc, char *** argv)
         return false;
     }
 
-    *argv = new char *[*argc + 1];
+    *argv = new char *[(size_t)*argc + 1];
     if (!*argv) {
         *argc = 0;
         if (LocalFree(wargv)) {
