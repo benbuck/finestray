@@ -17,7 +17,7 @@ static HWND hwnd_;
 static Settings settings_;
 static CompletionCallback completionCallback_;
 
-HWND show(HWND hwnd, const Settings & settings, CompletionCallback completionCallback)
+HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionCallback)
 {
     hwnd_ = hwnd;
     settings_ = settings;
@@ -104,6 +104,7 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
     }
+
     return FALSE;
 }
 

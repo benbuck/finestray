@@ -243,7 +243,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
                 case IDM_SETTINGS: {
-                    settingsDialog_ = SettingsDialog::show(hwnd_, settings_, onSettingsDialogComplete);
+                    if (!settingsDialog_) {
+                        settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                    }
                     break;
                 }
 
