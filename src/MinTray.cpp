@@ -33,6 +33,8 @@ enum class HotkeyID
 };
 
 static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static int init();
+static void cleanup();
 static bool modifiersActive(UINT modifiers);
 static bool isAutoTrayWindow(HWND hwnd);
 static void onAddWindow(HWND hwnd);
@@ -54,6 +56,8 @@ static HWND hwnd_;
 static HWND settingsDialog_;
 static Settings settings_;
 static std::set<HWND> autoTrayedWindows_;
+static Hotkey hotkeyMinimize_;
+static Hotkey hotkeyRestore_;
 static UINT modifiersOverride_;
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
@@ -142,48 +146,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // ShowWindow(hwnd, nCmdShow);
     (void)nCmdShow;
 
-    // register a hotkey that will be used to minimize windows
-    Hotkey hotkeyMinimize;
-    UINT vkMinimize = VK_DOWN;
-    UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
-        errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-        return IDS_ERROR_REGISTER_HOTKEY;
-    }
-    if (vkMinimize && modifiersMinimize) {
-        if (!hotkeyMinimize.create((INT)HotkeyID::Minimize, hwnd, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
-            errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-            return IDS_ERROR_REGISTER_HOTKEY;
-        }
-    }
-
-    // register a hotkey that will be used to restore windows
-    Hotkey hotkeyRestore;
-    UINT vkRestore = VK_UP;
-    UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
-        errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-        return IDS_ERROR_REGISTER_HOTKEY;
-    }
-    if (vkRestore && modifiersRestore) {
-        if (!hotkeyRestore.create((INT)HotkeyID::Restore, hwnd, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
-            errorMessage(IDS_ERROR_REGISTER_HOTKEY);
-            return IDS_ERROR_REGISTER_HOTKEY;
-        }
-    }
-
-    UINT vkOverride = 0;
-    modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
-        errorMessage(IDS_ERROR_REGISTER_MODIFIER);
-        return IDS_ERROR_REGISTER_MODIFIER;
-    }
-    if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
-        DEBUG_PRINTF("invalid override modifers\n");
-        errorMessage(IDS_ERROR_REGISTER_MODIFIER);
-        return IDS_ERROR_REGISTER_MODIFIER;
-    }
-
     // create a tray icon for the app
     TrayIcon trayIcon;
     if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
@@ -191,8 +153,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
 
-    WindowList::start(hwnd, settings_.pollInterval_, onAddWindow, onRemoveWindow);
-
+    // monitor minimize events
     HWINEVENTHOOK hWinEventHook = SetWinEventHook(
         EVENT_SYSTEM_MINIMIZESTART,
         EVENT_SYSTEM_MINIMIZESTART,
@@ -205,6 +166,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         DEBUG_PRINTF("failed to hook win event %#x, SetWinEventHook() failed: %u\n", hwnd, GetLastError());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
         return IDS_ERROR_REGISTER_EVENTHOOK;
+    }
+
+    int err = init();
+    if (err) {
+        errorMessage(err);
+        settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
     }
 
     // run the message loop
@@ -222,10 +189,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         DEBUG_PRINTF("failed to unhook win event %#x, UnhookWinEvent() failed: %u\n", hwnd, GetLastError());
     }
 
-    WindowList::stop();
-
-    hotkeyRestore.destroy();
-    hotkeyMinimize.destroy();
+    cleanup();
 
     if (!DestroyWindow(hwnd)) {
         DEBUG_PRINTF("failed to destroy window %#x, DestroyWindow() failed: %u\n", hwnd, GetLastError());
@@ -370,6 +334,55 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+int init()
+{
+    // register a hotkey that will be used to minimize windows
+    UINT vkMinimize = VK_DOWN;
+    UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (vkMinimize && modifiersMinimize) {
+        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+            return IDS_ERROR_REGISTER_HOTKEY;
+        }
+    }
+
+    // register a hotkey that will be used to restore windows
+    UINT vkRestore = VK_UP;
+    UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (vkRestore && modifiersRestore) {
+        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+            return IDS_ERROR_REGISTER_HOTKEY;
+        }
+    }
+
+    UINT vkOverride = 0;
+    modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
+        return IDS_ERROR_REGISTER_MODIFIER;
+    }
+    if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
+        DEBUG_PRINTF("invalid override modifers\n");
+        return IDS_ERROR_REGISTER_MODIFIER;
+    }
+
+    WindowList::start(hwnd_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
+
+    return 0;
+}
+
+void cleanup()
+{
+    WindowList::stop();
+
+    hotkeyRestore_.destroy();
+    hotkeyMinimize_.destroy();
 }
 
 bool modifiersActive(UINT modifiers)
@@ -558,6 +571,16 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 {
     if (success) {
         settings_ = settings;
+        DEBUG_PRINTF("got updated settings from dialog:\n");
+        settings_.dump();
+
+        cleanup();
+        int err = init();
+        if (err) {
+            errorMessage(err);
+            settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+            return;
+        }
     }
 
     settingsDialog_ = nullptr;
@@ -640,6 +663,7 @@ std::string getResourceString(UINT id)
     str.resize(256);
     if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
         DEBUG_PRINTF("failed to load resources string %u, LoadStringA() faile: %u\n", id, GetLastError());
+        str = "Error ID: " + std::to_string(id);
     }
 
     return str;

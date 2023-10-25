@@ -30,23 +30,6 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
     return dlg;
 }
 
-bool validateControl(HWND hwnd, WORD control)
-{
-    DEBUG_PRINTF("changed %#x\n", control);
-    CHAR dlgItemText[256];
-    if (!GetDlgItemTextA(hwnd, control, dlgItemText, sizeof(dlgItemText))) {
-        *dlgItemText = 0;
-    }
-    UINT key = 0;
-    UINT modifiers = 0;
-    if (!Hotkey::parse(dlgItemText, key, modifiers)) {
-        DEBUG_PRINTF("invalid hotkey\n");
-        return false;
-    }
-    DEBUG_PRINTF("hotkey %s\n", dlgItemText);
-    return true;
-}
-
 INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     DEBUG_PRINTF("wnd %#x, message %#x, wparam %#x, lparam %#x\n", hwndDlg, message, wParam, lParam);
@@ -64,9 +47,6 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND: {
             switch (HIWORD(wParam)) {
                 case EN_CHANGE: {
-                    bool valid = validateControl(hwndDlg, LOWORD(wParam));
-                    HWND hwndOk = GetDlgItem(hwndDlg, IDOK);
-                    EnableWindow(hwndOk, valid);
                     break;
                 }
 
@@ -75,22 +55,35 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
                     switch (LOWORD(wParam)) {
                         case IDOK: {
                             CHAR dlgItemText[256];
-                            if (!GetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
-                                *dlgItemText = 0;
+                            if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
+                                settings_.hotkeyMinimize_ = dlgItemText;
                             }
-                            DEBUG_PRINTF("got dialog hotkey minimize %s\n", dlgItemText);
+                            if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_RESTORE, dlgItemText, sizeof(dlgItemText))) {
+                                settings_.hotkeyRestore_ = dlgItemText;
+                            }
+                            if (GetDlgItemTextA(hwndDlg, IDC_MODIFIER_OVERRIDE, dlgItemText, sizeof(dlgItemText))) {
+                                settings_.modifiersOverride_ = dlgItemText;
+                            }
+                            if (GetDlgItemTextA(hwndDlg, IDC_POLL_INTERVAL, dlgItemText, sizeof(dlgItemText))) {
+                                settings_.pollInterval_ = std::stoul(dlgItemText);
+                            }
+
                             EndDialog(hwndDlg, wParam);
+
                             if (completionCallback_) {
                                 completionCallback_(true, settings_);
                             }
-                            return true;
+
+                            return TRUE;
                         }
 
                         case IDCANCEL: {
                             EndDialog(hwndDlg, wParam);
+
                             if (completionCallback_) {
                                 completionCallback_(false, settings_);
                             }
+
                             return TRUE;
                         }
                     }
