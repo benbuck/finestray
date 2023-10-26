@@ -13,6 +13,9 @@
 #define IDS_MENU_EXIT                   203
 #define IDS_ABOUT_CAPTION               204
 #define IDS_ABOUT_TEXT                  205
+#define IDS_COLUMN_EXECUTABLE           206
+#define IDS_COLUMN_WINDOW_CLASS         207
+#define IDS_COLUMN_WINDOW_TITLE         208
 #define IDS_ERROR_REGISTER_WINDOW_CLASS 301
 #define IDS_ERROR_CREATE_WINDOW         302
 #define IDS_ERROR_REGISTER_HOTKEY       303
@@ -30,5 +33,6 @@
 #define IDC_HOTKEY_RESTORE              1002
 #define IDC_MODIFIER_OVERRIDE           1003
 #define IDC_POLL_INTERVAL               1004
+#define IDC_AUTO_TRAY_LIST              1005
 
 // clang-format on
