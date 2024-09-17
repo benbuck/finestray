@@ -5,7 +5,6 @@
 // MinTray
 #include "DebugPrint.h"
 #include "File.h"
-#include "StringUtilities.h"
 
 // argh
 #include <argh.h>
@@ -149,7 +148,7 @@ void Settings::addAutoTray(const std::string & executable, const std::string & w
     autoTray.executable_ = executable;
     autoTray.windowClass_ = windowClass;
     autoTray.windowTitle_ = windowTitle;
-    autoTrays_.emplace_back(autoTray);
+    autoTrays_.push_back(autoTray);
 }
 
 bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)

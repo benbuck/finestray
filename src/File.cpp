@@ -4,6 +4,7 @@
 
 // MinTray
 #include "DebugPrint.h"
+#include "StringUtility.h"
 
 // standard library
 #include <cstring>
@@ -15,11 +16,17 @@ std::string fileRead(const std::string & fileName)
     HANDLE file =
         CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
-        DEBUG_PRINTF("could not open '%s' for reading, CreateFileA() failed: %u\n", fileName.c_str(), GetLastError());
+        DEBUG_PRINTF(
+            "could not open '%s' for reading, CreateFileA() failed: %s\n",
+            fileName.c_str(),
+            StringUtility::lastErrorString().c_str());
     } else {
         LARGE_INTEGER fileSize;
         if (!GetFileSizeEx(file, &fileSize)) {
-            DEBUG_PRINTF("could not get file size for '%s', GetFileSizeEx() failed: %u\n", fileName.c_str(), GetLastError());
+            DEBUG_PRINTF(
+                "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
+                fileName.c_str(),
+                StringUtility::lastErrorString().c_str());
         } else {
             std::string buffer;
             buffer.resize(fileSize.QuadPart + 1);
@@ -28,7 +35,7 @@ std::string fileRead(const std::string & fileName)
             DWORD bytesRead = 0;
             if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
                 DEBUG_PRINTF(
-                    "could not read %d bytes from '%s', ReadFile() failed: %u\n",
+                    "could not read %d bytes from '%s', ReadFile() failed: %s\n",
                     fileSize,
                     fileName.c_str(),
                     GetLastError());
@@ -51,7 +58,9 @@ std::string getExecutablePath()
 {
     CHAR path[MAX_PATH];
     if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
-        DEBUG_PRINTF("could not get executable path, GetModuleFileNameA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF(
+            "could not get executable path, GetModuleFileNameA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         return std::string();
     }
 

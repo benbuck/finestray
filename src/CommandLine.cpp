@@ -4,90 +4,50 @@
 
 // MinTray
 #include "DebugPrint.h"
+#include "StringUtility.h"
 
 // windows
 #include <Windows.h>
 
-// standard library
-#include <algorithm>
-
-char * wideStringToString(const wchar_t * ws)
+CommandLine::CommandLine()
+    : args_()
+    , argv_()
 {
-    int ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, nullptr, 0, nullptr, nullptr);
-    if (ret <= 0) {
-        DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-        return nullptr;
-    }
-
-    size_t len = (size_t)ret + 1;
-    char * s = new char[len];
-
-    ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, s, (int)len, nullptr, nullptr);
-    if (ret <= 0) {
-        DEBUG_PRINTF("WideCharToMultiByte() failed: %u\n", GetLastError());
-        delete[] s;
-        return nullptr;
-    }
-
-    return s;
 }
 
-namespace CommandLine
+bool CommandLine::parse()
 {
-
-bool getArgs(int * argc, char *** argv)
-{
-    *argc = 0;
-    *argv = nullptr;
-
     LPWSTR commandLine = GetCommandLineW();
     if (!commandLine) {
-        DEBUG_PRINTF("GetCommandLine() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("GetCommandLine() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
-    wchar_t ** wargv = CommandLineToArgvW(commandLine, argc);
-    if (!*argc || !wargv) {
-        DEBUG_PRINTF("CommandLineToArgvW() failed: %u\n", GetLastError());
+    DEBUG_PRINTF("Got command line: %ls\n", commandLine);
+
+    int argc = 0;
+    wchar_t ** wargv = CommandLineToArgvW(commandLine, &argc);
+    if (!argc || !wargv) {
+        DEBUG_PRINTF("CommandLineToArgvW() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
-    *argv = new char *[(size_t)*argc + 1];
-    if (!*argv) {
-        *argc = 0;
-        if (LocalFree(wargv)) {
-            DEBUG_PRINTF("LocalFree() failed: %u\n", GetLastError());
-        }
-        return false;
-    }
+    args_.resize(argc);
+    argv_.resize(argc);
 
-    std::fill_n(*argv, *argc + 1, nullptr);
-
-    for (int a = 0; a < *argc; ++a) {
-        (*argv)[a] = wideStringToString(wargv[a]);
-        if (!(*argv)[a]) {
-            freeArgs(*argc, *argv);
-            *argv = nullptr;
-            *argc = 0;
+    for (size_t a = 0; a < args_.size(); ++a) {
+        args_[a] = StringUtility::wideStringToString(wargv[a]).c_str();
+        if (args_[a].empty()) {
+            args_.clear();
+            argv_.clear();
             return false;
         }
+        argv_[a] = args_[a].c_str();
     }
 
     if (LocalFree(wargv)) {
-        DEBUG_PRINTF("LocalFree() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("LocalFree() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     return true;
 }
-
-void freeArgs(int argc, char ** argv)
-{
-    if (argv) {
-        for (int a = 0; a < argc; ++a) {
-            delete[] argv[a];
-        }
-        delete[] argv;
-    }
-}
-
-} // namespace CommandLine

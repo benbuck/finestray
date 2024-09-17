@@ -1,6 +1,7 @@
 // Copyright 2020 Benbuck Nason
 
 #include <winres.h>
+#include <CommCtrl.h>
 
 #include "Resource.h"
 
@@ -20,9 +21,11 @@ BEGIN
     IDS_MENU_EXIT                   "Exit"
     IDS_ABOUT_CAPTION               "About " APP_NAME
     IDS_ABOUT_TEXT                  APP_NAME "\nVersion " APP_VERSION_STRING "\nhttps://github.com/benbuck/mintray\n\nThis program is distributed under the ISC License.\n" APP_COPYRIGHT
+    IDS_COLUMN_INDEX                ""
     IDS_COLUMN_EXECUTABLE           "Executable"
     IDS_COLUMN_WINDOW_CLASS         "Class"
     IDS_COLUMN_WINDOW_TITLE         "Title"
+    IDS_ITEM_EMPTY                  "<empty>"
     IDS_ERROR_REGISTER_WINDOW_CLASS "Error creating window class"
     IDS_ERROR_CREATE_WINDOW         "Error creating window"
     IDS_ERROR_REGISTER_HOTKEY       "Couldn't register hotkey"
@@ -31,6 +34,7 @@ BEGIN
     IDS_ERROR_CREATE_TRAY_ICON      "Couldn't create tray icon"
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
     IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
+    IDS_ERROR_INIT_COMMON_CONTROLS  "Failed to initialize common controls"
 END
 
 IDD_DIALOG_SETTINGS DIALOGEX 0, 0, 400, 210
@@ -47,7 +51,7 @@ BEGIN
     LTEXT           "Poll Interval",IDC_STATIC,10,63,52,8
     EDITTEXT        IDC_POLL_INTERVAL,61,61,330,14, WS_TABSTOP | ES_NUMBER
     LTEXT           "Auto-tray windows",IDC_STATIC,10,83,51,8
-    CONTROL         "", IDC_AUTO_TRAY_LIST, "SysListView32", WS_TABSTOP | LVS_REPORT | WS_HSCROLL | WS_VSCROLL, 9,95,382,89
+    CONTROL         "", IDC_AUTO_TRAY_LIST, WC_LISTVIEWA, WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | WS_HSCROLL | WS_VSCROLL, 9,95,382,89
     PUSHBUTTON      "Cancel",IDCANCEL,285,190,50,14
     DEFPUSHBUTTON   "OK",IDOK,340,190,50,14
 END

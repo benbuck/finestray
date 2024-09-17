@@ -2,10 +2,22 @@
 
 #pragma once
 
-namespace CommandLine
+// standard library
+#include <string>
+#include <vector>
+
+class CommandLine
 {
+public:
+    CommandLine();
 
-bool getArgs(int * argc, char *** argv);
-void freeArgs(int argc, char ** argv);
+    bool parse();
 
-} // namespace CommandLine
+    inline int getArgc() const { return static_cast<int>(args_.size()); }
+
+    inline const char ** getArgv() const { return const_cast<const char **>(argv_.data()); }
+
+private:
+    std::vector<std::string> args_;
+    std::vector<const char *> argv_;
+};

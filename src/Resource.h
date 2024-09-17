@@ -11,11 +11,13 @@
 #define IDS_MENU_SETTINGS               201
 #define IDS_MENU_ABOUT                  202
 #define IDS_MENU_EXIT                   203
-#define IDS_ABOUT_CAPTION               204
-#define IDS_ABOUT_TEXT                  205
-#define IDS_COLUMN_EXECUTABLE           206
-#define IDS_COLUMN_WINDOW_CLASS         207
-#define IDS_COLUMN_WINDOW_TITLE         208
+#define IDS_ABOUT_CAPTION               211
+#define IDS_ABOUT_TEXT                  212
+#define IDS_COLUMN_INDEX                221
+#define IDS_COLUMN_EXECUTABLE           222
+#define IDS_COLUMN_WINDOW_CLASS         223
+#define IDS_COLUMN_WINDOW_TITLE         224
+#define IDS_ITEM_EMPTY                  231
 #define IDS_ERROR_REGISTER_WINDOW_CLASS 301
 #define IDS_ERROR_CREATE_WINDOW         302
 #define IDS_ERROR_REGISTER_HOTKEY       303
@@ -24,6 +26,7 @@
 #define IDS_ERROR_CREATE_TRAY_ICON      306
 #define IDS_ERROR_CREATE_POPUP_MENU     307
 #define IDS_ERROR_COMMAND_LINE          308
+#define IDS_ERROR_INIT_COMMON_CONTROLS  309
 
 // dialogs
 #define IDD_DIALOG_SETTINGS             401

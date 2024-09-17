@@ -8,12 +8,13 @@
 #include "Resource.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
-#include "StringUtilities.h"
+#include "StringUtility.h"
 #include "TrayIcon.h"
 #include "TrayWindow.h"
 #include "WindowList.h"
 
 // windows
+#include <CommCtrl.h>
 #include <Psapi.h>
 #include <Windows.h>
 
@@ -66,6 +67,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)hPrevInstance;
     (void)pCmdLine;
 
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC = ICC_LISTVIEW_CLASSES;
+    if (!InitCommonControlsEx(&icex)) {
+        errorMessage(IDS_ERROR_INIT_COMMON_CONTROLS);
+        return IDS_ERROR_INIT_COMMON_CONTROLS;
+    }
+
     // set default settings
     settings_.hotkeyMinimize_ = "alt+ctrl+shift+down";
     settings_.hotkeyRestore_ = "alt+ctrl+shift+up";
@@ -86,14 +95,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
 
     // get settings from command line
-    int argc;
-    char ** argv;
-    if (!CommandLine::getArgs(&argc, &argv)) {
+    CommandLine commandLine;
+    if (!commandLine.parse()) {
         errorMessage(IDS_ERROR_COMMAND_LINE);
         return IDS_ERROR_COMMAND_LINE;
     }
-    bool parsed = settings_.parseCommandLine(argc, argv);
-    CommandLine::freeArgs(argc, argv);
+    bool parsed = settings_.parseCommandLine(commandLine.getArgc(), commandLine.getArgv());
     if (!parsed) {
         errorMessage(IDS_ERROR_COMMAND_LINE);
         return IDS_ERROR_COMMAND_LINE;
@@ -115,7 +122,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     wc.hIconSm = icon;
     ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
-        DEBUG_PRINTF("could not create window class, RegisterClassExA() failed: %u", GetLastError());
+        DEBUG_PRINTF("could not create window class, RegisterClassExA() s", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
@@ -135,7 +142,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         nullptr // application data
     );
     if (!hwnd) {
-        DEBUG_PRINTF("could not create window, CreateWindowA() failed: %u", GetLastError());
+        DEBUG_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_WINDOW);
         return IDS_ERROR_CREATE_WINDOW;
     }
@@ -163,7 +170,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         0,
         WINEVENT_OUTOFCONTEXT);
     if (!hWinEventHook) {
-        DEBUG_PRINTF("failed to hook win event %#x, SetWinEventHook() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
@@ -186,13 +196,19 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
 
     if (!UnhookWinEvent(hWinEventHook)) {
-        DEBUG_PRINTF("failed to unhook win event %#x, UnhookWinEvent() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     cleanup();
 
     if (!DestroyWindow(hwnd)) {
-        DEBUG_PRINTF("failed to destroy window %#x, DestroyWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to destroy window %#x, DestroyWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     return 0;
@@ -218,7 +234,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
                     const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
                     if (!MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION)) {
-                        DEBUG_PRINTF("could not create about dialog, MessageBoxA() failed: %u\n", GetLastError());
+                        DEBUG_PRINTF(
+                            "could not create about dialog, MessageBoxA() failed: %s\n",
+                            StringUtility::lastErrorString().c_str());
                     }
                     break;
                 }
@@ -302,8 +320,12 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
-                // mouse moved over icon
-                case WM_MOUSEMOVE: {
+                case WM_LBUTTONDOWN: // left click down on icon
+                case WM_LBUTTONUP: // left click up on icon
+                case WM_MOUSEMOVE: // mouse moved over icon
+                case WM_RBUTTONDOWN: // right click down on icon
+                case WM_RBUTTONUP: // right click up on icon
+                {
                     // nothing to do
                     break;
                 }
@@ -432,14 +454,14 @@ bool isAutoTrayWindow(HWND hwnd)
     CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
     if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
-        DEBUG_PRINTF("GetWindowThreadProcessId() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
         if (!hProc) {
-            DEBUG_PRINTF("OpenProcess() failed: %u\n", GetLastError());
+            DEBUG_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
             if (!GetModuleFileNameExA((HMODULE)hProc, nullptr, executable, sizeof(executable))) {
-                DEBUG_PRINTF("GetModuleFileNameA() failed: %u\n", GetLastError());
+                DEBUG_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
             }
@@ -449,14 +471,18 @@ bool isAutoTrayWindow(HWND hwnd)
 
     CHAR windowText[128];
     if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
-        // DEBUG_PRINTF("failed to get window text %#x, GetWindowTextA() failed: %u\n", hwnd, GetLastError());
+        // DEBUG_PRINTF("failed to get window text %#x, GetWindowTextA() failed: %s\n", hwnd,
+        // StringUtility::lastErrorString().c_str());
     } else {
         DEBUG_PRINTF("\ttitle: %s\n", windowText);
     }
 
     CHAR className[1024];
     if (!GetClassNameA(hwnd, className, sizeof(className))) {
-        DEBUG_PRINTF("failed to get window class name %#x, GetClassNameA() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to get window class name %#x, GetClassNameA() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     } else {
         DEBUG_PRINTF("\tclass: %s\n", className);
     }
@@ -591,48 +617,54 @@ bool showContextMenu(HWND hwnd)
     // create popup menu
     HMENU menu = CreatePopupMenu();
     if (!menu) {
-        DEBUG_PRINTF("failed to create context menu, CreatePopupMenu() failed: %u\n", GetLastError());
+        DEBUG_PRINTF(
+            "failed to create context menu, CreatePopupMenu() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         return false;
     }
 
     // add menu entries
     if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
     // activate our window
     if (!SetForegroundWindow(hwnd)) {
-        DEBUG_PRINTF("failed to activate context menu, SetForegroundWindow() failed: %u\n", GetLastError());
+        DEBUG_PRINTF(
+            "failed to activate context menu, SetForegroundWindow() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         return false;
     }
 
     // get the current mouse position
     POINT point = { 0, 0 };
     if (!GetCursorPos(&point)) {
-        DEBUG_PRINTF("failed to get menu position, GetCursorPos() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to get menu position, GetCursorPos() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
     // show the popup menu
     if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, nullptr)) {
-        DEBUG_PRINTF("failed to show context menu, TrackPopupMenu() failed: %u\n", GetLastError());
+        DEBUG_PRINTF(
+            "failed to show context menu, TrackPopupMenu() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         if (!DestroyMenu(menu)) {
             DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
         }
@@ -641,7 +673,7 @@ bool showContextMenu(HWND hwnd)
 
     // force a task switch to our app
     if (!PostMessage(hwnd, WM_USER, 0, 0)) {
-        DEBUG_PRINTF("failed to activate app, PostMessage() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("failed to activate app, PostMessage() failed: %s\n", StringUtility::lastErrorString().c_str());
         if (!DestroyMenu(menu)) {
             DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
         }
@@ -662,7 +694,10 @@ std::string getResourceString(UINT id)
     std::string str;
     str.resize(256);
     if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
-        DEBUG_PRINTF("failed to load resources string %u, LoadStringA() faile: %u\n", id, GetLastError());
+        DEBUG_PRINTF(
+            "failed to load resources string %u, LoadStringA() faile: %u\n",
+            id,
+            StringUtility::lastErrorString().c_str());
         str = "Error ID: " + std::to_string(id);
     }
 
@@ -674,6 +709,9 @@ void errorMessage(UINT id)
     const std::string & err = getResourceString(id);
     DEBUG_PRINTF("error: %s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
-        DEBUG_PRINTF("failed to display error message %u, MessageBoxA() failed\n", id, GetLastError());
+        DEBUG_PRINTF(
+            "failed to display error message %u, MessageBoxA() failed\n",
+            id,
+            StringUtility::lastErrorString().c_str());
     }
 }

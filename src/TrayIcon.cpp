@@ -4,6 +4,7 @@
 
 // MinTray
 #include "DebugPrint.h"
+#include "StringUtility.h"
 
 volatile LONG TrayIcon::gid_ = 0;
 
@@ -34,18 +35,20 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
     nid_.uCallbackMessage = msg;
     nid_.hIcon = icon;
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
-        DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
     nid_.uVersion = NOTIFYICON_VERSION;
 
     if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
-        DEBUG_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %s\n", StringUtility::lastErrorString().c_str());
         ZeroMemory(&nid_, sizeof(nid_));
         return false;
     }
 
     if (!Shell_NotifyIconA(NIM_SETVERSION, &nid_)) {
-        DEBUG_PRINTF("could not set tray icon version, Shell_NotifyIcon() failed: %u\n", GetLastError());
+        DEBUG_PRINTF(
+            "could not set tray icon version, Shell_NotifyIcon() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         destroy();
         return false;
     }
@@ -57,7 +60,9 @@ void TrayIcon::destroy()
 {
     if (nid_.uID) {
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
-            DEBUG_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %u\n", GetLastError());
+            DEBUG_PRINTF(
+                "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
         }
 
         ZeroMemory(&nid_, sizeof(nid_));

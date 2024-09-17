@@ -113,8 +113,8 @@ add_executable(MinTray WIN32
     src/Settings.h
     src/SettingsDialog.cpp
     src/SettingsDialog.h
-    src/StringUtilities.cpp
-    src/StringUtilities.h
+    src/StringUtility.cpp
+    src/StringUtility.h
     src/TrayIcon.cpp
     src/TrayIcon.h
     src/TrayWindow.cpp
@@ -142,6 +142,8 @@ target_link_libraries(MinTray
     PRIVATE
         argh
         cJSON
+
+        Comctl32.lib
 )
 
 install(

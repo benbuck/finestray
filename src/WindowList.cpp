@@ -4,6 +4,7 @@
 
 // MinTray
 #include "DebugPrint.h"
+#include "StringUtility.h"
 
 // standard library
 #include <set>
@@ -31,7 +32,7 @@ void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND), void (*r
     if (pollMillis_ > 0) {
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
         if (!timer_) {
-            DEBUG_PRINTF("SetTimer() failed: %u\n", GetLastError());
+            DEBUG_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 }
@@ -55,7 +56,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
     std::set<HWND> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
-        DEBUG_PRINTF("could not list windows: EnumWindows() failed: %u\n", GetLastError());
+        DEBUG_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows

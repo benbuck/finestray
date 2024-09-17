@@ -4,6 +4,7 @@
 
 // MinTray
 #include "DebugPrint.h"
+#include "StringUtility.h"
 #include "TrayIcon.h"
 
 // standard library
@@ -39,12 +40,15 @@ void minimize(HWND hwnd, HWND messageWnd)
 
     // minimize window
     if (!ShowWindow(hwnd, SW_MINIMIZE)) {
-        DEBUG_PRINTF("failed to minimize window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to minimize window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     // hide window
     if (!ShowWindow(hwnd, SW_HIDE)) {
-        DEBUG_PRINTF("failed to hide window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF("failed to hide window %#x, ShowWindow() failed: %s\n", hwnd, StringUtility::lastErrorString().c_str());
     }
 
     // add tray icon
@@ -55,11 +59,17 @@ void minimize(HWND hwnd, HWND messageWnd)
             DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
 
             if (!ShowWindow(hwnd, SW_SHOW)) {
-                DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+                DEBUG_PRINTF(
+                    "failed to show window %#x, ShowWindow() failed: %s\n",
+                    hwnd,
+                    StringUtility::lastErrorString().c_str());
             }
 
             if (!SetForegroundWindow(hwnd)) {
-                DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: \n", hwnd, GetLastError());
+                DEBUG_PRINTF(
+                    "failed to set foreground window %#x, SetForegroundWindow() failed: \n",
+                    hwnd,
+                    StringUtility::lastErrorString().c_str());
             }
 
             return;
@@ -72,15 +82,21 @@ void restore(HWND hwnd)
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
     if (!ShowWindow(hwnd, SW_SHOW)) {
-        DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %s\n", hwnd, StringUtility::lastErrorString().c_str());
     }
 
     if (!ShowWindow(hwnd, SW_RESTORE)) {
-        DEBUG_PRINTF("failed to restore window %#x, ShowWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to restore window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     if (!SetForegroundWindow(hwnd)) {
-        DEBUG_PRINTF("failed to set foreground window %#x, SetForegroundWindow() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to set foreground window %#x, SetForegroundWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     remove(hwnd);
@@ -92,7 +108,10 @@ void close(HWND hwnd)
 
     // close the window
     if (!PostMessage(hwnd, WM_CLOSE, 0, 0)) {
-        DEBUG_PRINTF("failed to post close to %#x, PostMessage() failed: %u\n", hwnd, GetLastError());
+        DEBUG_PRINTF(
+            "failed to post close to %#x, PostMessage() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     // wait for close to complete
@@ -174,7 +193,7 @@ bool add(HWND hwnd, HWND messageWnd)
     }
 
     // add the window
-    trayIcons_.emplace_back(IconData(hwnd, new TrayIcon()));
+    trayIcons_.emplace_back(hwnd, new TrayIcon());
     return trayIcons_.back().trayIcon_->create(messageWnd, WM_TRAYWINDOW, getIcon(hwnd));
 }
 

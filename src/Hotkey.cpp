@@ -4,7 +4,7 @@
 
 // MinTray
 #include "DebugPrint.h"
-#include "StringUtilities.h"
+#include "StringUtility.h"
 
 // windows
 #include <Windows.h>
@@ -47,7 +47,10 @@ bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
     id_ = id;
 
     if (!RegisterHotKey(hwnd, id, hotkeyModifiers, hotkey)) {
-        DEBUG_PRINTF("failed to register hotkey %d, RegisterHotKey() failed: %u\n", id_, GetLastError());
+        DEBUG_PRINTF(
+            "failed to register hotkey %d, RegisterHotKey() failed: %s\n",
+            id_,
+            StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -58,7 +61,10 @@ void Hotkey::destroy()
 {
     if (id_ >= 0) {
         if (!UnregisterHotKey(hwnd_, id_)) {
-            DEBUG_PRINTF("failed to unregister hotkey %d, UnregisterHotKey failed: %u\n", id_, GetLastError());
+            DEBUG_PRINTF(
+                "failed to unregister hotkey %d, UnregisterHotKey failed: %s\n",
+                id_,
+                StringUtility::lastErrorString().c_str());
         }
 
         id_ = -1;
@@ -75,14 +81,14 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
     key = 0;
     modifiers = 0;
 
-    if (StringUtilities::toLower(hotkeyStr) == "none") {
+    if (StringUtility::toLower(hotkeyStr) == "none") {
         return true;
     }
 
-    std::vector<std::string> tokens = StringUtilities::split(hotkeyStr, "+");
+    std::vector<std::string> tokens = StringUtility::split(hotkeyStr, "+");
     for (std::string token : tokens) {
-        token = StringUtilities::trim(token);
-        token = StringUtilities::toLower(token);
+        token = StringUtility::trim(token);
+        token = StringUtility::toLower(token);
 
         // look for modifier string
         const auto & mit = modifierMap_.find(token);
