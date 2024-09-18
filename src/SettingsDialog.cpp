@@ -17,7 +17,8 @@ namespace SettingsDialog
 
 static INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static int listViewCompare(LPARAM, LPARAM, LPARAM);
-static void initListView(HWND hwndDlg);
+static void listViewInit(HWND hwndDlg);
+static void listViewNotify(HWND hwndDlg, LPNMHDR nmhdr);
 
 static HWND hwnd_;
 static Settings settings_;
@@ -47,7 +48,7 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             SetDlgItemTextA(hwndDlg, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str());
             SetDlgItemTextA(hwndDlg, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str());
 
-            initListView(hwndDlg);
+            listViewInit(hwndDlg);
 
             break;
         }
@@ -55,64 +56,8 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_NOTIFY: {
             LPNMHDR nmhdr = (LPNMHDR)lParam;
             DEBUG_PRINTF("nmhdr hwnd %#x, id %#x, code %d\n", nmhdr->hwndFrom, nmhdr->idFrom, (int)nmhdr->code);
-            switch (nmhdr->code) {
-                case LVN_GETDISPINFOW: {
-                    DEBUG_PRINTF("LVN_GETDISPINFOW\n");
-                    break;
-                }
-                case LVN_GETDISPINFOA: {
-                    DEBUG_PRINTF("LVN_GETDISPINFOA\n");
-                    NMLVDISPINFOA * displayInfo = (NMLVDISPINFOA *)lParam;
-                    const char * str = nullptr;
-                    switch (displayInfo->item.iSubItem) {
-                        case 0: {
-                            str = settings_.autoTrays_[displayInfo->item.iItem].executable_.c_str();
-                            break;
-                        }
-                        case 1: {
-                            str = settings_.autoTrays_[displayInfo->item.iItem].windowClass_.c_str();
-                            break;
-                        }
-                        case 2: {
-                            str = settings_.autoTrays_[displayInfo->item.iItem].windowTitle_.c_str();
-                            break;
-                        }
-                        default: {
-                            __debugbreak();
-                            break;
-                        }
-                    }
-                    if (!str || !strlen(str)) {
-                        static char emptyStr[256];
-                        if (!strlen(emptyStr)) {
-                            HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
-                            LoadStringA(hInstance, IDS_ITEM_EMPTY, emptyStr, sizeof(emptyStr) / sizeof(emptyStr[0]));
-                        }
-                        str = emptyStr;
-                    }
-                    displayInfo->item.pszText = const_cast<CHAR *>(str);
-                    break;
-                }
-
-                case LVN_COLUMNCLICK: {
-                    NMLISTVIEW * pListView = (NMLISTVIEW *)lParam;
-                    HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
-                    if (SendMessageA(autoTrayList, LVM_SORTITEMS, (WPARAM)pListView->iSubItem, (LPARAM)listViewCompare)) {
-                        DEBUG_PRINTF("err %s\n", StringUtility::lastErrorString().c_str());
-                        __debugbreak();
-                        break;
-                    }
-                }
-
-                case LVN_DELETEALLITEMS: {
-                    DEBUG_PRINTF("LVN_DELETEALLITEMS\n");
-                    break;
-                }
-
-                default: {
-                    DEBUG_PRINTF("WM_NOTIFY default %x\n", wParam);
-                    break;
-                }
+            if (nmhdr->hwndFrom == GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST)) {
+                listViewNotify(hwndDlg, nmhdr);
             }
             break;
         }
@@ -127,6 +72,7 @@ INT_PTR dialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
                     DEBUG_PRINTF("HIWORD %#x\n", HIWORD(wParam));
                     switch (LOWORD(wParam)) {
                         case IDOK: {
+                            // dialog done, update settings
                             CHAR dlgItemText[256];
                             if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
                                 settings_.hotkeyMinimize_ = dlgItemText;
@@ -180,37 +126,36 @@ int listViewCompare(LPARAM, LPARAM, LPARAM)
     return -1;
 }
 
-void initListView(HWND hwndDlg)
+void listViewInit(HWND hwndDlg)
 {
     HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
     HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
     CHAR szText[256];
 
+    unsigned int styles = LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERDRAGDROP;
+    if (SendMessageA(autoTrayList, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
+        __debugbreak();
+        // return FALSE;
+    }
+
     LVCOLUMNA listViewColumn;
     memset(&listViewColumn, 0, sizeof(listViewColumn));
     listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     listViewColumn.fmt = LVCFMT_LEFT;
-    listViewColumn.cx = 100;
     listViewColumn.pszText = szText;
 
     listViewColumn.iSubItem = 0;
+    listViewColumn.cx = 200;
     LoadStringA(hInstance, IDS_COLUMN_EXECUTABLE, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayList, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         __debugbreak();
         // return FALSE;
     }
-    if (SendMessageA(autoTrayList, LVM_SETCOLUMNWIDTH, listViewColumn.iSubItem, (LPARAM)LVSCW_AUTOSIZE_USEHEADER) == -1) {
-        __debugbreak();
-        // return FALSE;
-    }
 
     ++listViewColumn.iSubItem = 1;
+    listViewColumn.cx = 100;
     LoadStringA(hInstance, IDS_COLUMN_WINDOW_CLASS, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayList, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        __debugbreak();
-        // return FALSE;
-    }
-    if (SendMessageA(autoTrayList, LVM_SETCOLUMNWIDTH, listViewColumn.iSubItem, (LPARAM)LVSCW_AUTOSIZE_USEHEADER) == -1) {
         __debugbreak();
         // return FALSE;
     }
@@ -226,10 +171,10 @@ void initListView(HWND hwndDlg)
         // return FALSE;
     }
 
-    if (SendMessageA(autoTrayList, LVM_SETITEMCOUNT, (WPARAM)settings_.autoTrays_.size(), 0) == -1) {
-        __debugbreak();
-        // return FALSE;
-    }
+    // if (SendMessageA(autoTrayList, LVM_SETITEMCOUNT, (WPARAM)settings_.autoTrays_.size(), 0) == -1) {
+    //     __debugbreak();
+    //     // return FALSE;
+    // }
 
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
@@ -242,6 +187,69 @@ void initListView(HWND hwndDlg)
             DEBUG_PRINTF("err %#x\n", StringUtility::lastErrorString().c_str());
             __debugbreak();
             // return FALSE;
+        }
+    }
+}
+
+void listViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
+{
+    switch (nmhdr->code) {
+        case LVN_GETDISPINFOW: {
+            DEBUG_PRINTF("LVN_GETDISPINFOW\n");
+            break;
+        }
+        case LVN_GETDISPINFOA: {
+            DEBUG_PRINTF("LVN_GETDISPINFOA\n");
+            NMLVDISPINFOA * displayInfo = (NMLVDISPINFOA *)nmhdr;
+            const char * str = nullptr;
+            const Settings::AutoTray & autoTray = settings_.autoTrays_[displayInfo->item.iItem];
+            switch (displayInfo->item.iSubItem) {
+                case 0: str = autoTray.executable_.c_str(); break;
+                case 1: str = autoTray.windowClass_.c_str(); break;
+                case 2: str = autoTray.windowTitle_.c_str(); break;
+
+                default: {
+                    __debugbreak();
+                    break;
+                }
+            }
+            if (!str || !strlen(str)) {
+                static char emptyStr[256];
+                if (!strlen(emptyStr)) {
+                    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
+                    LoadStringA(hInstance, IDS_ITEM_EMPTY, emptyStr, sizeof(emptyStr) / sizeof(emptyStr[0]));
+                }
+                str = emptyStr;
+            }
+            displayInfo->item.pszText = const_cast<CHAR *>(str);
+            break;
+        }
+
+        case LVN_COLUMNCLICK: {
+            NMLISTVIEW * pListView = (NMLISTVIEW *)nmhdr;
+            HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
+            if (SendMessageA(autoTrayList, LVM_SORTITEMS, (WPARAM)pListView->iSubItem, (LPARAM)listViewCompare)) {
+                DEBUG_PRINTF("err %s\n", StringUtility::lastErrorString().c_str());
+                __debugbreak();
+                break;
+            }
+        }
+
+        case LVN_ITEMACTIVATE: {
+            DEBUG_PRINTF("LVN_ITEMACTIVATE\n");
+            LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
+            ListView_EditLabel(hwndDlg, lpnmia->iItem);
+            break;
+        }
+
+        case LVN_DELETEALLITEMS: {
+            DEBUG_PRINTF("LVN_DELETEALLITEMS\n");
+            break;
+        }
+
+        default: {
+            DEBUG_PRINTF("WM_NOTIFY default %u\n", nmhdr->code);
+            break;
         }
     }
 }

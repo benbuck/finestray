@@ -25,7 +25,7 @@ BEGIN
     IDS_COLUMN_EXECUTABLE           "Executable"
     IDS_COLUMN_WINDOW_CLASS         "Class"
     IDS_COLUMN_WINDOW_TITLE         "Title"
-    IDS_ITEM_EMPTY                  "<empty>"
+    IDS_ITEM_EMPTY                  ""
     IDS_ERROR_REGISTER_WINDOW_CLASS "Error creating window class"
     IDS_ERROR_CREATE_WINDOW         "Error creating window"
     IDS_ERROR_REGISTER_HOTKEY       "Couldn't register hotkey"
