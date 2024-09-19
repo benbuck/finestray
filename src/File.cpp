@@ -6,7 +6,7 @@
 #include "DebugPrint.h"
 #include "StringUtility.h"
 
-// standard library
+// Standard library
 #include <cstring>
 
 std::string fileRead(const std::string & fileName)

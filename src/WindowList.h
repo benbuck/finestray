@@ -2,7 +2,7 @@
 
 #pragma once
 
-// windows
+// Windows
 #include <Windows.h>
 
 namespace WindowList

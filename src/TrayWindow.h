@@ -2,7 +2,7 @@
 
 #pragma once
 
-// windows
+// Windows
 #include <Windows.h>
 
 #define WM_TRAYWINDOW (WM_USER + 1)

@@ -2,7 +2,7 @@
 
 #pragma once
 
-// standard library
+// Standard library
 #include <string>
 #include <vector>
 

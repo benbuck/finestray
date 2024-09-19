@@ -12,7 +12,7 @@
 // cJSON
 #include <cJSON.h>
 
-// windows
+// Windows
 #include <Windows.h>
 #include <shellapi.h>
 #include <stdlib.h>

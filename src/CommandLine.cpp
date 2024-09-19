@@ -6,7 +6,7 @@
 #include "DebugPrint.h"
 #include "StringUtility.h"
 
-// windows
+// Windows
 #include <Windows.h>
 
 CommandLine::CommandLine()

@@ -6,10 +6,10 @@
 #include "DebugPrint.h"
 #include "StringUtility.h"
 
-// windows
+// Windows
 #include <Windows.h>
 
-// standard library
+// Standard library
 #include <map>
 #include <string>
 #include <vector>

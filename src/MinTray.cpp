@@ -13,12 +13,12 @@
 #include "TrayWindow.h"
 #include "WindowList.h"
 
-// windows
+// Windows
 #include <CommCtrl.h>
 #include <Psapi.h>
 #include <Windows.h>
 
-// standard library
+// Standard library
 #include <regex>
 #include <set>
 

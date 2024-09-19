@@ -2,10 +2,10 @@
 
 #pragma once
 
-// windows
+// Windows
 #include <Windows.h>
 
-// standard library
+// Standard library
 #include <string>
 #include <vector>
 

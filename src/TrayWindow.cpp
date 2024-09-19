@@ -7,7 +7,7 @@
 #include "StringUtility.h"
 #include "TrayIcon.h"
 
-// standard library
+// Standard library
 #include <list>
 #include <memory>
 

@@ -1,9 +1,12 @@
 // Copyright 2020 Benbuck Nason
 
-// windows
+// MinTray
+#include "DebugPrint.h"
+
+// Windows
 #include <Windows.h>
 
-// standard library
+// Standard library
 #include <stdarg.h>
 #include <stdio.h>
 

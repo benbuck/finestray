@@ -2,7 +2,7 @@
 
 #pragma once
 
-// windows
+// Windows
 #include <Windows.h>
 #include <shellapi.h>
 

@@ -8,7 +8,7 @@
 // Windows
 #include <Windows.h>
 
-// standard library
+// Standard library
 #include <algorithm>
 
 namespace StringUtility
