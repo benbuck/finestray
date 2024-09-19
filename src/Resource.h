@@ -37,5 +37,8 @@
 #define IDC_MODIFIER_OVERRIDE           1003
 #define IDC_POLL_INTERVAL               1004
 #define IDC_AUTO_TRAY_LIST              1005
+#define IDC_AUTO_TRAY_ITEM_ADD          1006
+#define IDC_AUTO_TRAY_ITEM_EDIT         1007
+#define IDC_AUTO_TRAY_ITEM_DELETE       1008
 
 // clang-format on

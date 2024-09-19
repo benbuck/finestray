@@ -29,6 +29,8 @@ public:
         std::string windowTitle_;
     };
 
+    void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
+
     std::vector<AutoTray> autoTrays_;
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
@@ -37,6 +39,5 @@ public:
 
 private:
     bool parseJson(const std::string & json);
-    void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
     static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };

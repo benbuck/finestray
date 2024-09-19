@@ -13,6 +13,8 @@
 #include <CommCtrl.h>
 #include <Windows.h>
 
+// #define SORT_ENABLED
+
 namespace SettingsDialog
 {
 
@@ -26,22 +28,30 @@ enum class AutoTrayListViewColumn
 static INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static void autoTrayListViewInit(HWND hwndDlg);
 static void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr);
+#ifdef SORT_ENABLED
 static int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
+#endif
+static void autoTrayListViewItemAdd(HWND hwndDlg);
+static void autoTrayListViewItemEdit(HWND hwndDlg, unsigned int item);
+static void autoTrayListViewItemDelete(HWND hwndDlg, unsigned int item);
+static void autoTrayListViewUpdateButtons(HWND hwndDlg);
+static void autoTrayListViewUpdateSelected(HWND hwndDlg);
 
-static HWND hwnd_;
 static Settings settings_;
 static CompletionCallback completionCallback_;
-static bool autoTrayListViewSortAscending_ = true;
-static int autoTrayListViewSortColumn_ = 0;
+static int autoTrayListViewActiveItem_;
+#ifdef SORT_ENABLED
+static bool autoTrayListViewSortAscending_;
+static int autoTrayListViewSortColumn_;
+#endif
 
 HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionCallback)
 {
-    hwnd_ = hwnd;
     settings_ = settings;
     completionCallback_ = completionCallback;
 
     HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
-    HWND dlg = CreateDialogA(hInstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd_, settingsDialogFunc);
+    HWND dlg = CreateDialogA(hInstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
     ShowWindow(dlg, SW_SHOW);
 
     return dlg;
@@ -73,48 +83,65 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
         }
 
         case WM_COMMAND: {
-            switch (HIWORD(wParam)) {
-                case EN_CHANGE: {
-                    break;
-                }
+            // DEBUG_PRINTF("WM_COMMAND wparam %#x, lparam  %#x\n", wParam, lParam);
+            if (HIWORD(wParam) == 0) {
+                switch (LOWORD(wParam)) {
+                    case IDC_AUTO_TRAY_ITEM_ADD: {
+                        autoTrayListViewItemAdd(hwndDlg);
+                        break;
+                    }
 
-                default: {
-                    // DEBUG_PRINTF("HIWORD %#x\n", HIWORD(wParam));
-                    switch (LOWORD(wParam)) {
-                        case IDOK: {
-                            // dialog done, update settings
-                            CHAR dlgItemText[256];
-                            if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
-                                settings_.hotkeyMinimize_ = dlgItemText;
-                            }
-                            if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_RESTORE, dlgItemText, sizeof(dlgItemText))) {
-                                settings_.hotkeyRestore_ = dlgItemText;
-                            }
-                            if (GetDlgItemTextA(hwndDlg, IDC_MODIFIER_OVERRIDE, dlgItemText, sizeof(dlgItemText))) {
-                                settings_.modifiersOverride_ = dlgItemText;
-                            }
-                            if (GetDlgItemTextA(hwndDlg, IDC_POLL_INTERVAL, dlgItemText, sizeof(dlgItemText))) {
-                                settings_.pollInterval_ = std::stoul(dlgItemText);
-                            }
+                    case IDC_AUTO_TRAY_ITEM_EDIT: {
+                        autoTrayListViewItemEdit(hwndDlg, autoTrayListViewActiveItem_);
+                        break;
+                    }
 
-                            EndDialog(hwndDlg, wParam);
+                    case IDC_AUTO_TRAY_ITEM_DELETE: {
+                        autoTrayListViewItemDelete(hwndDlg, autoTrayListViewActiveItem_);
+                        break;
+                    }
 
-                            if (completionCallback_) {
-                                completionCallback_(true, settings_);
-                            }
+                    case IDOK: {
+                        DEBUG_PRINTF("Settings dialog done, updating settings\n");
 
-                            return TRUE;
+                        CHAR dlgItemText[256];
+                        if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
+                            settings_.hotkeyMinimize_ = dlgItemText;
+                        }
+                        if (GetDlgItemTextA(hwndDlg, IDC_HOTKEY_RESTORE, dlgItemText, sizeof(dlgItemText))) {
+                            settings_.hotkeyRestore_ = dlgItemText;
+                        }
+                        if (GetDlgItemTextA(hwndDlg, IDC_MODIFIER_OVERRIDE, dlgItemText, sizeof(dlgItemText))) {
+                            settings_.modifiersOverride_ = dlgItemText;
+                        }
+                        if (GetDlgItemTextA(hwndDlg, IDC_POLL_INTERVAL, dlgItemText, sizeof(dlgItemText))) {
+                            settings_.pollInterval_ = std::stoul(dlgItemText);
                         }
 
-                        case IDCANCEL: {
-                            EndDialog(hwndDlg, wParam);
+                        EndDialog(hwndDlg, wParam);
 
-                            if (completionCallback_) {
-                                completionCallback_(false, settings_);
-                            }
-
-                            return TRUE;
+                        if (completionCallback_) {
+                            completionCallback_(true, settings_);
                         }
+
+                        return TRUE;
+                    }
+
+                    case IDCANCEL: {
+                        DEBUG_PRINTF("Settings dialog cancelled\n");
+
+                        EndDialog(hwndDlg, wParam);
+
+                        if (completionCallback_) {
+                            completionCallback_(false, settings_);
+                        }
+
+                        return TRUE;
+                    }
+
+                    default: {
+                        DEBUG_PRINTF("WM_COMMAND %#x\n", wParam);
+                        break;
                     }
                 }
             }
@@ -159,7 +186,7 @@ void autoTrayListViewInit(HWND hwndDlg)
     }
 
     ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
-    listViewColumn.cx = 125;
+    listViewColumn.cx = 147;
     LoadStringA(hInstance, IDS_COLUMN_WINDOW_CLASS, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayList, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -196,16 +223,40 @@ void autoTrayListViewInit(HWND hwndDlg)
             return;
         }
     }
+
+    autoTrayListViewActiveItem_ = -1;
+#ifdef SORT_ENABLED
+    autoTrayListViewSortAscending_ = true;
+    autoTrayListViewSortColumn_ = 0;
+#endif
+
+    autoTrayListViewUpdateButtons(hwndDlg);
 }
 
 void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
 {
     switch (nmhdr->code) {
+        case NM_KILLFOCUS: {
+            DEBUG_PRINTF("NM_KILLFOCUS\n");
+            if (nmhdr->hwndFrom == GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST)) {
+                DEBUG_PRINTF("NM_KILLFOCUS matched\n");
+                // FIX
+                // autoTrayListViewActiveItem_ = -1;
+                // autoTrayListViewUpdateSelected(hwndDlg);
+                // autoTrayListViewUpdateButtons(hwndDlg);
+            }
+            break;
+        }
+
         case LVN_GETDISPINFOA: {
             NMLVDISPINFOA * displayInfo = (NMLVDISPINFOA *)nmhdr;
             // DEBUG_PRINTF("LVN_GETDISPINFOA item %d %d\n", displayInfo->item.iItem, displayInfo->item.iSubItem);
             const char * str = nullptr;
+#ifdef SORT_ENABLED
             const Settings::AutoTray & autoTray = settings_.autoTrays_[displayInfo->item.lParam];
+#else
+            const Settings::AutoTray & autoTray = settings_.autoTrays_[displayInfo->item.iItem];
+#endif
             switch (static_cast<AutoTrayListViewColumn>(displayInfo->item.iSubItem)) {
                 case AutoTrayListViewColumn::Executable: str = autoTray.executable_.c_str(); break;
                 case AutoTrayListViewColumn::WindowClass: str = autoTray.windowClass_.c_str(); break;
@@ -222,6 +273,7 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
         }
 
         case LVN_COLUMNCLICK: {
+#ifdef SORT_ENABLED
             NMLISTVIEW * pListView = (NMLISTVIEW *)nmhdr;
 
             if (pListView->iSubItem == autoTrayListViewSortColumn_) {
@@ -236,12 +288,14 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
                 DEBUG_PRINTF("SendMessage LVM_SORTITEMS failed: %s\n", StringUtility::lastErrorString().c_str());
                 break;
             }
+#endif
+            break;
         }
 
         case LVN_ITEMACTIVATE: {
             DEBUG_PRINTF("LVN_ITEMACTIVATE\n");
-            // LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
-            // ListView_EditLabel(hwndDlg, lpnmia->iItem);
+            LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
+            autoTrayListViewItemEdit(hwndDlg, lpnmia->iItem);
             break;
         }
 
@@ -250,13 +304,22 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
             break;
         }
 
+        case NM_CLICK: {
+            NMITEMACTIVATE * nmia = (NMITEMACTIVATE *)nmhdr;
+            DEBUG_PRINTF("NM_CLICK %d\n", nmia->iItem);
+            autoTrayListViewActiveItem_ = nmia->iItem;
+            autoTrayListViewUpdateButtons(hwndDlg);
+            break;
+        }
+
         default: {
-            DEBUG_PRINTF("WM_NOTIFY default %u\n", nmhdr->code);
+            // DEBUG_PRINTF("WM_NOTIFY default %#x\n", nmhdr->code);
             break;
         }
     }
 }
 
+#ifdef SORT_ENABLED
 int autoTrayListViewCompare(LPARAM item1, LPARAM item2, LPARAM sortParam)
 {
     // DEBUG_PRINTF("autoTrayListViewCompare item1 %ld item2 %ld sort %ld\n", item1, item2, sortParam);
@@ -290,6 +353,102 @@ int autoTrayListViewCompare(LPARAM item1, LPARAM item2, LPARAM sortParam)
     }
 
     return (sortParam > 0) ? strcmp(str1, str2) : strcmp(str2, str1);
+}
+#endif
+
+void autoTrayListViewItemAdd(HWND hwndDlg)
+{
+    DEBUG_PRINTF("Deleting auto tray item\n");
+
+    HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
+
+    LVITEMA listViewItem;
+    memset(&listViewItem, 0, sizeof(listViewItem));
+    listViewItem.iItem = (int)settings_.autoTrays_.size();
+    listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
+    listViewItem.pszText = LPSTR_TEXTCALLBACKA; // sends an LVN_GETDISPINFO message to get item contents
+    listViewItem.lParam = settings_.autoTrays_.size();
+    if (SendMessageA(autoTrayList, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
+        DEBUG_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    settings_.addAutoTray("", "", "");
+
+    autoTrayListViewItemEdit(hwndDlg, (int)settings_.autoTrays_.size() - 1);
+
+    autoTrayListViewActiveItem_ = (int)settings_.autoTrays_.size() - 1;
+    autoTrayListViewUpdateSelected(hwndDlg);
+}
+
+void autoTrayListViewItemEdit(HWND hwndDlg, unsigned int item)
+{
+    DEBUG_PRINTF("Editing auto tray item %d\n", item);
+
+    MessageBoxA(hwndDlg, (std::string("Edit ") + std::to_string(item)).c_str(), "Edit", MB_OK);
+    autoTrayListViewUpdateSelected(hwndDlg);
+}
+
+void autoTrayListViewItemDelete(HWND hwndDlg, unsigned int item)
+{
+    DEBUG_PRINTF("Deleting auto tray item %d\n", item);
+
+    HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
+
+    if (SendMessageA(autoTrayList, LVM_DELETEITEM, item, 0) == -1) {
+        DEBUG_PRINTF("SendMessage LVM_DELETEITEM failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    settings_.autoTrays_.erase(settings_.autoTrays_.begin() + item);
+
+    if (autoTrayListViewActiveItem_ >= (int)settings_.autoTrays_.size()) {
+        autoTrayListViewActiveItem_ = (int)settings_.autoTrays_.size() - 1;
+    }
+    autoTrayListViewUpdateSelected(hwndDlg);
+}
+
+void autoTrayListViewUpdateButtons(HWND hwndDlg)
+{
+    DEBUG_PRINTF("Updating buttons\n");
+
+    bool hasActiveItem = (autoTrayListViewActiveItem_ >= 0) &&
+        (autoTrayListViewActiveItem_ < (int)settings_.autoTrays_.size());
+    EnableWindow(GetDlgItem(hwndDlg, IDC_AUTO_TRAY_ITEM_EDIT), hasActiveItem);
+    EnableWindow(GetDlgItem(hwndDlg, IDC_AUTO_TRAY_ITEM_DELETE), hasActiveItem);
+}
+
+void autoTrayListViewUpdateSelected(HWND hwndDlg)
+{
+    DEBUG_PRINTF("Updating selected %d\n", autoTrayListViewActiveItem_);
+
+    HWND autoTrayList = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
+
+    if (autoTrayListViewActiveItem_ == -1) {
+        LVITEM listViewItem;
+        memset(&listViewItem, 0, sizeof(listViewItem));
+        listViewItem.mask = LVIF_STATE;
+        listViewItem.state = 0;
+        listViewItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+        if (SendMessageA(autoTrayList, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&listViewItem) == -1) {
+            DEBUG_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+    } else {
+        if (!SetFocus(autoTrayList)) {
+            DEBUG_PRINTF("SetFocus failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+
+        if (SendMessageA(autoTrayList, LVM_ENSUREVISIBLE, autoTrayListViewActiveItem_, (LPARAM)TRUE) == -1) {
+            DEBUG_PRINTF("SendMessage LVM_ENSUREVISIBLE failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+
+        LVITEM listViewItem;
+        memset(&listViewItem, 0, sizeof(listViewItem));
+        listViewItem.mask = LVIF_STATE;
+        listViewItem.state = LVIS_FOCUSED | LVIS_SELECTED;
+        listViewItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+        if (SendMessageA(autoTrayList, LVM_SETITEMSTATE, autoTrayListViewActiveItem_, (LPARAM)&listViewItem) == -1) {
+            DEBUG_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+    }
 }
 
 } // namespace SettingsDialog
