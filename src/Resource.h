@@ -17,7 +17,6 @@
 #define IDS_COLUMN_EXECUTABLE           222
 #define IDS_COLUMN_WINDOW_CLASS         223
 #define IDS_COLUMN_WINDOW_TITLE         224
-#define IDS_ITEM_EMPTY                  231
 #define IDS_ERROR_REGISTER_WINDOW_CLASS 301
 #define IDS_ERROR_CREATE_WINDOW         302
 #define IDS_ERROR_REGISTER_HOTKEY       303
@@ -27,6 +26,7 @@
 #define IDS_ERROR_CREATE_POPUP_MENU     307
 #define IDS_ERROR_COMMAND_LINE          308
 #define IDS_ERROR_INIT_COMMON_CONTROLS  309
+#define IDS_ERROR_CREATE_DIALOG         310
 
 // dialogs
 #define IDD_DIALOG_SETTINGS             401

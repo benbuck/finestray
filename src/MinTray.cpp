@@ -1,6 +1,7 @@
 // Copyright 2020 Benbuck Nason
 
 // MinTray
+#include "MinTray.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
 #include "File.h"
@@ -50,8 +51,6 @@ static void onMinimizeEvent(
     DWORD dwmsEventTime);
 static void onSettingsDialogComplete(bool success, const Settings & settings);
 static bool showContextMenu(HWND hwnd);
-static std::string getResourceString(UINT id);
-static inline void errorMessage(UINT id);
 
 static HWND hwnd_;
 static HWND settingsDialog_;
@@ -687,7 +686,7 @@ bool showContextMenu(HWND hwnd)
     return true;
 }
 
-std::string getResourceString(UINT id)
+std::string getResourceString(unsigned int id)
 {
     HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
 
@@ -704,7 +703,7 @@ std::string getResourceString(UINT id)
     return str;
 }
 
-void errorMessage(UINT id)
+void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
     DEBUG_PRINTF("error: %s\n", err.c_str());
