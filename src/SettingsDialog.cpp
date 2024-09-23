@@ -377,6 +377,7 @@ void autoTrayListViewItemAdd(HWND hwndDlg)
     autoTrayListViewItemEdit(hwndDlg, (int)settings_.autoTrays_.size() - 1);
 
     autoTrayListViewActiveItem_ = (int)settings_.autoTrays_.size() - 1;
+    autoTrayListViewUpdateButtons(hwndDlg);
     autoTrayListViewUpdateSelected(hwndDlg);
 }
 
@@ -384,7 +385,9 @@ void autoTrayListViewItemEdit(HWND hwndDlg, unsigned int item)
 {
     DEBUG_PRINTF("Editing auto tray item %d\n", item);
 
+    // FIX - do actual editing
     MessageBoxA(hwndDlg, (std::string("Edit ") + std::to_string(item)).c_str(), "Edit", MB_OK);
+
     autoTrayListViewUpdateSelected(hwndDlg);
 }
 
@@ -403,6 +406,7 @@ void autoTrayListViewItemDelete(HWND hwndDlg, unsigned int item)
     if (autoTrayListViewActiveItem_ >= (int)settings_.autoTrays_.size()) {
         autoTrayListViewActiveItem_ = (int)settings_.autoTrays_.size() - 1;
     }
+    autoTrayListViewUpdateButtons(hwndDlg);
     autoTrayListViewUpdateSelected(hwndDlg);
 }
 
