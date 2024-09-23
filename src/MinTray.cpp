@@ -598,6 +598,12 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         settings_ = settings;
         DEBUG_PRINTF("got updated settings from dialog:\n");
         settings_.dump();
+        std::string fileName(std::string(APP_NAME) + ".json");
+        if (!settings_.writeToFile(fileName)) {
+            errorMessage(IDS_ERROR_SAVE_SETTINGS);
+        } else {
+            DEBUG_PRINTF("wrote settings to %s\n", fileName.c_str());
+        }
 
         cleanup();
         int err = init();

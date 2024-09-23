@@ -55,12 +55,30 @@ Settings::~Settings()
 
 bool Settings::readFromFile(const std::string & fileName)
 {
+    DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
+
     std::string json = fileRead(fileName);
     if (json.empty()) {
         return false;
     }
 
     return parseJson(json);
+}
+
+bool Settings::writeToFile(const std::string & fileName)
+{
+    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
+
+    std::string json = constructJSON();
+    if (json.empty()) {
+        return false;
+    }
+
+    if (!fileWrite(fileName, json)) {
+        return false;
+    }
+
+    return true;
 }
 
 bool Settings::parseCommandLine(int argc, const char * const * argv)
@@ -124,6 +142,50 @@ bool Settings::parseJson(const std::string & json)
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
 
     return true;
+}
+
+std::string Settings::constructJSON()
+{
+    cJSON * cjson = cJSON_CreateObject();
+    if (!cjson) {
+        DEBUG_PRINTF("failed to create settings JSON object\n");
+        return std::string();
+    }
+
+    if (!autoTrays_.empty()) {
+        cJSON * autotrayArray = cJSON_AddArrayToObject(cjson, settingKeys_[SK_AutoTray]);
+        if (!autotrayArray) {
+            DEBUG_PRINTF("failed to create auto-tray array\n");
+            cJSON_Delete(cjson);
+            return std::string();
+        }
+
+        for (const AutoTray & autoTray : autoTrays_) {
+            cJSON * item = cJSON_CreateObject();
+            if (!cJSON_AddStringToObject(item, settingKeys_[SK_Executable], autoTray.executable_.c_str()) ||
+                !cJSON_AddStringToObject(item, settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str()) ||
+                !cJSON_AddStringToObject(item, settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str())) {
+                DEBUG_PRINTF("failed to add auto-tray item\n");
+                cJSON_Delete(item);
+                cJSON_Delete(autotrayArray);
+                cJSON_Delete(cjson);
+                return std::string();
+            }
+
+            cJSON_AddItemToArray(autotrayArray, item);
+        }
+    }
+
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str()) ||
+        !cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str()) ||
+        !cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str()) ||
+        !cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
+        DEBUG_PRINTF("failed to add settings\n");
+        cJSON_Delete(cjson);
+        return std::string();
+    }
+
+    return cJSON_Print(cjson);
 }
 
 void Settings::dump()

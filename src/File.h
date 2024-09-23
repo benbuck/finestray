@@ -9,4 +9,5 @@
 #include <string>
 
 std::string fileRead(const std::string & fileName);
+bool fileWrite(const std::string & fileName, const std::string & contents);
 std::string getExecutablePath(void);

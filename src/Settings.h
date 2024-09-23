@@ -19,6 +19,7 @@ public:
 
     bool readFromFile(const std::string & fileName);
     bool parseCommandLine(int argc, const char * const * argv);
+    bool writeToFile(const std::string & fileName);
 
     void dump();
 
@@ -39,5 +40,6 @@ public:
 
 private:
     bool parseJson(const std::string & json);
+    std::string constructJSON();
     static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };

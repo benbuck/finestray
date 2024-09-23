@@ -40,8 +40,8 @@ std::string fileRead(const std::string & fileName)
                     fileName.c_str(),
                     GetLastError());
             } else {
-                if (bytesRead < fileSize.LowPart) {
-                    DEBUG_PRINTF("only read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+                if (bytesRead != fileSize.LowPart) {
+                    DEBUG_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
                 } else {
                     contents = buffer;
                 }
@@ -52,6 +52,44 @@ std::string fileRead(const std::string & fileName)
     }
 
     return contents;
+}
+
+bool fileWrite(const std::string & fileName, const std::string & contents)
+{
+    HANDLE file = CreateFileA(
+        fileName.c_str(),
+        GENERIC_WRITE,
+        FILE_SHARE_WRITE,
+        nullptr,
+        OPEN_ALWAYS | TRUNCATE_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        DEBUG_PRINTF(
+            "could not open '%s' for writing, CreateFileA() failed: %s\n",
+            fileName.c_str(),
+            StringUtility::lastErrorString().c_str());
+        return false;
+    } else {
+        DWORD bytesWritten = 0;
+        if (!WriteFile(file, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
+            DEBUG_PRINTF(
+                "could not write %d bytes to '%s', WriteFile() failed: %s\n",
+                contents.size(),
+                fileName.c_str(),
+                GetLastError());
+            return false;
+        } else {
+            if (bytesWritten != contents.size()) {
+                DEBUG_PRINTF("wrote %d bytes to '%s', expected %zu\n", bytesWritten, fileName.c_str(), contents.size());
+                return false;
+            }
+        }
+    }
+
+    CloseHandle(file);
+
+    return true;
 }
 
 std::string getExecutablePath()
