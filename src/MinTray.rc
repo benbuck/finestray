@@ -35,6 +35,8 @@ BEGIN
     IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
     IDS_ERROR_INIT_COMMON_CONTROLS  "Failed to initialize common controls"
     IDS_ERROR_CREATE_DIALOG         "Failed to create dialog window"
+    IDS_ERROR_LOAD_SETTINGS         "Failed to load settings"
+    IDS_ERROR_SAVE_SETTINGS         "Failed to save settings"
 END
 
 IDD_DIALOG_SETTINGS DIALOGEX 0, 0, 400, 230

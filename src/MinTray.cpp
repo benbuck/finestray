@@ -79,17 +79,19 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     settings_.hotkeyRestore_ = "alt+ctrl+shift+up";
     settings_.modifiersOverride_ = "alt+ctrl+shift";
     settings_.pollInterval_ = 500;
+    settings_.autoTrays_.clear();
 
     // get settings from file
-    std::string fileName(std::string(APP_NAME) + ".json");
+    std::string exePath = getExecutablePath();
+    std::string fileName = exePath + "\\" + std::string(APP_NAME) + ".json";
     if (settings_.readFromFile(fileName)) {
         DEBUG_PRINTF("read settings from %s\n", fileName.c_str());
     } else {
-        // no settings file in current directory, try in executable dir
-        std::string exePath = getExecutablePath();
-        fileName = exePath + "\\" + std::string(APP_NAME) + ".json";
-        if (settings_.readFromFile(fileName)) {
-            DEBUG_PRINTF("read settings from %s\n", fileName.c_str());
+        DWORD attrib = GetFileAttributesA(fileName.c_str());
+        bool exists = (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
+        if (exists) {
+            errorMessage(IDS_ERROR_LOAD_SETTINGS);
+            return IDS_ERROR_LOAD_SETTINGS;
         }
     }
 
