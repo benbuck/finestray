@@ -152,35 +152,59 @@ std::string Settings::constructJSON()
         return std::string();
     }
 
+    bool fail = false;
+
     if (!autoTrays_.empty()) {
         cJSON * autotrayArray = cJSON_AddArrayToObject(cjson, settingKeys_[SK_AutoTray]);
         if (!autotrayArray) {
-            DEBUG_PRINTF("failed to create auto-tray array\n");
-            cJSON_Delete(cjson);
-            return std::string();
-        }
+            fail = true;
+        } else {
+            for (const AutoTray & autoTray : autoTrays_) {
+                cJSON * item = cJSON_CreateObject();
+                if (!item) {
+                    fail = true;
+                    break;
+                }
 
-        for (const AutoTray & autoTray : autoTrays_) {
-            cJSON * item = cJSON_CreateObject();
-            if (!cJSON_AddStringToObject(item, settingKeys_[SK_Executable], autoTray.executable_.c_str()) ||
-                !cJSON_AddStringToObject(item, settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str()) ||
-                !cJSON_AddStringToObject(item, settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str())) {
-                DEBUG_PRINTF("failed to add auto-tray item\n");
-                cJSON_Delete(item);
-                cJSON_Delete(autotrayArray);
-                cJSON_Delete(cjson);
-                return std::string();
+                if (!autoTray.executable_.empty() &&
+                    !cJSON_AddStringToObject(item, settingKeys_[SK_Executable], autoTray.executable_.c_str())) {
+                    fail = true;
+                }
+
+                if (!autoTray.windowClass_.empty() &&
+                    !cJSON_AddStringToObject(item, settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str())) {
+                    fail = true;
+                }
+
+                if (!autoTray.windowTitle_.empty() &&
+                    !cJSON_AddStringToObject(item, settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str())) {
+                    fail = true;
+                }
+
+                if (!cJSON_AddItemToArray(autotrayArray, item)) {
+                    fail = true;
+                }
             }
-
-            cJSON_AddItemToArray(autotrayArray, item);
         }
     }
 
-    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str()) ||
-        !cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str()) ||
-        !cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str()) ||
-        !cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
-        DEBUG_PRINTF("failed to add settings\n");
+    // FIX - check for empty and default values
+
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
+        fail = true;
+    }
+
+    if (fail) {
+        DEBUG_PRINTF("Failed to construct json settings\n");
         cJSON_Delete(cjson);
         return std::string();
     }
