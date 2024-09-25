@@ -22,7 +22,8 @@ enum class AutoTrayListViewColumn
 {
     Executable,
     WindowClass,
-    WindowTitle
+    WindowTitle,
+    Count
 };
 
 static INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -166,12 +167,17 @@ void autoTrayListViewInit(HWND hwndDlg)
 {
     autoTrayListView_ = GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST);
 
-    unsigned int styles = LVS_EX_FULLROWSELECT; // | LVS_EX_GRIDLINES;
+    unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
     if (SendMessageA(autoTrayListView_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
         DEBUG_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
+
+    RECT rect;
+    GetWindowRect(autoTrayListView_, &rect);
+    int width = rect.right - rect.left;
+    int columnWidth = (width - 18) / (int)AutoTrayListViewColumn::Count;
 
     CHAR szText[256];
 
@@ -179,12 +185,12 @@ void autoTrayListViewInit(HWND hwndDlg)
     memset(&listViewColumn, 0, sizeof(listViewColumn));
     listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     listViewColumn.fmt = LVCFMT_LEFT;
+    listViewColumn.cx = columnWidth;
     listViewColumn.pszText = szText;
 
     HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
 
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
-    listViewColumn.cx = 200;
     LoadStringA(hInstance, IDS_COLUMN_EXECUTABLE, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListView_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -193,7 +199,6 @@ void autoTrayListViewInit(HWND hwndDlg)
     }
 
     ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
-    listViewColumn.cx = 200;
     LoadStringA(hInstance, IDS_COLUMN_WINDOW_CLASS, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListView_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -202,7 +207,6 @@ void autoTrayListViewInit(HWND hwndDlg)
     }
 
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
-    listViewColumn.cx = 200;
     LoadStringA(hInstance, IDS_COLUMN_WINDOW_TITLE, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListView_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -308,12 +312,12 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
 
         case LVN_COLUMNCLICK: {
 #ifdef SORT_ENABLED
-            NMLISTVIEW * pListView = (NMLISTVIEW *)nmhdr;
+            LPNMLISTVIEW nmListView = (LPNMLISTVIEW)nmhdr;
 
-            if (pListView->iSubItem == autoTrayListViewSortColumn_) {
+            if (nmListView->iSubItem == autoTrayListViewSortColumn_) {
                 autoTrayListViewSortAscending_ = !autoTrayListViewSortAscending_;
             }
-            autoTrayListViewSortColumn_ = pListView->iSubItem;
+            autoTrayListViewSortColumn_ = nmListView->iSubItem;
             int sortColumn =
                 (autoTrayListViewSortAscending_ ? (autoTrayListViewSortColumn_ + 1) : -(autoTrayListViewSortColumn_ + 1));
 
@@ -325,11 +329,23 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
             break;
         }
 
-        case NM_CLICK:
-        case LVN_ITEMACTIVATE: {
-            DEBUG_PRINTF("LVN_ITEMACTIVATE\n");
-            LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
-            autoTrayListViewItemEdit(hwndDlg, lpnmia->iItem);
+            // case NM_CLICK:
+            // case LVN_ITEMACTIVATE: {
+            //    DEBUG_PRINTF("LVN_ITEMACTIVATE\n");
+            //    LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
+            //    autoTrayListViewItemEdit(hwndDlg, lpnmia->iItem);
+            //    break;
+            //}
+
+        case LVN_ITEMCHANGED: {
+            LPNMLISTVIEW nmListView = (LPNMLISTVIEW)nmhdr;
+            if (nmListView->uChanged & LVIF_STATE) {
+                if (nmListView->uNewState & LVIS_SELECTED) {
+                    autoTrayListViewItemEdit(hwndDlg, nmListView->iItem);
+                } else {
+                    autoTrayListViewItemEdit(hwndDlg, -1);
+                }
+            }
             break;
         }
 
@@ -337,14 +353,6 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
             DEBUG_PRINTF("LVN_DELETEALLITEMS\n");
             break;
         }
-
-            // case NM_CLICK: {
-            //     LPNMITEMACTIVATE nmia = (LPNMITEMACTIVATE)nmhdr;
-            //     DEBUG_PRINTF("NM_CLICK %d\n", nmia->iItem);
-            //     autoTrayListViewActiveItem_ = nmia->iItem;
-            //     autoTrayListViewUpdateButtons(hwndDlg);
-            //     break;
-            // }
 
         default: {
             // DEBUG_PRINTF("WM_NOTIFY default %#x\n", nmhdr->code);
@@ -592,5 +600,46 @@ void autoTrayListViewUpdateSelected(HWND /*hwndDlg*/)
         }
     }
 }
+
+#ifdef SORT_ENABLED
+// state can be
+// sortOrder - 0 neither, 1 ascending, 2 descending
+void setListViewSortIcon(HWND listView, int col, int sortOrder)
+{
+    HWND headerWnd;
+    const int bufLen = 256;
+    char headerText[bufLen];
+    HD_ITEM item;
+    int numColumns, curCol;
+
+    headerWnd = ListView_GetHeader(listView);
+    numColumns = Header_GetItemCount(headerWnd);
+
+    for (curCol = 0; curCol < numColumns; curCol++) {
+        item.mask = HDI_FORMAT | HDI_TEXT;
+        item.pszText = headerText;
+        item.cchTextMax = bufLen - 1;
+        SendMessage(headerWnd, HDM_GETITEM, curCol, (LPARAM)&item);
+
+        if ((sortOrder != 0) && (curCol == col)) {
+            switch (sortOrder) {
+                case 1:
+                    item.fmt &= !HDF_SORTUP;
+                    item.fmt |= HDF_SORTDOWN;
+                    break;
+                case 2:
+                    item.fmt &= !HDF_SORTDOWN;
+                    item.fmt |= HDF_SORTUP;
+                    break;
+            }
+        } else {
+            item.fmt &= !HDF_SORTUP & !HDF_SORTDOWN;
+        }
+        item.fmt |= HDF_STRING;
+        item.mask = HDI_FORMAT | HDI_TEXT;
+        SendMessage(headerWnd, HDM_SETITEM, curCol, (LPARAM)&item);
+    }
+}
+#endif
 
 } // namespace SettingsDialog
