@@ -2,7 +2,7 @@
 
 #include "File.h"
 
-// MinTray
+// App
 #include "DebugPrint.h"
 #include "StringUtility.h"
 

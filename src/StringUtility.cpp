@@ -2,7 +2,7 @@
 
 #include "StringUtility.h"
 
-// MinTray
+// App
 #include "DebugPrint.h"
 
 // Windows

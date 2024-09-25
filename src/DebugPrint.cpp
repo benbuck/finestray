@@ -1,6 +1,6 @@
 // Copyright 2020 Benbuck Nason
 
-// MinTray
+// App
 #include "DebugPrint.h"
 
 // Windows

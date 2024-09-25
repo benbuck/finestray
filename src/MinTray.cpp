@@ -1,6 +1,6 @@
 // Copyright 2020 Benbuck Nason
 
-// MinTray
+// App
 #include "MinTray.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"

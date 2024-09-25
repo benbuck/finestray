@@ -2,7 +2,7 @@
 
 #include "Hotkey.h"
 
-// MinTray
+// App
 #include "DebugPrint.h"
 #include "StringUtility.h"
 
