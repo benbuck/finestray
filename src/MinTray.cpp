@@ -355,37 +355,50 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int init()
 {
     // register a hotkey that will be used to minimize windows
-    UINT vkMinimize = VK_DOWN;
-    UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
-    }
-    if (vkMinimize && modifiersMinimize) {
-        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+    if (settings_.hotkeyMinimize_.empty()) {
+        DEBUG_PRINTF("no hotkey to minimize windows\n");
+    } else {
+        UINT vkMinimize = VK_DOWN;
+        UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+        if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
             return IDS_ERROR_REGISTER_HOTKEY;
+        }
+        if (vkMinimize && modifiersMinimize) {
+            if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+                return IDS_ERROR_REGISTER_HOTKEY;
+            }
         }
     }
 
     // register a hotkey that will be used to restore windows
-    UINT vkRestore = VK_UP;
-    UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
-    }
-    if (vkRestore && modifiersRestore) {
-        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+    if (settings_.hotkeyRestore_.empty()) {
+        DEBUG_PRINTF("no hotkey to restore windows\n");
+    } else {
+        UINT vkRestore = VK_UP;
+        UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+        if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
             return IDS_ERROR_REGISTER_HOTKEY;
+        }
+        if (vkRestore && modifiersRestore) {
+            if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+                return IDS_ERROR_REGISTER_HOTKEY;
+            }
         }
     }
 
-    UINT vkOverride = 0;
-    modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-    if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
-        return IDS_ERROR_REGISTER_MODIFIER;
-    }
-    if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
-        DEBUG_PRINTF("invalid override modifers\n");
-        return IDS_ERROR_REGISTER_MODIFIER;
+    // get modifiers that will be used to override auto-tray
+    if (settings_.modifiersOverride_.empty()) {
+        DEBUG_PRINTF("no override modifiers\n");
+    } else {
+        UINT vkOverride = 0;
+        modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+        if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
+            return IDS_ERROR_REGISTER_MODIFIER;
+        }
+        if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
+            DEBUG_PRINTF("invalid override modifiers\n");
+            return IDS_ERROR_REGISTER_MODIFIER;
+        }
     }
 
     WindowList::start(hwnd_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
