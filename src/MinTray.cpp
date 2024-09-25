@@ -548,9 +548,13 @@ void onAddWindow(HWND hwnd)
     }
 
     if (isAutoTrayWindow(hwnd)) {
-        DEBUG_PRINTF("\tminimizing\n");
-        TrayWindow::minimize(hwnd, hwnd_);
-        autoTrayedWindows_.insert(hwnd);
+        if (modifiersActive(modifiersOverride_)) {
+            DEBUG_PRINTF("\tmodifier active, not minimizing\n");
+        } else {
+            DEBUG_PRINTF("\tminimizing\n");
+            TrayWindow::minimize(hwnd, hwnd_);
+            autoTrayedWindows_.insert(hwnd);
+        }
     }
 }
 
