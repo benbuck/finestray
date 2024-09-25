@@ -69,22 +69,6 @@ bool Settings::readFromFile(const std::string & fileName)
     return parseJson(json);
 }
 
-bool Settings::writeToFile(const std::string & fileName)
-{
-    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
-
-    std::string json = constructJSON();
-    if (json.empty()) {
-        return false;
-    }
-
-    if (!fileWrite(fileName, json)) {
-        return false;
-    }
-
-    return true;
-}
-
 bool Settings::parseCommandLine(int argc, const char * const * argv)
 {
     argh::parser args;
@@ -122,7 +106,52 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
+    sanitize();
+
     return true;
+}
+
+bool Settings::writeToFile(const std::string & fileName)
+{
+    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
+
+    sanitize();
+
+    std::string json = constructJSON();
+    if (json.empty()) {
+        return false;
+    }
+
+    if (!fileWrite(fileName, json)) {
+        return false;
+    }
+
+    return true;
+}
+
+void Settings::dump()
+{
+#if !defined(NDEBUG)
+    for (const AutoTray & autoTray : autoTrays_) {
+        DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
+    }
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
+    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
+#endif
+}
+
+void Settings::addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle)
+{
+    AutoTray autoTray;
+    autoTray.executable_ = executable;
+    autoTray.windowClass_ = windowClass;
+    autoTray.windowTitle_ = windowTitle;
+    autoTrays_.push_back(autoTray);
 }
 
 bool Settings::parseJson(const std::string & json)
@@ -144,6 +173,8 @@ bool Settings::parseJson(const std::string & json)
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
+
+    sanitize();
 
     return true;
 }
@@ -192,8 +223,6 @@ std::string Settings::constructJSON()
         }
     }
 
-    // FIX - check for empty and default values
-
     if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str())) {
         fail = true;
     }
@@ -216,29 +245,15 @@ std::string Settings::constructJSON()
     return cJSON_Print(cjson);
 }
 
-void Settings::dump()
+void Settings::sanitize()
 {
-#if !defined(NDEBUG)
-    for (const AutoTray & autoTray : autoTrays_) {
-        DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
-        DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
-        DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
-        DEBUG_PRINTF("\t\t%s: %s\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
+    for (auto it = autoTrays_.begin(); it != autoTrays_.end(); ++it) {
+        AutoTray & autoTray = *it;
+        if ((autoTray.executable_.empty()) && (!autoTray.windowClass_.empty()) && (!autoTray.windowTitle_.empty())) {
+            DEBUG_PRINTF("Removing empty auto-tray item\n");
+            it = autoTrays_.erase(it);
+        }
     }
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
-    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
-#endif
-}
-
-void Settings::addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle)
-{
-    AutoTray autoTray;
-    autoTray.executable_ = executable;
-    autoTray.windowClass_ = windowClass;
-    autoTray.windowTitle_ = windowTitle;
-    autoTrays_.push_back(autoTray);
 }
 
 bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)

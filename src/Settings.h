@@ -36,10 +36,11 @@ public:
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
     std::string modifiersOverride_;
-    unsigned int pollInterval_;
+    unsigned int pollInterval_; // zero to disable
 
 private:
     bool parseJson(const std::string & json);
     std::string constructJSON();
+    void sanitize();
     static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };
