@@ -20,7 +20,7 @@ BEGIN
     IDS_MENU_ABOUT                  "About"
     IDS_MENU_EXIT                   "Exit"
     IDS_ABOUT_CAPTION               "About " APP_NAME
-    IDS_ABOUT_TEXT                  APP_NAME "\nVersion " APP_VERSION_STRING "\nhttps://github.com/benbuck/mintray\n\nThis program is distributed under the ISC License.\n" APP_COPYRIGHT
+    IDS_ABOUT_TEXT                  APP_NAME "\nVersion " APP_VERSION_STRING "\nhttps://github.com/benbuck/mintray\n\nThis program is distributed under the Apache License,\nVersion 2.0.\n\n" APP_COPYRIGHT
     IDS_COLUMN_INDEX                ""
     IDS_COLUMN_EXECUTABLE           "Executable"
     IDS_COLUMN_WINDOW_CLASS         "Class"

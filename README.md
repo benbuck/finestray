@@ -4,9 +4,9 @@
 
 ## Legal
 
-MinTray is distributed under the ISC license.
+MinTray is distributed under the Apache License, Version 2.0, please see LICENSE.txt for more information..
 
-Copyright &copy; 2021 [Benbuck Nason](https://github.com/benbuck)
+Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
 
 Uses cJSON:
 https://github.com/DaveGamble/cJSON
