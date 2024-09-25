@@ -408,34 +408,34 @@ bool modifiersActive(UINT modifiers)
     }
 
     if (modifiers & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT)) {
-        DEBUG_PRINTF("invalid modifers: %#x\n", modifiers);
+        DEBUG_PRINTF("invalid modifiers: %#x\n", modifiers);
         return false;
     }
 
     if (modifiers & MOD_ALT) {
-        if (!(GetKeyState(VK_MENU) & 0x8000)) {
-            DEBUG_PRINTF("alt modifier not down\n");
+        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
+            DEBUG_PRINTF("\talt modifier not down\n");
             return false;
         }
     }
 
     if (modifiers & MOD_CONTROL) {
-        if (!(GetKeyState(VK_CONTROL) & 0x8000)) {
-            DEBUG_PRINTF("ctrl modifier not down\n");
+        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
+            DEBUG_PRINTF("\tctrl modifier not down\n");
             return false;
         }
     }
 
     if (modifiers & MOD_SHIFT) {
-        if (!(GetKeyState(VK_SHIFT) & 0x8000)) {
-            DEBUG_PRINTF("shift modifier not down\n");
+        if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_LSHIFT) & 0x8000) && !(GetKeyState(VK_RSHIFT) & 0x8000)) {
+            DEBUG_PRINTF("\tshift modifier not down\n");
             return false;
         }
     }
 
     if (modifiers & MOD_WIN) {
         if (!(GetKeyState(VK_LWIN) & 0x8000) && !(GetKeyState(VK_RWIN) & 0x8000)) {
-            DEBUG_PRINTF("win modifier not down\n");
+            DEBUG_PRINTF("\twin modifier not down\n");
             return false;
         }
     }
