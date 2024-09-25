@@ -74,13 +74,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_INIT_COMMON_CONTROLS;
     }
 
-    // set default settings
-    settings_.hotkeyMinimize_ = "alt+ctrl+shift+down";
-    settings_.hotkeyRestore_ = "alt+ctrl+shift+up";
-    settings_.modifiersOverride_ = "alt+ctrl+shift";
-    settings_.pollInterval_ = 500;
-    settings_.autoTrays_.clear();
-
     // get settings from file
     std::string exePath = getExecutablePath();
     std::string fileName = exePath + "\\" + std::string(APP_NAME) + ".json";
