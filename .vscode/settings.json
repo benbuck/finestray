@@ -3,11 +3,14 @@
   "cSpell.words": [
     "APP_NAMEW",
     "APPDATA",
+    "argh",
+    "autotray",
     "BSTR",
     "cjson",
     "DLGPROC",
     "HBRUSH",
     "HICON",
+    "HINSTANCE",
     "HMENU",
     "HRESULT",
     "HWND",
@@ -21,8 +24,10 @@
     "MINTRAY",
     "REFRTRAY",
     "snwprintf",
+    "trayed",
     "vkey",
-    "WNDCLASSEX"
+    "WNDCLASSEX",
+    "WPARAM"
   ],
   "files.associations": {
     "xtree": "cpp"

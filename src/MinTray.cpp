@@ -66,10 +66,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)hPrevInstance;
     (void)pCmdLine;
 
-    INITCOMMONCONTROLSEX icex;
-    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC = ICC_LISTVIEW_CLASSES;
-    if (!InitCommonControlsEx(&icex)) {
+    INITCOMMONCONTROLSEX initCommonControlsEx;
+    initCommonControlsEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    initCommonControlsEx.dwICC = ICC_LISTVIEW_CLASSES;
+    if (!InitCommonControlsEx(&initCommonControlsEx)) {
         errorMessage(IDS_ERROR_INIT_COMMON_CONTROLS);
         return IDS_ERROR_INIT_COMMON_CONTROLS;
     }
@@ -712,7 +712,7 @@ std::string getResourceString(unsigned int id)
     str.resize(256);
     if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
         DEBUG_PRINTF(
-            "failed to load resources string %u, LoadStringA() faile: %u\n",
+            "failed to load resources string %u, LoadStringA() failed: %u\n",
             id,
             StringUtility::lastErrorString().c_str());
         str = "Error ID: " + std::to_string(id);
