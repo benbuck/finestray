@@ -2,6 +2,7 @@
 
 // App
 #include "MinTray.h"
+#include "AppName.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
 #include "File.h"
@@ -23,7 +24,6 @@
 #include <regex>
 #include <set>
 
-static constexpr CHAR APP_NAME[] = "MinTray";
 static constexpr WORD IDM_SETTINGS = 0x1003;
 static constexpr WORD IDM_ABOUT = 0x1004;
 static constexpr WORD IDM_EXIT = 0x1005;
