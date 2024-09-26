@@ -73,12 +73,12 @@ std::string errorToString(unsigned long error)
     LPSTR str;
     if (!FormatMessageA(
             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL,
+            nullptr,
             error,
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
             (LPSTR)&str,
             0,
-            NULL)) {
+            nullptr)) {
         return std::to_string(error);
     }
 

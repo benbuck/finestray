@@ -25,6 +25,8 @@ BEGIN
     IDS_COLUMN_EXECUTABLE           "Executable"
     IDS_COLUMN_WINDOW_CLASS         "Class"
     IDS_COLUMN_WINDOW_TITLE         "Title"
+    IDS_SPY_MODE_TITLE              "Spy Mode"
+    IDS_SPY_MODE_TEXT               "Spy mode activated, click on any window to retrieve its information."
     IDS_ERROR_REGISTER_WINDOW_CLASS "Error creating window class"
     IDS_ERROR_CREATE_WINDOW         "Error creating window"
     IDS_ERROR_REGISTER_HOTKEY       "Couldn't register hotkey"
@@ -63,9 +65,10 @@ BEGIN
     PUSHBUTTON      "Update",IDC_AUTO_TRAY_ITEM_UPDATE,60,241,50,12
     PUSHBUTTON      "Add",IDC_AUTO_TRAY_ITEM_ADD,110,241,50,12
     PUSHBUTTON      "Delete",IDC_AUTO_TRAY_ITEM_DELETE,160,241,50,12
+    PUSHBUTTON      "Spy",IDC_AUTO_TRAY_ITEM_SPY,360,241,50,12
 
-    PUSHBUTTON      "Cancel",IDCANCEL,303,268,50,14
-    DEFPUSHBUTTON   "OK",IDOK,358,268,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,305,268,50,14
+    DEFPUSHBUTTON   "OK",IDOK,359,269,50,14
 END
 
 VS_VERSION_INFO VERSIONINFO

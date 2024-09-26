@@ -11,6 +11,7 @@
 
 // Windows
 #include <CommCtrl.h>
+#include <Psapi.h>
 #include <Windows.h>
 
 // #define SORT_ENABLED
@@ -36,6 +37,7 @@ static int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 static void autoTrayListViewItemAdd(HWND hwndDlg);
 static void autoTrayListViewItemUpdate(HWND hwndDlg, int item);
 static void autoTrayListViewItemDelete(HWND hwndDlg, int item);
+static void autoTrayListViewItemSpy(HWND hwndDlg, int item);
 static void autoTrayListViewItemEdit(HWND hwndDlg, int item);
 static void autoTrayListViewUpdateButtons(HWND hwndDlg);
 static void autoTrayListViewUpdateSelected(HWND hwndDlg);
@@ -48,6 +50,12 @@ static int autoTrayListViewActiveItem_;
 static bool autoTrayListViewSortAscending_;
 static int autoTrayListViewSortColumn_;
 #endif
+static bool spyMode_;
+static HWND spyModeFromHwnd_;
+static HHOOK hMouseHook_;
+
+static void spySelectWindowAtPoint(const POINT & point);
+static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionCallback)
 {
@@ -64,6 +72,16 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
 INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     // DEBUG_PRINTF("wnd %#x, message %#x, wparam %#x, lparam %#x\n", hwndDlg, message, wParam, lParam);
+
+    if (spyMode_) {
+        if (message == WM_LBUTTONDOWN) {
+            POINT point;
+            GetCursorPos(&point);
+            spySelectWindowAtPoint(point);
+        }
+
+        return FALSE;
+    }
 
     switch (message) {
         case WM_INITDIALOG: {
@@ -102,6 +120,10 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 
                     case IDC_AUTO_TRAY_ITEM_DELETE: {
                         autoTrayListViewItemDelete(hwndDlg, autoTrayListViewActiveItem_);
+                        break;
+                    }
+                    case IDC_AUTO_TRAY_ITEM_SPY: {
+                        autoTrayListViewItemSpy(hwndDlg, autoTrayListViewActiveItem_);
                         break;
                     }
 
@@ -519,6 +541,25 @@ void autoTrayListViewItemDelete(HWND hwndDlg, int item)
     autoTrayListViewUpdateSelected(hwndDlg);
 }
 
+void autoTrayListViewItemSpy(HWND hwndDlg, int item)
+{
+    DEBUG_PRINTF("Spying auto tray item %d\n", item);
+
+    ShowWindow(hwndDlg, SW_HIDE);
+
+    MessageBoxA(hwndDlg, getResourceString(IDS_SPY_MODE_TEXT).c_str(), getResourceString(IDS_SPY_MODE_TITLE).c_str(), MB_OK);
+
+    hMouseHook_ = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, nullptr, 0);
+    if (!hMouseHook_) {
+        DEBUG_PRINTF("Failed to install mouse hook!\n");
+    } else {
+        DEBUG_PRINTF("Mouse hook installed.\n");
+    }
+
+    spyModeFromHwnd_ = hwndDlg;
+    spyMode_ = true;
+}
+
 void autoTrayListViewItemEdit(HWND hwndDlg, int item)
 {
     DEBUG_PRINTF("Editing auto tray item %d\n", item);
@@ -641,5 +682,61 @@ void setListViewSortIcon(HWND listView, int col, int sortOrder)
     }
 }
 #endif
+
+void spySelectWindowAtPoint(const POINT & point)
+{
+    DEBUG_PRINTF("Mouse clicked at: %d, %d\n", point.x, point.y);
+
+    HWND hwnd = WindowFromPoint(point);
+    if (!hwnd) {
+    } else {
+        DEBUG_PRINTF("Spy mode: hwnd %#x\n", hwnd);
+
+        HWND rootHwnd = GetAncestor(hwnd, GA_ROOT);
+        if (!rootHwnd) {
+            DEBUG_PRINTF("Failed to get root hwnd, falling back to original\n");
+            rootHwnd = hwnd;
+        }
+
+        CHAR exePath[MAX_PATH];
+        CHAR className[256];
+        std::string title;
+
+        DWORD processID;
+        GetWindowThreadProcessId(rootHwnd, &processID);
+        HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+        GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH);
+        DEBUG_PRINTF("Exe path: %s\n", exePath);
+        CloseHandle(hproc);
+
+        GetClassNameA(rootHwnd, className, sizeof(className));
+        DEBUG_PRINTF("Class name: %s\n", className);
+
+        int length = GetWindowTextLengthA(rootHwnd);
+        title.resize(length + 1);
+        GetWindowTextA(rootHwnd, &title[0], (int)title.size());
+        DEBUG_PRINTF("Title: %s\n", title.c_str());
+
+        SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), exePath);
+        SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className);
+        SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), title.c_str());
+
+        ShowWindow(spyModeFromHwnd_, SW_SHOW);
+
+        spyMode_ = false;
+    }
+}
+
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if ((nCode == HC_ACTION) && (wParam == WM_LBUTTONDOWN)) {
+        UnhookWindowsHookEx(hMouseHook_);
+
+        LPMSLLHOOKSTRUCT mouseInfo = (LPMSLLHOOKSTRUCT)lParam;
+        spySelectWindowAtPoint(mouseInfo->pt);
+    }
+
+    return CallNextHookEx(hMouseHook_, nCode, wParam, lParam);
+}
 
 } // namespace SettingsDialog

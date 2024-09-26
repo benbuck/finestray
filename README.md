@@ -91,14 +91,17 @@ window. Because of this, MinTray provides three possible ways, which can be used
     `C:\Windows\notepad.exe`. This must exactly match the path of the executable that owns the window, or you can leave
     this empty if you don't care which executable created the window.
 - **Window class**:
-    This value corresponds to the "class" of the window. The class is an internal value, which you can find using a tool
-    like Window Spy or Spy++. The class you provide must exactly match the internal value, or you can leave this empty
-    if you don't care what the class name is.
+    This value corresponds to the "class" of the window. The class is an internal value, which you can find using the
+    spy feature, or with a tool like Window Spy or Spy++. The class you provide must exactly match the internal value,
+    or you can leave this empty if you don't care what the class name is.
 - **Window title**:
     This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
     is provided as a regular expression (<https://en.cppreference.com/w/cpp/regex>). If you aren't familiar with regular
     expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window
     which has a title like "My Document - Notepad", you could use a regular expression like ".*Notepad$".
+
+All of these values can be automatically filled by selecting the Spy button, and following the instructions to select
+the window you want to auto-tray.
 
 ## Command Line Options
 
