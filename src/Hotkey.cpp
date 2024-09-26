@@ -72,6 +72,75 @@ void Hotkey::destroy()
     }
 }
 
+std::string Hotkey::normalize(const std::string & hotkeyStr)
+{
+    std::string tmp = StringUtility::toLower(hotkeyStr);
+
+    std::vector<std::string> modifiers;
+    std::string key;
+
+    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
+    for (std::string token : tokens) {
+        token = StringUtility::trim(token);
+        token = StringUtility::toLower(token);
+
+        if (token == "none") {
+            key = token;
+        } else {
+            // look for modifier string
+            const auto & mit = modifierMap_.find(token);
+            if (mit != modifierMap_.end()) {
+                if (key == "none") {
+                    DEBUG_PRINTF("modifier for 'none' key, ignoring '%s'\n", token.c_str());
+                } else {
+                    modifiers.push_back(token);
+                }
+            } else {
+                if (!key.empty()) {
+                    DEBUG_PRINTF("more than one key in hotkey, ignoring '%s'\n", token.c_str());
+                } else {
+                    // look for vkey string
+                    const auto & vkit = vkeyMap_.find(token);
+                    if (vkit != vkeyMap_.end()) {
+                        key = token;
+                    } else {
+                        // look for key character
+                        if (token.length() != 1) {
+                            DEBUG_PRINTF("unknown value in hotkey, ignoring '%s'\n", token.c_str());
+                        } else {
+                            SHORT scan = VkKeyScanA(token[0]);
+                            if (scan == 0xFFFF) {
+                                DEBUG_PRINTF("unknown key in hotkey, ignoring '%s'\n", token.c_str());
+                            } else {
+                                key = token;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::string normalized;
+
+    for (const auto & modifier : modifiers) {
+        if (!normalized.empty()) {
+            normalized += ' ';
+        }
+        normalized += modifier;
+    }
+
+    if (!key.empty()) {
+        if (!normalized.empty()) {
+            normalized += ' ';
+        }
+        normalized += key;
+    }
+
+    DEBUG_PRINTF("normalized hotkey '%s' to '%s'\n", hotkeyStr.c_str(), normalized.c_str());
+    return normalized;
+}
+
 bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
 {
     if (hotkeyStr.empty()) {
@@ -85,7 +154,7 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
         return true;
     }
 
-    std::vector<std::string> tokens = StringUtility::split(hotkeyStr, "+");
+    std::vector<std::string> tokens = StringUtility::split(hotkeyStr, " \t");
     for (std::string token : tokens) {
         token = StringUtility::trim(token);
         token = StringUtility::toLower(token);

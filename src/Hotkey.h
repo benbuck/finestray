@@ -17,6 +17,7 @@ public:
     bool create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers);
     void destroy();
 
+    static std::string normalize(const std::string & hotkeyStr);
     static bool parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers);
 
 private:

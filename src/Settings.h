@@ -21,6 +21,7 @@ public:
     bool parseCommandLine(int argc, const char * const * argv);
     bool writeToFile(const std::string & fileName);
 
+    void normalize();
     void dump();
 
     struct AutoTray
@@ -41,6 +42,5 @@ public:
 private:
     bool parseJson(const std::string & json);
     std::string constructJSON();
-    void sanitize();
     static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };

@@ -70,13 +70,15 @@ Modifier choices: `alt`, `ctrl`, `shift`, `win`
 
 Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`,
     `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
-    `home`, `end`, `ins`, `del`
+    `home`, `end`, `ins`, `del`, and normal letters, numbers, punctuation, etc. except spaces
 
-For the minimize and restore hotkey settings, you can combine a set of modifiers with one a single key, using "+". So
-for example, you could make a hotkey like this: `alt+win+esc`, or `ctrl+win+f8`.
+For the minimize and restore hotkey settings, you can combine a set of modifiers with one a single key. So
+for example, you could make a hotkey like this: `alt win esc`, or `ctrl win -`.
 
-Similarly, for the override modifier, you can provide one ore more modifiers using "+". For example you could provide a
-modifier like this: `alt`, or `ctrl+shift`.
+Similarly, for the override modifier, you can provide one ore more modifiers using " ". For example you could provide a
+modifier like this: `alt`, or `ctrl shift`.
+
+You can also leave a hotkey or modifier empty or specify `none` to disable the it.
 
 ### Auto-tray settings
 

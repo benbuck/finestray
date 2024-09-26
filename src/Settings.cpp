@@ -5,6 +5,7 @@
 // App
 #include "DebugPrint.h"
 #include "File.h"
+#include "Hotkey.h"
 
 // argh
 #include <argh.h>
@@ -106,7 +107,7 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
-    sanitize();
+    normalize();
 
     return true;
 }
@@ -115,7 +116,7 @@ bool Settings::writeToFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
 
-    sanitize();
+    normalize();
 
     std::string json = constructJSON();
     if (json.empty()) {
@@ -127,6 +128,21 @@ bool Settings::writeToFile(const std::string & fileName)
     }
 
     return true;
+}
+
+void Settings::normalize()
+{
+    for (auto it = autoTrays_.begin(); it != autoTrays_.end(); ++it) {
+        AutoTray & autoTray = *it;
+        if ((autoTray.executable_.empty()) && (!autoTray.windowClass_.empty()) && (!autoTray.windowTitle_.empty())) {
+            DEBUG_PRINTF("Removing empty auto-tray item\n");
+            it = autoTrays_.erase(it);
+        }
+    }
+
+    hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
+    hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
+    modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
 }
 
 void Settings::dump()
@@ -174,7 +190,7 @@ bool Settings::parseJson(const std::string & json)
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
 
-    sanitize();
+    normalize();
 
     return true;
 }
@@ -243,17 +259,6 @@ std::string Settings::constructJSON()
     }
 
     return cJSON_Print(cjson);
-}
-
-void Settings::sanitize()
-{
-    for (auto it = autoTrays_.begin(); it != autoTrays_.end(); ++it) {
-        AutoTray & autoTray = *it;
-        if ((autoTray.executable_.empty()) && (!autoTray.windowClass_.empty()) && (!autoTray.windowTitle_.empty())) {
-            DEBUG_PRINTF("Removing empty auto-tray item\n");
-            it = autoTrays_.erase(it);
-        }
-    }
 }
 
 bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)

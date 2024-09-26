@@ -355,50 +355,44 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int init()
 {
     // register a hotkey that will be used to minimize windows
-    if (settings_.hotkeyMinimize_.empty()) {
+    UINT vkMinimize = VK_DOWN;
+    UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (!vkMinimize || !modifiersMinimize) {
         DEBUG_PRINTF("no hotkey to minimize windows\n");
     } else {
-        UINT vkMinimize = VK_DOWN;
-        UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-        if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
+        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
-        }
-        if (vkMinimize && modifiersMinimize) {
-            if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
-                return IDS_ERROR_REGISTER_HOTKEY;
-            }
         }
     }
 
     // register a hotkey that will be used to restore windows
-    if (settings_.hotkeyRestore_.empty()) {
+    UINT vkRestore = VK_UP;
+    UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (!vkRestore || !modifiersRestore) {
         DEBUG_PRINTF("no hotkey to restore windows\n");
     } else {
-        UINT vkRestore = VK_UP;
-        UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-        if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
+        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
-        }
-        if (vkRestore && modifiersRestore) {
-            if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
-                return IDS_ERROR_REGISTER_HOTKEY;
-            }
         }
     }
 
     // get modifiers that will be used to override auto-tray
-    if (settings_.modifiersOverride_.empty()) {
+    UINT vkOverride = 0;
+    modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
+        return IDS_ERROR_REGISTER_MODIFIER;
+    }
+    if (!modifiersOverride_) {
         DEBUG_PRINTF("no override modifiers\n");
-    } else {
-        UINT vkOverride = 0;
-        modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
-        if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
-            return IDS_ERROR_REGISTER_MODIFIER;
-        }
-        if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
-            DEBUG_PRINTF("invalid override modifiers\n");
-            return IDS_ERROR_REGISTER_MODIFIER;
-        }
+    } else if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
+        DEBUG_PRINTF("invalid override modifiers\n");
+        return IDS_ERROR_REGISTER_MODIFIER;
     }
 
     WindowList::start(hwnd_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
@@ -440,7 +434,8 @@ bool modifiersActive(UINT modifiers)
     }
 
     if (modifiers & MOD_SHIFT) {
-        if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_LSHIFT) & 0x8000) && !(GetKeyState(VK_RSHIFT) & 0x8000)) {
+        if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_LSHIFT) & 0x8000) &&
+            !(GetKeyState(VK_RSHIFT) & 0x8000)) {
             DEBUG_PRINTF("\tshift modifier not down\n");
             return false;
         }
@@ -609,20 +604,23 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
     if (success) {
         settings_ = settings;
         DEBUG_PRINTF("got updated settings from dialog:\n");
+        settings_.normalize();
         settings_.dump();
-        std::string fileName(std::string(APP_NAME) + ".json");
-        if (!settings_.writeToFile(fileName)) {
-            errorMessage(IDS_ERROR_SAVE_SETTINGS);
-        } else {
-            DEBUG_PRINTF("wrote settings to %s\n", fileName.c_str());
-        }
 
+        // restart to apply new settings
         cleanup();
         int err = init();
         if (err) {
             errorMessage(err);
             settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
             return;
+        }
+
+        std::string fileName(std::string(APP_NAME) + ".json");
+        if (!settings_.writeToFile(fileName)) {
+            errorMessage(IDS_ERROR_SAVE_SETTINGS);
+        } else {
+            DEBUG_PRINTF("wrote settings to %s\n", fileName.c_str());
         }
     }
 
