@@ -705,17 +705,26 @@ void spySelectWindowAtPoint(const POINT & point)
         DWORD processID;
         GetWindowThreadProcessId(rootHwnd, &processID);
         HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-        GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH);
-        DEBUG_PRINTF("Exe path: %s\n", exePath);
+        if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH)) {
+            DEBUG_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+            exePath[0] = '\0';
+        }
+        DEBUG_PRINTF("Exe path: '%s'\n", exePath);
         CloseHandle(hproc);
 
-        GetClassNameA(rootHwnd, className, sizeof(className));
-        DEBUG_PRINTF("Class name: %s\n", className);
+        if (!GetClassNameA(rootHwnd, className, sizeof(className))) {
+            DEBUG_PRINTF("GetClassNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+            className[0] = '\0';
+        }
+        DEBUG_PRINTF("Class name: '%s'\n", className);
 
         int length = GetWindowTextLengthA(rootHwnd);
         title.resize(length + 1);
-        GetWindowTextA(rootHwnd, &title[0], (int)title.size());
-        DEBUG_PRINTF("Title: %s\n", title.c_str());
+        if (!GetWindowTextA(rootHwnd, &title[0], (int)title.size())) {
+            DEBUG_PRINTF("GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+            title.clear();
+        }
+        DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
         SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), exePath);
         SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className);

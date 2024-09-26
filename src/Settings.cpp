@@ -132,9 +132,11 @@ bool Settings::writeToFile(const std::string & fileName)
 
 void Settings::normalize()
 {
-    for (auto it = autoTrays_.begin(); it != autoTrays_.end(); ++it) {
+    for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
         AutoTray & autoTray = *it;
-        if ((autoTray.executable_.empty()) && (!autoTray.windowClass_.empty()) && (!autoTray.windowTitle_.empty())) {
+        if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
+            ++it;
+        } else {
             DEBUG_PRINTF("Removing empty auto-tray item\n");
             it = autoTrays_.erase(it);
         }
