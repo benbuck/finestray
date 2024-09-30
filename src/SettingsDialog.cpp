@@ -689,6 +689,7 @@ void spySelectWindowAtPoint(const POINT & point)
 
     HWND hwnd = WindowFromPoint(point);
     if (!hwnd) {
+        DEBUG_PRINTF("No window found\n");
     } else {
         DEBUG_PRINTF("Spy mode: hwnd %#x\n", hwnd);
 
@@ -731,7 +732,9 @@ void spySelectWindowAtPoint(const POINT & point)
         SetWindowTextA(GetDlgItem(spyModeFromHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), title.c_str());
 
         ShowWindow(spyModeFromHwnd_, SW_SHOW);
+        SetForegroundWindow(spyModeFromHwnd_);
 
+        spyModeFromHwnd_ = nullptr;
         spyMode_ = false;
     }
 }
