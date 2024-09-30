@@ -37,7 +37,7 @@ static int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 static void autoTrayListViewItemAdd(HWND hwndDlg);
 static void autoTrayListViewItemUpdate(HWND hwndDlg, int item);
 static void autoTrayListViewItemDelete(HWND hwndDlg, int item);
-static void autoTrayListViewItemSpy(HWND hwndDlg, int item);
+static void autoTrayListViewItemSpy(HWND hwndDlg);
 static void autoTrayListViewItemEdit(HWND hwndDlg, int item);
 static void autoTrayListViewUpdateButtons(HWND hwndDlg);
 static void autoTrayListViewUpdateSelected(HWND hwndDlg);
@@ -123,7 +123,7 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
                         break;
                     }
                     case IDC_AUTO_TRAY_ITEM_SPY: {
-                        autoTrayListViewItemSpy(hwndDlg, autoTrayListViewActiveItem_);
+                        autoTrayListViewItemSpy(hwndDlg);
                         break;
                     }
 
@@ -541,9 +541,9 @@ void autoTrayListViewItemDelete(HWND hwndDlg, int item)
     autoTrayListViewUpdateSelected(hwndDlg);
 }
 
-void autoTrayListViewItemSpy(HWND hwndDlg, int item)
+void autoTrayListViewItemSpy(HWND hwndDlg)
 {
-    DEBUG_PRINTF("Spying auto tray item %d\n", item);
+    DEBUG_PRINTF("Spying auto tray\n");
 
     ShowWindow(hwndDlg, SW_HIDE);
 

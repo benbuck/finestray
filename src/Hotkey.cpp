@@ -109,7 +109,7 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
                             DEBUG_PRINTF("unknown value in hotkey, ignoring '%s'\n", token.c_str());
                         } else {
                             SHORT scan = VkKeyScanA(token[0]);
-                            if (scan == 0xFFFF) {
+                            if ((unsigned int)scan == 0xFFFF) {
                                 DEBUG_PRINTF("unknown key in hotkey, ignoring '%s'\n", token.c_str());
                             } else {
                                 key = token;

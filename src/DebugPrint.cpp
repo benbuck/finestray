@@ -19,7 +19,7 @@ void debugPrintf(const char * fmt, ...)
     int len = vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
 
-    if (len >= sizeof(buf)) {
+    if (len >= (int)sizeof(buf)) {
         __debugbreak();
     }
 
