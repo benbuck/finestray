@@ -40,9 +40,9 @@ enum SettingKeys : unsigned int
     SK_Count
 };
 
-static const char hotkeyMinimizeDefault_[] = "alt+ctrl+shift+down";
-static const char hotkeyRestoreDefault_[] = "alt+ctrl+shift+up";
-static const char modifiersOverrideDefault_[] = "alt+ctrl+shift";
+static const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
+static const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
+static const char modifiersOverrideDefault_[] = "alt ctrl shift";
 static const unsigned int pollIntervalDefault_ = 500;
 static const char * settingKeys_[SK_Count] = { "auto-tray",          "executable",      "window-class",
                                                "window-title",       "hotkey-minimize", "hotkey-restore",
