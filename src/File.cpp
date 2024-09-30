@@ -6,6 +6,10 @@
 #include "DebugPrint.h"
 #include "StringUtility.h"
 
+// Windows
+#include <ShlObj.h>
+#include <Shlwapi.h>
+
 // Standard library
 #include <cstring>
 
@@ -86,6 +90,18 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     return true;
 }
 
+bool fileExists(const std::string & filename)
+{
+    DWORD attrib = GetFileAttributesA(filename.c_str());
+    return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool directoryExists(const std::string & directory)
+{
+    DWORD attrib = GetFileAttributesA(directory.c_str());
+    return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 std::string getExecutablePath()
 {
     CHAR path[MAX_PATH];
@@ -108,4 +124,37 @@ std::string getExecutablePath()
     exePath.resize(pathChars);
     strncpy_s(&exePath[0], pathChars + 1, path, pathChars);
     return exePath;
+}
+
+std::string getAppDataPath(void)
+{
+    CHAR path[MAX_PATH];
+
+    HRESULT result = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, path);
+    if (FAILED(result)) {
+        DEBUG_PRINTF(
+            "could not get AppData path, SHGetFolderPath() failed: %s\n",
+            StringUtility::errorToString(result).c_str());
+        return std::string();
+    }
+
+    return path;
+}
+
+std::string pathJoin(const std::string & path1, const std::string & path2)
+{
+    std::string path;
+    path.reserve(max(MAX_PATH, path1.size() + path2.size() + 2));
+
+    LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
+    if (!result) {
+        DEBUG_PRINTF(
+            "could not join paths '%s' and '%s', PathCombineA() failed: %s\n",
+            path1.c_str(),
+            path2.c_str(),
+            StringUtility::lastErrorString().c_str());
+        return std::string();
+    }
+
+    return path;
 }

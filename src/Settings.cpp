@@ -3,6 +3,7 @@
 #include "Settings.h"
 
 // App
+#include "AppName.h"
 #include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"
@@ -16,6 +17,8 @@
 // Windows
 #include <Windows.h>
 #include <shellapi.h>
+
+// Standard library
 #include <stdlib.h>
 
 // static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
@@ -62,9 +65,15 @@ bool Settings::readFromFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
 
-    std::string json = fileRead(fileName);
+    std::string json;
+    json = fileRead(fileName);
     if (json.empty()) {
-        return false;
+        std::string appDataPath = pathJoin(getAppDataPath(), APP_NAME);
+        std::string appDataFileName = pathJoin(appDataPath, fileName);
+        json = fileRead(appDataFileName);
+        if (json.empty()) {
+            return false;
+        }
     }
 
     return parseJson(json);
@@ -124,7 +133,20 @@ bool Settings::writeToFile(const std::string & fileName)
     }
 
     if (!fileWrite(fileName, json)) {
-        return false;
+        std::string appDataPath = pathJoin(getAppDataPath(), APP_NAME);
+        if (!directoryExists(appDataPath)) {
+            if (!CreateDirectoryA(appDataPath.c_str(), nullptr)) {
+                DEBUG_PRINTF(
+                    "could not create directory '%s', CreateDirectoryA() failed: %s\n",
+                    appDataPath.c_str(),
+                    GetLastError());
+                return false;
+            }
+        }
+        std::string appDataFileName = pathJoin(appDataPath, fileName);
+        if (!fileWrite(appDataFileName, json)) {
+            return false;
+        }
     }
 
     return true;

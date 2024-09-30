@@ -146,6 +146,7 @@ target_link_libraries(MinTray
         cJSON
 
         Comctl32.lib
+        Shlwapi.lib
 )
 
 install(TARGETS MinTray)

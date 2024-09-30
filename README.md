@@ -62,7 +62,8 @@ The available settings correspond to some of the above features. The settings ar
     the Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update
     button. Please see below for details about auto-tray settings.
 
-Settings are automatically stored in a file called "MinTray.json" in the same location as the MinTray application.
+Settings are automatically stored in a file called "MinTray.json". MinTray first tries to save them in the same location
+as the MinTray application, and if that's not possible it saves them to %APPDATA%\\MinTray\\MinTray.json.
 
 ### Modifiers and Hotkeys
 
