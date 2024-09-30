@@ -35,8 +35,8 @@ enum class HotkeyID
 };
 
 static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static int init();
-static void cleanup();
+static int start();
+static void stop();
 static bool modifiersActive(UINT modifiers);
 static bool isAutoTrayWindow(HWND hwnd);
 static void onAddWindow(HWND hwnd);
@@ -172,7 +172,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
-    int err = init();
+    int err = start();
     if (err) {
         errorMessage(err);
         settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
@@ -196,7 +196,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             StringUtility::lastErrorString().c_str());
     }
 
-    cleanup();
+    stop();
 
     if (!DestroyWindow(hwnd)) {
         DEBUG_PRINTF(
@@ -352,7 +352,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-int init()
+int start()
 {
     // register a hotkey that will be used to minimize windows
     UINT vkMinimize = VK_DOWN;
@@ -400,7 +400,7 @@ int init()
     return 0;
 }
 
-void cleanup()
+void stop()
 {
     WindowList::stop();
 
@@ -608,8 +608,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         settings_.dump();
 
         // restart to apply new settings
-        cleanup();
-        int err = init();
+        stop();
+        int err = start();
         if (err) {
             errorMessage(err);
             settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
