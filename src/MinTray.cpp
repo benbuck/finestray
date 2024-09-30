@@ -53,6 +53,7 @@ static void onSettingsDialogComplete(bool success, const Settings & settings);
 static bool showContextMenu(HWND hwnd);
 
 static HWND hwnd_;
+static TrayIcon trayIcon_;
 static HWND settingsDialog_;
 static Settings settings_;
 static std::set<HWND> autoTrayedWindows_;
@@ -148,8 +149,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)nCmdShow;
 
     // create a tray icon for the app
-    TrayIcon trayIcon;
-    if (!trayIcon.create(hwnd, WM_TRAYWINDOW, icon)) {
+    if (!trayIcon_.create(hwnd, WM_TRAYWINDOW, icon)) {
         errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
@@ -195,6 +195,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             hwnd,
             StringUtility::lastErrorString().c_str());
     }
+
+    trayIcon_.destroy();
 
     stop();
 
@@ -329,6 +331,14 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     HWND hwndTray = TrayWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
                         TrayWindow::restore(hwndTray);
+                    } else if (wParam == trayIcon_.id()) {
+                        if (!settingsDialog_) {
+                            settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                        } else {
+                            if (DestroyWindow(settingsDialog_)) {
+                                settingsDialog_ = nullptr;
+                            }
+                        }
                     }
                     break;
                 }
