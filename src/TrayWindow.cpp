@@ -54,20 +54,13 @@ void minimize(HWND hwnd, HWND messageWnd)
     // add tray icon
     if (find(hwnd) == trayIcons_.end()) {
         if (!add(hwnd, messageWnd)) {
-            // restore window on failure
+            // un-hide window on failure, but leave it minimized
 
             DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
 
             if (!ShowWindow(hwnd, SW_SHOW)) {
                 DEBUG_PRINTF(
                     "failed to show window %#x, ShowWindow() failed: %s\n",
-                    hwnd,
-                    StringUtility::lastErrorString().c_str());
-            }
-
-            if (!SetForegroundWindow(hwnd)) {
-                DEBUG_PRINTF(
-                    "failed to set foreground window %#x, SetForegroundWindow() failed: \n",
                     hwnd,
                     StringUtility::lastErrorString().c_str());
             }
