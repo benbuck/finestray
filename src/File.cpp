@@ -56,14 +56,8 @@ std::string fileRead(const std::string & fileName)
 
 bool fileWrite(const std::string & fileName, const std::string & contents)
 {
-    HANDLE file = CreateFileA(
-        fileName.c_str(),
-        GENERIC_WRITE,
-        FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_ALWAYS | TRUNCATE_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr);
+    HANDLE file =
+        CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF(
             "could not open '%s' for writing, CreateFileA() failed: %s\n",
