@@ -14,6 +14,7 @@ project(MinTray
 
 set(COMPILE_CONFIG_OPTIONS
     $<$<CXX_COMPILER_ID:MSVC>:
+        /D_HAS_EXCEPTIONS=0 # disable exceptions
         /GR- # disable run-time type information (RTTI)
         /GS # enable security checks
         /MP # build with multiple processes
@@ -36,10 +37,11 @@ set(COMPILE_CONFIG_OPTIONS
     >
 
     $<$<CXX_COMPILER_ID:Clang>:
-        -fno-exceptions
-        -fno-rtti
-        -Wall
-        -Werror
+        -fno-exceptions # disable exceptions
+        -fno-rtti # disable run-time type information (RTTI)
+        -Wall # enable all warnings
+        -Wextra # enable extra warnings
+        -Werror # treat warnings as errors
 
         # Debug compile options
         $<$<CONFIG:Debug>:
