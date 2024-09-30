@@ -146,18 +146,16 @@ target_link_libraries(MinTray
         Comctl32.lib
 )
 
-install(
-    TARGETS MinTray
-    RUNTIME DESTINATION .
-    COMPONENT Runtime
-)
+install(TARGETS MinTray)
 
 set(CPACK_GENERATOR "NSIS64")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "MinTray.exe")
 set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/mintray/")
+#set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "MinTray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
+set(CPACK_PACKAGE_EXECUTABLES "MinTray" "MinTray" )
 include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")

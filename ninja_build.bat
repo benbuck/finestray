@@ -30,7 +30,8 @@ cmake ..\..\.. -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
 cmake --build .
 
 :: for release builds, also make the package
-:: FIX - this isn't working yet
-:: if "%BUILD_CONFIG%"=="Release" cpack
+if "%BUILD_CONFIG%"=="Release" (
+    cmake --build . --config %BUILD_CONFIG% --target package
+)
 
 popd

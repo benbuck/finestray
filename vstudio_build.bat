@@ -15,9 +15,11 @@ pushd %BUILD_DIR%
 cmake ..\..
 
 :: build
-cmake --build . --config %BUILD_CONFIG%%
+cmake --build . --config %BUILD_CONFIG%
 
 :: for release builds, also make the package
-if "%BUILD_CONFIG%"=="Release" cpack
+if "%BUILD_CONFIG%"=="Release" (
+    cmake --build . --config %BUILD_CONFIG% --target PACKAGE
+)
 
 popd
