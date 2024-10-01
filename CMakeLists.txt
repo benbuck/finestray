@@ -73,17 +73,8 @@ set(LINK_CONFIG_OPTIONS
     >
 )
 
+include(argh.cmake)
 include(cJSON.cmake)
-
-add_library(argh
-    INTERFACE
-        src/argh/argh.h
-)
-
-target_include_directories(argh
-    INTERFACE
-    src/argh
-)
 
 add_executable(MinTray WIN32
     src/CommandLine.cpp
