@@ -1,6 +1,6 @@
 # Copyright 2020 Benbuck Nason
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
@@ -73,20 +73,7 @@ set(LINK_CONFIG_OPTIONS
     >
 )
 
-add_library(cJSON
-    src/cJSON/cJSON.c
-    src/cJSON/cJSON.h
-)
-
-target_include_directories(cJSON
-    INTERFACE
-        src/cJSON
-)
-
-target_compile_options(cJSON
-    PRIVATE
-        ${COMPILE_CONFIG_OPTIONS}
-)
+include(cJSON.cmake)
 
 add_library(argh
     INTERFACE
