@@ -19,14 +19,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cJSON)
 
-set(CJSON_LIB_NAME ${CMAKE_STATIC_LIBRARY_PREFIX}cjson${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-set_target_properties(cjson PROPERTIES
-    IMPORTED_LOCATION ${cJSON_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${CJSON_LIB_NAME}
-    IMPORTED_LOCATION_DEBUG ${cJSON_BINARY_DIR}/Debug/${CJSON_LIB_NAME}
-    IMPORTED_LOCATION_RELEASE ${cJSON_BINARY_DIR}/Release/${CJSON_LIB_NAME}
-)
-
 target_include_directories(cjson INTERFACE ${cJSON_SOURCE_DIR})
 
 # could potentially be removed if cJSON fixes all warnings
