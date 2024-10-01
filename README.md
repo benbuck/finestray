@@ -120,12 +120,15 @@ Please see above for an explanation of values that can be used for each of these
 
 ## Legal
 
-MinTray is distributed under the Apache License, Version 2.0, please see LICENSE.txt for more information..
-
 Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
+
+MinTray is distributed under the Apache License, Version 2.0, please see the [license](LICENSE.txt) for more information..
 
 Uses cJSON:
 https://github.com/DaveGamble/cJSON
 
 Uses Argh!:
 https://github.com/adishavit/argh
+
+Uses icon from Google Noto Emoji:
+https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg
