@@ -136,12 +136,19 @@ target_link_libraries(MinTray
         Shlwapi.lib
 )
 
-install(TARGETS MinTray)
+install(
+    TARGETS MinTray
+    RUNTIME DESTINATION .
+    COMPONENT Runtime
+)
 
 set(CPACK_GENERATOR "NSIS64")
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "MinTray.exe")
 set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/mintray/")
-#set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
+set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
+# FIX - set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "MinTray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
