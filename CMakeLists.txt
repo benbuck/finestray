@@ -141,21 +141,22 @@ target_link_libraries(MinTray
 
 install(
     TARGETS MinTray
-    RUNTIME DESTINATION .
-    COMPONENT Runtime
+    RUNTIME
+    DESTINATION .
 )
 
-set(CPACK_GENERATOR "NSIS64")
-set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-set(CPACK_NSIS_INSTALLED_ICON_NAME "MinTray.exe")
-set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/mintray/")
-set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
-# FIX - set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\src\\\\MinTray.ico")
+set(CPACK_GENERATOR "NSIS")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "MinTray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_PACKAGE_EXECUTABLES "MinTray" "MinTray" )
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+set(CPACK_NSIS_INSTALLED_ICON_NAME "MinTray.exe")
+set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_header.bmp")
+set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/mintray/")
+set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
+set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
 include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")
