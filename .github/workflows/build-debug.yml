@@ -34,7 +34,7 @@ jobs:
       - name: Build
         run: .\vstudio_build.bat Debug
 
-      - name: Archive portable
+      - name: Create portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable
