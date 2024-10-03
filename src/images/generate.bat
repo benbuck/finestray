@@ -17,6 +17,9 @@ pushd %~dp0
 :: create icon for executable
 magick convert -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u1f4e5.svg ../MinTray.ico
 
+:: create icon for README.md
+magick convert -background none -size 16x16 -filter point emoji_u1f4e5.svg icon.png
+
 :: create installer header image (used at top of most installer screens)
 magick -size 150x57 -define gradient:direction=east gradient:steelblue1-white installer_header.bmp
 magick composite -background none -geometry 40x40+15+8 emoji_u1f4e5.svg installer_header.bmp BMP3:installer_header.bmp
