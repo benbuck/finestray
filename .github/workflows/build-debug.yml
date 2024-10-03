@@ -16,27 +16,26 @@ name: Build Debug
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Add MSBuild to path
-      uses: microsoft/setup-msbuild@v1.1
+      - name: Add MSBuild to path
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Build
-      run: .\vstudio_build.bat Debug
+      - name: Build
+        run: .\vstudio_build.bat Debug
 
-    - name: Archive portable
-      uses: actions/upload-artifact@v3
-      with:
-        name: portable
-        path: build/vstudio/Debug/MinTray.exe
+      - name: Archive portable
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable
+          path: build/vstudio/Debug/MinTray.exe
