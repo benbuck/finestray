@@ -6,7 +6,8 @@ window is minimized) to reduce visual clutter.
 
 ## Basic Operation
 
-After launching the MinTray application, it will add an icon for itself to your tray. ![MinTray icon](src/images/icon.png "MinTray icon")
+After launching the MinTray application, it will add an icon for itself to your tray.
+![MinTray icon](src/images/icon.png "MinTray icon")
 
 MinTray supports a number of features to help you control when to minimize windows to the tray and restore them back to
 their normal placement:
@@ -47,7 +48,7 @@ From the context menu, you can select one of the menu items:
 ## Settings
 
 To change the default behavior of MinTray, you can modify its settings. To open the Settings window, right click on any
-of the icons in the tray the belong to MinTray, and select Settings.
+of the icons in the tray the belong to MinTray, and select Settings, or just click once on the main MinTray tray icon.
 
 ![Settings window](src/images/settings-window.png "Settings window")
 
@@ -64,8 +65,8 @@ The available settings correspond to some of the above features. The settings ar
     [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Poll interval**:
     MinTray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
-    how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is one
-    second, and MinTray will scan the windows once every second. You can increase the value if you think MinTray is
+    how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
+    one second, and MinTray will scan the windows once every second. You can increase the value if you think MinTray is
     checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to happen
     more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior when a
     window first opens.
@@ -146,7 +147,8 @@ These options are:
 - `--modifiers-override=[modifiers]`
 - `--poll-interval=[milliseconds]`
 
-Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of values that can be used for each of these.
+Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of
+values that can be used for each of these.
 
 ## Legal
 
