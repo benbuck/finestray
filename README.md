@@ -1,6 +1,8 @@
 # MinTray
 
 MinTray is a program that can minimize windows to the tray area (typically bottom right corner) of the Windows desktop.
+This is useful if you want to have a window not be visible, and also not show in the taskbar (the usual behavior when a
+window is minimized) to reduce visual clutter.
 
 ## Basic Operation
 
@@ -97,9 +99,9 @@ window. Because of this, MinTray provides three possible ways, which can be used
     or you can leave this empty if you don't care what the class name is.
 - **Window title**:
     This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
-    is provided as a regular expression (<https://en.cppreference.com/w/cpp/regex>). If you aren't familiar with regular
+    is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
     expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window
-    which has a title like "My Document - Notepad", you could use a regular expression like ".*Notepad$".
+    which has a title like "My Document - Notepad", you could use a regular expression like: `.*Notepad$`.
 
 All of these values can be automatically filled by selecting the Spy button, and following the instructions to select
 the window you want to auto-tray.
@@ -120,15 +122,13 @@ Please see above for an explanation of values that can be used for each of these
 
 ## Legal
 
-Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
+Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 
-MinTray is distributed under the Apache License, Version 2.0, please see the [license](LICENSE.txt) for more information..
+MinTray is distributed under the [Apache License, Version 2.0](LICENSE.txt).
 
-Uses cJSON:
-https://github.com/DaveGamble/cJSON
+Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
-Uses Argh!:
-https://github.com/adishavit/argh
+Uses the [Argh! library](https://github.com/adishavit/argh) for command line parsing.
 
-Uses icon from Google Noto Emoji:
-https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg
+Uses the [emoji U1F4E5](https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg)
+from [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for the application icon and installer images.
