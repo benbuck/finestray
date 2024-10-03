@@ -515,7 +515,7 @@ bool isAutoTrayWindow(HWND hwnd)
             // DEBUG_PRINTF("\texecutable match (empty)\n");
             executableMatch = true;
         } else {
-            if (autoTray.executable_ == executable) {
+            if (StringUtility::toLower(autoTray.executable_) == StringUtility::toLower(executable)) {
                 // DEBUG_PRINTF("\texecutable %s match\n", autoTray.executable_.c_str());
                 executableMatch = true;
             }
