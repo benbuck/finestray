@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // App
-#include "MinTray.h"
+#include "Finestray.h"
 #include "AppName.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
@@ -114,7 +114,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DEBUG_PRINTF("final settings:\n");
     settings_.dump();
 
-    HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINTRAY));
+    HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_FINESTRAY));
 
     // create the window class
     WNDCLASSEXA wc;

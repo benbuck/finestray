@@ -17,7 +17,7 @@
 // clang-format off
 
 // icons
-#define IDI_MINTRAY                     101
+#define IDI_FINESTRAY                     101
 
 // strings
 #define IDS_MENU_SETTINGS               201

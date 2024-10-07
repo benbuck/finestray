@@ -22,7 +22,7 @@
       "name": "CPP VS Debugger",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "MinTray.exe",
+      "program": "Finestray.exe",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build/Debug",

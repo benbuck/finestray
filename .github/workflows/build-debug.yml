@@ -38,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: portable
-          path: build/vstudio/Debug/MinTray.exe
+          path: build/vstudio/Debug/Finestray.exe

@@ -16,8 +16,8 @@
 
 // App
 #include "DebugPrint.h"
+#include "Finestray.h"
 #include "Hotkey.h"
-#include "MinTray.h"
 #include "Resource.h"
 #include "StringUtility.h"
 

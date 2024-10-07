@@ -15,7 +15,7 @@
 pushd %~dp0
 
 :: create icon for executable
-magick convert -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u1f4e5.svg ../MinTray.ico
+magick convert -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u1f4e5.svg ../Finestray.ico
 
 :: create icon for README.md
 magick convert -background none -size 16x16 -filter point emoji_u1f4e5.svg icon.png

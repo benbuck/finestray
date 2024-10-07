@@ -20,7 +20,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     cmake_policy(SET CMP0117 NEW) # /GR (RTTI) is not added to CMAKE_CXX_FLAGS by default
 endif()
 
-project(MinTray
+project(Finestray
     VERSION 0.1
 )
 
@@ -88,18 +88,19 @@ set(LINK_CONFIG_OPTIONS
 include(argh.cmake)
 include(cJSON.cmake)
 
-add_executable(MinTray WIN32
+add_executable(Finestray WIN32
     src/CommandLine.cpp
     src/CommandLine.h
     src/DebugPrint.cpp
     src/DebugPrint.h
     src/File.cpp
     src/File.h
+    src/Finestray.cpp
+    src/Finestray.h
+    src/Finestray.ico
+    src/Finestray.rc
     src/Hotkey.cpp
     src/Hotkey.h
-    src/MinTray.cpp
-    src/MinTray.ico
-    src/MinTray.rc
     src/Resource.h
     src/Settings.cpp
     src/Settings.h
@@ -115,22 +116,22 @@ add_executable(MinTray WIN32
     src/WindowList.h
 )
 
-target_compile_options(MinTray
+target_compile_options(Finestray
     PRIVATE
         ${COMPILE_CONFIG_OPTIONS}
 )
 
-target_compile_definitions(MinTray
+target_compile_definitions(Finestray
     PRIVATE
         UNICODE # Windows headers use wide character by default
 )
 
-target_link_options(MinTray
+target_link_options(Finestray
     PRIVATE
         ${LINK_CONFIG_OPTIONS}
 )
 
-target_link_libraries(MinTray
+target_link_libraries(Finestray
     PRIVATE
         argh
         cJSON
@@ -140,25 +141,25 @@ target_link_libraries(MinTray
 )
 
 install(
-    TARGETS MinTray
+    TARGETS Finestray
     RUNTIME
     DESTINATION .
 )
 
 set(CPACK_GENERATOR "NSIS")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "MinTray")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finestray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_EXECUTABLES "MinTray" "MinTray" )
+set(CPACK_PACKAGE_EXECUTABLES "Finestray" "Finestray" )
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-set(CPACK_NSIS_INSTALLED_ICON_NAME "MinTray.exe")
+set(CPACK_NSIS_INSTALLED_ICON_NAME "Finestray.exe")
 set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_header.bmp")
-set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/mintray/")
+set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/finestray/")
 set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
 set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
 include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT MinTray)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Finestray)
 endif()

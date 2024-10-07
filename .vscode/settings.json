@@ -35,7 +35,7 @@
     "LPSTR",
     "LPWSTR",
     "LRESULT",
-    "MINTRAY",
+    "FINESTRAY",
     "REFRTRAY",
     "snwprintf",
     "trayed",

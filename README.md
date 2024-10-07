@@ -1,16 +1,16 @@
-# MinTray
+# Finestray
 
-MinTray is a program that can minimize windows to the tray area (typically bottom right corner) of the Windows desktop.
-This is useful if you want to have a window not be visible, and also not show in the taskbar (the usual behavior when a
-window is minimized) to reduce visual clutter.
+Finestray (pronounced fin-es-tray) is a program that can minimize windows to the system tray area (typically bottom
+right corner) of the Windows desktop. This is useful if you want to have a window not be visible, and also not show in
+the taskbar (the usual behavior when a window is minimized) to reduce visual clutter.
 
 ## Basic Operation
 
-After launching the MinTray application, it will add an icon for itself to your tray.
-![MinTray icon](src/images/icon.png "MinTray icon")
+After launching the Finestray application, it will add an icon for itself to your tray.
+![Finestray icon](src/images/icon.png "Finestray icon")
 
-MinTray supports a number of features to help you control when to minimize windows to the tray and restore them back to
-their normal placement:
+Finestray supports a number of features to help you control when to minimize windows to the tray and restore them back
+to their normal placement:
 
 - **Minimize hotkey**:
     First select a window, then press the configurable hotkey (typically Alt+Ctrl+Shift+Down) to minimize the window to
@@ -19,11 +19,11 @@ their normal placement:
     Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
     will be restored to its original location.
 - **Override modifier**:
-    Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of
-    a window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
+    Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button
+    of a window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
     functionality.
 - **Tray Icons**:
-    If you click on the main tray icon for MinTray itself, it will show the [Settings](#settings) window, and
+    If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and
     if you click it again it will hide the Settings window.
 
     For any window that has been minimized to an icon in the tray, simply click it to restore it to its original
@@ -32,7 +32,8 @@ their normal placement:
     This feature allows specific windows to be minimized to the tray as soon as they appear. Please see the [Auto-tray
     Settings](#auto-tray-settings) section for more information.
 - **Context menu**:
-    For any of the tray icons created by MinTray, including its own, you can right click on it to see the context menu.
+    For any of the tray icons created by Finestray, including its own, you can right click on it to see the context
+    menu.
 
     ![Context menu](src/images/context-menu.png "Context menu")
 
@@ -41,14 +42,15 @@ From the context menu, you can select one of the menu items:
 - **Settings**:
     Shows the [Settings](#settings) window.
 - **About**:
-    Shows a some basic information about Mintray.
+    Shows a some basic information about Finestray.
 - **Exit**:
-    Exits the Mintray application.
+    Exits the Finestray application.
 
 ## Settings
 
-To change the default behavior of MinTray, you can modify its settings. To open the Settings window, right click on any
-of the icons in the tray the belong to MinTray, and select Settings, or just click once on the main MinTray tray icon.
+To change the default behavior of Finestray, you can modify its settings. To open the Settings window, right click on
+any of the icons in the tray the belong to Finestray, and select Settings, or just click once on the main Finestray tray
+icon.
 
 ![Settings window](src/images/settings-window.png "Settings window")
 
@@ -61,23 +63,23 @@ The available settings correspond to some of the above features. The settings ar
     This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
     [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Override modifier**:
-    This lets you configure the modifier that is used to override some Mintray behavior. Please see the
+    This lets you configure the modifier that is used to override some Finestray behavior. Please see the
     [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Poll interval**:
-    MinTray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
+    Finestray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
     how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
-    one second, and MinTray will scan the windows once every second. You can increase the value if you think MinTray is
-    checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to happen
-    more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior when a
-    window first opens.
+    one second, and Finestray will scan the windows once every second. You can increase the value if you think Finestray
+    is checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to
+    happen more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior
+    when a window first opens.
 - **Auto-trays**:
     This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
     windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing
     the Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update
     button. Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
 
-Settings are automatically stored in a file called "MinTray.json". MinTray first tries to save them in the same location
-as the MinTray application, and if that's not possible it saves them to %APPDATA%\\MinTray\\MinTray.json.
+Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same location
+as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
 
 ### Modifiers and Hotkeys
 
@@ -100,7 +102,7 @@ You can also leave a hotkey or modifier empty or specify `none` to disable the i
 
 The auto-tray settings are a list of items that each identify a window that you would like to automatically be minimized
 to the tray when it opens, and when you minimize it. The complication is that it's often not trivial to identify a
-window. Because of this, MinTray provides three possible ways, which can be used in combination, to identify a window:
+window. Because of this, Finestray provides three possible ways, which can be used in combination, to identify a window:
 
 - **Executable name**:
     This value corresponds to executable the created the window. Provide the full path to the executable, for example
@@ -154,7 +156,7 @@ values that can be used for each of these.
 
 Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 
-MinTray is distributed under the [Apache License, Version 2.0](LICENSE).
+Finestray is distributed under the [Apache License, Version 2.0](LICENSE).
 
 Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
