@@ -154,7 +154,7 @@ values that can be used for each of these.
 
 Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 
-MinTray is distributed under the [Apache License, Version 2.0](LICENSE.txt).
+MinTray is distributed under the [Apache License, Version 2.0](LICENSE).
 
 Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 

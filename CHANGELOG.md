@@ -9,4 +9,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
 
-MinTray is distributed under the Apache License, Version 2.0, please see the [license](LICENSE.txt) for more information..
+MinTray is distributed under the Apache License, Version 2.0, please see the [license](LICENSE) for more information..

@@ -1,0 +1,19 @@
+MinTray
+https://github.com/benbuck/mintray
+
+Copyright 2020 Benbuck Nason
+https://github.com/benbuck
+
+MinTray is distributed under the Apache License, Version 2.0.
+https://www.apache.org/licenses/LICENSE-2.0
+
+MinTray uses the cJSON library for JSON parsing, which is available under an "MIT" license.
+https://github.com/DaveGamble/cJSON
+
+MinTray uses the Argh! library for command line parsing, which is available under a "3-clause BSD" license.
+https://github.com/adishavit/argh
+
+MinTray uses the emoji U1F4E5 from Google Noto Emoji for the application icon and installer images, which is available
+under an "OFL 1.1" license.
+https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg
+https://github.com/googlefonts/noto-emoji
