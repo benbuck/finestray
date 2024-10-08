@@ -1,8 +1,9 @@
 # Finestray
 
 Finestray (pronounced fin-es-tray) is a program that can minimize windows to the system tray area (typically bottom
-right corner) of the Windows desktop. This is useful if you want to have a window not be visible, and also not show in
-the taskbar (the usual behavior when a window is minimized) to reduce visual clutter.
+right corner, formally known as the "notification area") of the Windows desktop. This is useful if you want to have a
+window not be visible, and also not show in the taskbar (the usual behavior when a window is minimized) to reduce visual
+clutter.
 
 ## Basic Operation
 
