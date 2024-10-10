@@ -17,6 +17,15 @@ pushd %~dp0
 :: create app icon
 magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u1f4e5.svg ../Finestray.ico
 
+:: create about icon
+magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u2139.svg about.ico
+
+:: create exit icon
+magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u274c.svg exit.ico
+
+:: create settings icon
+magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" -filter point emoji_u2699.svg settings.ico
+
 :: create icon for README.md
 magick -background none -define png:exclude-chunks=date,time -filter point -size 16x16 emoji_u1f4e5.svg icon.png
 
