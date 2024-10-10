@@ -97,6 +97,7 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 
     switch (message) {
         case WM_INITDIALOG: {
+            CheckDlgButton(hwndDlg, IDC_START_WITH_WINDOWS, settings_.startWithWindows_ ? BST_CHECKED : BST_UNCHECKED);
             SetDlgItemTextA(hwndDlg, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str());
             SetDlgItemTextA(hwndDlg, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str());
             SetDlgItemTextA(hwndDlg, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str());
@@ -120,6 +121,11 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
             // DEBUG_PRINTF("WM_COMMAND wparam %#x, lparam  %#x\n", wParam, lParam);
             if (HIWORD(wParam) == 0) {
                 switch (LOWORD(wParam)) {
+                    case IDC_START_WITH_WINDOWS: {
+                        settings_.startWithWindows_ = IsDlgButtonChecked(hwndDlg, IDC_START_WITH_WINDOWS) == BST_CHECKED;
+                        break;
+                    }
+
                     case IDC_AUTO_TRAY_ITEM_UPDATE: {
                         autoTrayListViewItemUpdate(hwndDlg, autoTrayListViewActiveItem_);
                         break;
@@ -139,6 +145,18 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
                         break;
                     }
 
+                    case IDC_ABOUT: {
+                        const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
+                        const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
+                        if (!MessageBoxA(hwndDlg, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION)) {
+                            DEBUG_PRINTF(
+                                "could not create about dialog, MessageBoxA() failed: %s\n",
+                                StringUtility::lastErrorString().c_str());
+                        }
+                        break;
+                    }
+
+                    case IDC_EXIT:
                     case IDOK: {
                         DEBUG_PRINTF("Settings dialog done, updating settings\n");
 
@@ -162,6 +180,10 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 
                         if (completionCallback_) {
                             completionCallback_(true, settings_);
+                        }
+
+                        if (LOWORD(wParam == IDC_EXIT)) {
+                            PostQuitMessage(0);
                         }
 
                         return TRUE;
@@ -332,18 +354,6 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* hwndDlg */)
 void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
 {
     switch (nmhdr->code) {
-        case NM_KILLFOCUS: {
-            DEBUG_PRINTF("NM_KILLFOCUS\n");
-            if (nmhdr->hwndFrom == GetDlgItem(hwndDlg, IDC_AUTO_TRAY_LIST)) {
-                DEBUG_PRINTF("NM_KILLFOCUS matched\n");
-                // FIX
-                // autoTrayListViewActiveItem_ = -1;
-                // autoTrayListViewUpdateSelected(hwndDlg);
-                // autoTrayListViewUpdateButtons(hwndDlg);
-            }
-            break;
-        }
-
         case LVN_COLUMNCLICK: {
 #ifdef SORT_ENABLED
             LPNMLISTVIEW nmListView = (LPNMLISTVIEW)nmhdr;
@@ -362,14 +372,6 @@ void autoTrayListViewNotify(HWND hwndDlg, LPNMHDR nmhdr)
 #endif
             break;
         }
-
-            // case NM_CLICK:
-            // case LVN_ITEMACTIVATE: {
-            //    DEBUG_PRINTF("LVN_ITEMACTIVATE\n");
-            //    LPNMITEMACTIVATE lpnmia = (LPNMITEMACTIVATE)nmhdr;
-            //    autoTrayListViewItemEdit(hwndDlg, lpnmia->iItem);
-            //    break;
-            //}
 
         case LVN_ITEMCHANGED: {
             LPNMLISTVIEW nmListView = (LPNMLISTVIEW)nmhdr;

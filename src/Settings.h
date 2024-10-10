@@ -14,9 +14,6 @@
 
 #pragma once
 
-// Windows
-#include <Windows.h>
-
 // Standard library
 #include <string>
 #include <vector>
@@ -45,11 +42,12 @@ public:
 
     void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
 
-    std::vector<AutoTray> autoTrays_;
+    bool startWithWindows_;
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
     std::string modifiersOverride_;
     unsigned int pollInterval_; // zero to disable
+    std::vector<AutoTray> autoTrays_;
 
 private:
     bool parseJson(const std::string & json);

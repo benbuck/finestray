@@ -32,18 +32,19 @@
 #define IDS_SPY_MODE_TITLE              225
 #define IDS_SPY_MODE_TEXT               226
 // error strings
-#define IDS_ERROR_REGISTER_WINDOW_CLASS 301
-#define IDS_ERROR_CREATE_WINDOW         302
-#define IDS_ERROR_REGISTER_HOTKEY       303
-#define IDS_ERROR_REGISTER_MODIFIER     304
-#define IDS_ERROR_REGISTER_EVENTHOOK    305
-#define IDS_ERROR_CREATE_TRAY_ICON      306
-#define IDS_ERROR_CREATE_POPUP_MENU     307
-#define IDS_ERROR_COMMAND_LINE          308
-#define IDS_ERROR_INIT_COMMON_CONTROLS  309
-#define IDS_ERROR_CREATE_DIALOG         310
-#define IDS_ERROR_LOAD_SETTINGS         311
-#define IDS_ERROR_SAVE_SETTINGS         312
+#define IDS_ERROR_INIT_COM              301
+#define IDS_ERROR_INIT_COMMON_CONTROLS  302
+#define IDS_ERROR_REGISTER_WINDOW_CLASS 303
+#define IDS_ERROR_CREATE_WINDOW         304
+#define IDS_ERROR_REGISTER_HOTKEY       305
+#define IDS_ERROR_REGISTER_MODIFIER     306
+#define IDS_ERROR_REGISTER_EVENTHOOK    307
+#define IDS_ERROR_CREATE_TRAY_ICON      308
+#define IDS_ERROR_CREATE_POPUP_MENU     309
+#define IDS_ERROR_COMMAND_LINE          310
+#define IDS_ERROR_CREATE_DIALOG         311
+#define IDS_ERROR_LOAD_SETTINGS         312
+#define IDS_ERROR_SAVE_SETTINGS         313
 
 // dialogs
 #define IDD_DIALOG_SETTINGS             401
@@ -61,5 +62,8 @@
 #define IDC_AUTO_TRAY_ITEM_ADD          1010
 #define IDC_AUTO_TRAY_ITEM_DELETE       1011
 #define IDC_AUTO_TRAY_ITEM_SPY          1012
+#define IDC_START_WITH_WINDOWS          1013
+#define IDC_ABOUT                       1014
+#define IDC_EXIT                        1015
 
 // clang-format on

@@ -63,6 +63,7 @@ static void onMinimizeEvent(
     DWORD dwmsEventTime);
 static void onSettingsDialogComplete(bool success, const Settings & settings);
 static bool showContextMenu(HWND hwnd);
+static void updateStartWithWindows();
 
 static HWND hwnd_;
 static TrayIcon trayIcon_;
@@ -78,6 +79,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // unused
     (void)hPrevInstance;
     (void)pCmdLine;
+
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr)) {
+        CoUninitialize();
+        errorMessage(IDS_ERROR_INIT_COM);
+        return IDS_ERROR_INIT_COM;
+    }
 
     INITCOMMONCONTROLSEX initCommonControlsEx;
     initCommonControlsEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -113,6 +121,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     DEBUG_PRINTF("final settings:\n");
     settings_.dump();
+
+    updateStartWithWindows();
 
     HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_FINESTRAY));
 
@@ -216,6 +226,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             hwnd,
             StringUtility::lastErrorString().c_str());
     }
+
+    CoUninitialize();
 
     return 0;
 }
@@ -642,6 +654,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         } else {
             DEBUG_PRINTF("wrote settings to %s\n", fileName.c_str());
         }
+
+        updateStartWithWindows();
     }
 
     settingsDialog_ = nullptr;
@@ -720,6 +734,31 @@ bool showContextMenu(HWND hwnd)
     }
 
     return true;
+}
+
+void updateStartWithWindows()
+{
+    std::string startupPath = getStartupPath();
+    std::string startupShortcutPath = pathJoin(startupPath, APP_NAME ".lnk");
+    if (settings_.startWithWindows_) {
+        if (fileExists(startupShortcutPath)) {
+            DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutPath.c_str());
+        } else {
+            std::string exePath = getExecutablePath();
+            std::string exeFilename = pathJoin(exePath, APP_NAME ".exe");
+            if (!createShortcut(startupShortcutPath, exeFilename)) {
+                DEBUG_PRINTF("failed to create startup link: %s\n", startupShortcutPath.c_str());
+            }
+        }
+    } else {
+        if (!fileExists(startupShortcutPath)) {
+            DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutPath.c_str());
+        } else {
+            if (!deleteFile(startupShortcutPath)) {
+                DEBUG_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
+            }
+        }
+    }
 }
 
 std::string getResourceString(unsigned int id)

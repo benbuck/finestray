@@ -33,14 +33,14 @@
 // Standard library
 #include <stdlib.h>
 
-// static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
+static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 static double getNumber(const cJSON * cjson, const char * key, double defaultValue);
 static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
 static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
 
 enum SettingKeys : unsigned int
 {
-    SK_AutoTray,
+    SK_StartWithWindows,
     SK_Executable,
     SK_WindowClass,
     SK_WindowTitle,
@@ -48,24 +48,28 @@ enum SettingKeys : unsigned int
     SK_HotkeyRestore,
     SK_ModifiersOverride,
     SK_PollInterval,
+    SK_AutoTray,
 
     SK_Count
 };
 
+static const bool startWithWindowsDefault_ = false;
 static const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
 static const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
 static const char modifiersOverrideDefault_[] = "alt ctrl shift";
 static const unsigned int pollIntervalDefault_ = 500;
-static const char * settingKeys_[SK_Count] = { "auto-tray",          "executable",      "window-class",
+static const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false };
+static const char * settingKeys_[SK_Count] = { "start-with-windows", "executable",      "window-class",
                                                "window-title",       "hotkey-minimize", "hotkey-restore",
-                                               "modifiers-override", "poll-interval" };
+                                               "modifiers-override", "poll-interval",   "auto-tray" };
 
 Settings::Settings()
-    : autoTrays_()
+    : startWithWindows_(startWithWindowsDefault_)
     , hotkeyMinimize_(hotkeyMinimizeDefault_)
     , hotkeyRestore_(hotkeyRestoreDefault_)
     , modifiersOverride_(modifiersOverrideDefault_)
     , pollInterval_(pollIntervalDefault_)
+    , autoTrays_()
 {
 }
 
@@ -94,18 +98,36 @@ bool Settings::readFromFile(const std::string & fileName)
 bool Settings::parseCommandLine(int argc, const char * const * argv)
 {
     argh::parser args;
-    for (const char * settingKey : settingKeys_) {
-        args.add_param(settingKey);
+    for (unsigned int sk = 0; sk < SK_Count; ++sk) {
+        if (!settingsIsFlag_[sk]) {
+            args.add_param(settingKeys_[sk]);
+        }
     }
     args.parse(argc, argv);
 
-    if (!args.flags().empty()) {
-        DEBUG_PRINTF("error, unexpected command line flags:\n");
-        for (const std::string & flag : args.flags()) {
-            DEBUG_PRINTF("\t%s\n", flag.c_str());
-            (void)flag;
+    for (const std::string & flag : args.flags()) {
+        DEBUG_PRINTF("flag %s\n", flag.c_str());
+        bool found = false;
+        for (unsigned int sk = 0; sk < SK_Count; ++sk) {
+            if (settingsIsFlag_[sk] && ((flag == settingKeys_[sk]) || (flag == std::string("no-") + settingKeys_[sk]))) {
+                found = true;
+                switch (sk) {
+                    case SK_StartWithWindows: {
+                        startWithWindows_ = (flag == settingKeys_[sk]) ? true : false;
+                        break;
+                    }
+                    default: {
+                        DEBUG_PRINTF("error, unexpected flag: %s\n", flag.c_str());
+                        return false;
+                    }
+                }
+                break;
+            }
         }
-        return false;
+        if (!found) {
+            DEBUG_PRINTF("error, unknown flag: %s\n", flag.c_str());
+            return false;
+        }
     }
 
     if (args.pos_args().size() > 1) {
@@ -116,9 +138,6 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         return false;
     }
 
-    // note: "auto-tray" options are not supported on the command line, only in json, since the
-    // complexity of the syntax to support the various selector strings would be unwieldy
-
     hotkeyMinimize_ = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_).str();
     hotkeyRestore_ = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_).str();
     modifiersOverride_ = args(settingKeys_[SK_ModifiersOverride], modifiersOverride_).str();
@@ -127,6 +146,9 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
     if (!(pollIntervalArg >> pollInterval_)) {
         DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
+
+    // note: "auto-tray" options are not supported on the command line, only in json, since the
+    // complexity of the syntax to support the various selector strings would be unwieldy
 
     normalize();
 
@@ -166,6 +188,10 @@ bool Settings::writeToFile(const std::string & fileName)
 
 void Settings::normalize()
 {
+    hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
+    hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
+    modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
+
     for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
         AutoTray & autoTray = *it;
         if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
@@ -175,25 +201,22 @@ void Settings::normalize()
             it = autoTrays_.erase(it);
         }
     }
-
-    hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
-    hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
-    modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
 }
 
 void Settings::dump()
 {
 #if !defined(NDEBUG)
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
+    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
+
     for (const AutoTray & autoTray : autoTrays_) {
         DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
     }
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
-    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
 #endif
 }
 
@@ -216,15 +239,17 @@ bool Settings::parseJson(const std::string & json)
 
     DEBUG_PRINTF("parsed settings JSON:\n%s\n", cJSON_Print(cjson));
 
-    const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);
-    if (autotray) {
-        iterateArray(autotray, autoTrayItemCallback, this);
-    }
+    startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
 
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
+
+    const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);
+    if (autotray) {
+        iterateArray(autotray, autoTrayItemCallback, this);
+    }
 
     normalize();
 
@@ -240,6 +265,23 @@ std::string Settings::constructJSON()
     }
 
     bool fail = false;
+
+    if (!cJSON_AddBoolToObject(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_)) {
+        fail = true;
+    }
+
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
+        fail = true;
+    }
 
     if (!autoTrays_.empty()) {
         cJSON * autotrayArray = cJSON_AddArrayToObject(cjson, settingKeys_[SK_AutoTray]);
@@ -275,19 +317,6 @@ std::string Settings::constructJSON()
         }
     }
 
-    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str())) {
-        fail = true;
-    }
-    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str())) {
-        fail = true;
-    }
-    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {
-        fail = true;
-    }
-    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
-        fail = true;
-    }
-
     if (fail) {
         DEBUG_PRINTF("Failed to construct json settings\n");
         cJSON_Delete(cjson);
@@ -315,20 +344,20 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
     return true;
 }
 
-// bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
-// {
-//     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
-//     if (!item) {
-//         return defaultValue;
-//     }
-//
-//     if (!cJSON_IsBool(item)) {
-//         DEBUG_PRINTF("bad type for '%s'\n", item->string);
-//         return defaultValue;
-//     }
-//
-//     return cJSON_IsTrue(item) ? true : false;
-// }
+bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
+{
+    const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
+    if (!item) {
+        return defaultValue;
+    }
+
+    if (!cJSON_IsBool(item)) {
+        DEBUG_PRINTF("bad type for '%s'\n", item->string);
+        return defaultValue;
+    }
+
+    return cJSON_IsTrue(item) ? true : false;
+}
 
 double getNumber(const cJSON * cjson, const char * key, double defaultValue)
 {

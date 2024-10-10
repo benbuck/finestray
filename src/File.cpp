@@ -114,6 +114,19 @@ bool directoryExists(const std::string & directory)
     return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
+bool deleteFile(const std::string & fileName)
+{
+    if (!DeleteFileA(fileName.c_str())) {
+        DEBUG_PRINTF(
+            "could not delete '%s', DeleteFileA() failed: %s\n",
+            fileName.c_str(),
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    return true;
+}
+
 std::string getExecutablePath()
 {
     CHAR path[MAX_PATH];
@@ -138,14 +151,29 @@ std::string getExecutablePath()
     return exePath;
 }
 
-std::string getAppDataPath(void)
+std::string getAppDataPath()
 {
     CHAR path[MAX_PATH];
 
     HRESULT result = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, path);
     if (FAILED(result)) {
         DEBUG_PRINTF(
-            "could not get AppData path, SHGetFolderPath() failed: %s\n",
+            "could not get app data path, SHGetFolderPath() failed: %s\n",
+            StringUtility::errorToString(result).c_str());
+        return std::string();
+    }
+
+    return path;
+}
+
+std::string getStartupPath()
+{
+    CHAR path[MAX_PATH];
+
+    HRESULT result = SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL, 0, path);
+    if (FAILED(result)) {
+        DEBUG_PRINTF(
+            "could not get startup path, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(result).c_str());
         return std::string();
     }
@@ -169,4 +197,43 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
     }
 
     return path;
+}
+
+bool createShortcut(const std::string & shortcutPath, const std::string & executablePath)
+{
+    IShellLinkA * pShellLink = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&pShellLink);
+    if (FAILED(hr)) {
+        DEBUG_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hr).c_str());
+        return false;
+    }
+
+    hr = pShellLink->SetPath(executablePath.c_str());
+    if (FAILED(hr)) {
+        DEBUG_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hr).c_str());
+        pShellLink->Release();
+        return false;
+    }
+
+    IPersistFile * pPersistFile = nullptr;
+    hr = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID *)&pPersistFile);
+    if (FAILED(hr)) {
+        DEBUG_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hr).c_str());
+        pShellLink->Release();
+        return false;
+    }
+
+    std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutPath);
+    hr = pPersistFile->Save(shortcutPathW.c_str(), TRUE);
+    if (FAILED(hr)) {
+        DEBUG_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hr).c_str());
+        pPersistFile->Release();
+        pShellLink->Release();
+        return false;
+    }
+
+    pPersistFile->Release();
+    pShellLink->Release();
+
+    return true;
 }

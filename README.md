@@ -57,6 +57,10 @@ icon.
 
 The available settings correspond to some of the above features. The settings are:
 
+- **Start with windows**:
+    This toggles whether Finestray is launched when you start Windows. This creates a shortcut link located in your
+    startup folder (typically `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which
+    which launches the Finestray executable.
 - **Minimize hotkey**:
     This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
     [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
@@ -78,6 +82,17 @@ The available settings correspond to some of the above features. The settings ar
     windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing
     the Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update
     button. Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
+
+At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and OK:
+
+- **About**:
+    Shows a some basic information about Finestray.
+- **Exit**:
+    Exits the Finestray application after saving settings.
+- **Cancel**:
+    Closes the Settings window but does not save settings (settings are restored to their unmodified values).
+- **OK**:
+    Closes the Settings window and saves settings.
 
 Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same location
 as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
@@ -145,6 +160,7 @@ auto-tray settings).
 
 These options are:
 
+- `--start-with-windows` or `--no-start-with-windows`
 - `--hotkey-minimize=[hotkey]`
 - `--hotkey-restore=[hotkey]`
 - `--modifiers-override=[modifiers]`

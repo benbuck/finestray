@@ -60,9 +60,9 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
     return strings;
 }
 
-std::string wideStringToString(const wchar_t * ws)
+std::string wideStringToString(const std::wstring & ws)
 {
-    int ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, nullptr, 0, nullptr, nullptr);
+    int ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (ret <= 0) {
         DEBUG_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return std::string();
@@ -71,13 +71,33 @@ std::string wideStringToString(const wchar_t * ws)
     std::string s;
     s.resize(ret + 1);
 
-    ret = WideCharToMultiByte(CP_UTF8, 0, ws, -1, &s[0], (int)s.size(), nullptr, nullptr);
+    ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, &s[0], (int)s.size(), nullptr, nullptr);
     if (ret <= 0) {
         DEBUG_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return std::string();
     }
 
     return s;
+}
+
+std::wstring stringToWideString(const std::string & s)
+{
+    int ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+    if (ret <= 0) {
+        DEBUG_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
+        return std::wstring();
+    }
+
+    std::wstring ws;
+    ws.resize(ret + 1);
+
+    ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, &ws[0], (int)ws.size());
+    if (ret <= 0) {
+        DEBUG_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
+        return std::wstring();
+    }
+
+    return ws;
 }
 
 std::string errorToString(unsigned long error)
