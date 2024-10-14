@@ -1,0 +1,33 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024">
+    <metadata>Copyright 2020 Benbuck Nason</metadata>
+    <defs>
+        <linearGradient id="Gradient" x2="0.1" y2="1" x1="0" y1="0">
+            <stop offset="0%" stop-color="deepskyblue" />
+            <stop offset="87%" stop-color="lightblue" />
+        </linearGradient>
+    </defs>
+    <path
+        d="
+        M 75 155
+        c
+            36 -36 -36 -36 835 -32
+            36 36 36 -36 72 730
+            -36 36 36 36 -911 30
+            -36 -36 -36 -36 -7 -576
+        z"
+        fill="url(#Gradient)" stroke="darkslategray" stroke-width="32" />
+    <path
+        d="
+        M 120 765
+        c
+            7 7 -7 7 346 0
+            22 -7 0 0 108 -72
+            22 -22 -36 0 302 0
+            36 -36 36 36 -72 -432
+            -36 -36 36 -36 -576 0
+            0 0 0 0 -108 496
+        z"
+        fill="dodgerblue" stroke="darkslategray" stroke-width="30" />
+</svg>

@@ -7,8 +7,7 @@ clutter.
 
 ## Basic Operation
 
-After launching the Finestray application, it will add an icon for itself to your tray.
-![Finestray icon](src/images/icon.png "Finestray icon")
+After launching the Finestray application, it will add an icon for itself to your tray. The icon looks like this: ![Finestray icon](src/images/icon.png "Finestray icon")
 
 Finestray supports a number of features to help you control when to minimize windows to the tray and restore them back
 to their normal placement:
@@ -179,5 +178,4 @@ Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
 Uses the [Argh! library](https://github.com/adishavit/argh) for command line parsing.
 
-Uses the [emoji U1F4E5](https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg)
-from [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for the application icon and installer images.
+Uses some [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for image artwork.
