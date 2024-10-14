@@ -26,6 +26,11 @@ IDI_FINESTRAY ICON "Finestray.ico"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
+IDB_APP BITMAP images\app.bmp
+IDB_ABOUT BITMAP images\about.bmp
+IDB_EXIT BITMAP images\exit.bmp
+IDB_SETTINGS BITMAP images\settings.bmp
+
 STRINGTABLE
 BEGIN
     IDS_MENU_SETTINGS               "Settings"

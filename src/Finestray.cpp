@@ -36,9 +36,10 @@
 #include <regex>
 #include <set>
 
-static constexpr WORD IDM_SETTINGS = 0x1003;
-static constexpr WORD IDM_ABOUT = 0x1004;
-static constexpr WORD IDM_EXIT = 0x1005;
+static constexpr WORD IDM_APP = 0x1001;
+static constexpr WORD IDM_SETTINGS = 0x1002;
+static constexpr WORD IDM_ABOUT = 0x1003;
+static constexpr WORD IDM_EXIT = 0x1004;
 
 enum class HotkeyID
 {
@@ -64,6 +65,8 @@ static void onMinimizeEvent(
 static void onSettingsDialogComplete(bool success, const Settings & settings);
 static bool showContextMenu(HWND hwnd);
 static void updateStartWithWindows();
+static HBITMAP getResourceBitmap(unsigned int id);
+static void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor);
 
 static HWND hwnd_;
 static TrayIcon trayIcon_;
@@ -240,6 +243,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         // command from context menu
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
+                case IDM_APP: {
+                    break;
+                }
+
                 case IDM_SETTINGS: {
                     if (!settingsDialog_) {
                         settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
@@ -673,7 +680,7 @@ bool showContextMenu(HWND hwnd)
     }
 
     // add menu entries
-    if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, 0, APP_NAME)) {
+    if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, IDM_APP, APP_NAME)) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
@@ -693,6 +700,65 @@ bool showContextMenu(HWND hwnd)
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
+
+    MENUITEMINFOA menuItemInfo;
+    memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
+    menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
+    menuItemInfo.fMask = MIIM_BITMAP;
+
+    menuItemInfo.hbmpItem = getResourceBitmap(IDB_APP);
+    if (!menuItemInfo.hbmpItem) {
+        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+    if (!SetMenuItemInfoA(menu, IDM_APP, FALSE, &menuItemInfo)) {
+        DEBUG_PRINTF(
+            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        DeleteObject(menuItemInfo.hbmpItem);
+        return false;
+    }
+
+    menuItemInfo.hbmpItem = getResourceBitmap(IDB_SETTINGS);
+    if (!menuItemInfo.hbmpItem) {
+        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+    if (!SetMenuItemInfoA(menu, IDM_SETTINGS, FALSE, &menuItemInfo)) {
+        DEBUG_PRINTF(
+            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        DeleteObject(menuItemInfo.hbmpItem);
+        return false;
+    }
+
+    menuItemInfo.hbmpItem = getResourceBitmap(IDB_ABOUT);
+    if (!menuItemInfo.hbmpItem) {
+        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+    if (!SetMenuItemInfoA(menu, IDM_ABOUT, FALSE, &menuItemInfo)) {
+        DEBUG_PRINTF(
+            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        DeleteObject(menuItemInfo.hbmpItem);
+        return false;
+    }
+
+    menuItemInfo.hbmpItem = getResourceBitmap(IDB_EXIT);
+    if (!menuItemInfo.hbmpItem) {
+        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+    if (!SetMenuItemInfoA(menu, IDM_EXIT, FALSE, &menuItemInfo)) {
+        DEBUG_PRINTF(
+            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        DeleteObject(menuItemInfo.hbmpItem);
+        return false;
+    }
+
+    // FIX - call DeleteObject() on the bitmaps
 
     // activate our window
     if (!SetForegroundWindow(hwnd)) {
@@ -769,13 +835,76 @@ std::string getResourceString(unsigned int id)
     str.resize(256);
     if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
         DEBUG_PRINTF(
-            "failed to load resources string %u, LoadStringA() failed: %u\n",
+            "failed to load resources string %u, LoadStringA() failed: %s\n",
             id,
             StringUtility::lastErrorString().c_str());
         str = "Error ID: " + std::to_string(id);
     }
 
     return str;
+}
+
+HBITMAP getResourceBitmap(unsigned int id)
+{
+    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
+    HBITMAP bitmap = (HBITMAP)LoadImageA(hInstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0);
+    if (!bitmap) {
+        DEBUG_PRINTF(
+            "failed to load resources bitmap %u, LoadImage() failed: %s\n",
+            id,
+            StringUtility::lastErrorString().c_str());
+    }
+
+    uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
+    uint32_t menuColor = GetSysColor(COLOR_MENU);
+    uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+    replaceBitmapColor(bitmap, oldColor, newColor);
+
+    return bitmap;
+}
+
+void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
+{
+    HDC hdc = ::GetDC(HWND_DESKTOP);
+    if (!hdc) {
+        DEBUG_PRINTF("failed to get desktop DC, GetDC() failed: %s\n", StringUtility::lastErrorString().c_str());
+        return;
+    }
+
+    BITMAP bitmap;
+    memset(&bitmap, 0, sizeof(bitmap));
+    if (!GetObject(hbmp, sizeof(bitmap), &bitmap)) {
+        DEBUG_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
+        ::ReleaseDC(HWND_DESKTOP, hdc);
+        return;
+    }
+
+    BITMAPINFO bitmapInfo;
+    memset(&bitmapInfo, 0, sizeof(bitmapInfo));
+    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth = bitmap.bmWidth;
+    bitmapInfo.bmiHeader.biHeight = bitmap.bmHeight;
+    bitmapInfo.bmiHeader.biPlanes = 1;
+    bitmapInfo.bmiHeader.biBitCount = 32;
+
+    std::vector<uint32_t> pixels(bitmap.bmWidth * bitmap.bmHeight);
+    if (!GetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+        DEBUG_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
+        ::ReleaseDC(HWND_DESKTOP, hdc);
+        return;
+    }
+
+    for (uint32_t & pixelColor : pixels) {
+        if (pixelColor == oldColor) {
+            pixelColor = newColor;
+        }
+    }
+
+    if (!SetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+        DEBUG_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    ::ReleaseDC(HWND_DESKTOP, hdc);
 }
 
 void errorMessage(unsigned int id)

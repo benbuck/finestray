@@ -17,37 +17,44 @@
 // clang-format off
 
 // icons
-#define IDI_FINESTRAY                     101
+#define IDI_FINESTRAY                    101
 
 // strings
-#define IDS_MENU_SETTINGS               201
-#define IDS_MENU_ABOUT                  202
-#define IDS_MENU_EXIT                   203
-#define IDS_ABOUT_CAPTION               211
-#define IDS_ABOUT_TEXT                  212
-#define IDS_COLUMN_INDEX                221
-#define IDS_COLUMN_EXECUTABLE           222
-#define IDS_COLUMN_WINDOW_CLASS         223
-#define IDS_COLUMN_WINDOW_TITLE         224
-#define IDS_SPY_MODE_TITLE              225
-#define IDS_SPY_MODE_TEXT               226
+#define IDS_MENU_SETTINGS                201
+#define IDS_MENU_ABOUT                   202
+#define IDS_MENU_EXIT                    203
+#define IDS_ABOUT_CAPTION                211
+#define IDS_ABOUT_TEXT                   212
+#define IDS_COLUMN_INDEX                 221
+#define IDS_COLUMN_EXECUTABLE            222
+#define IDS_COLUMN_WINDOW_CLASS          223
+#define IDS_COLUMN_WINDOW_TITLE          224
+#define IDS_SPY_MODE_TITLE               225
+#define IDS_SPY_MODE_TEXT                226
+
 // error strings
-#define IDS_ERROR_INIT_COM              301
-#define IDS_ERROR_INIT_COMMON_CONTROLS  302
-#define IDS_ERROR_REGISTER_WINDOW_CLASS 303
-#define IDS_ERROR_CREATE_WINDOW         304
-#define IDS_ERROR_REGISTER_HOTKEY       305
-#define IDS_ERROR_REGISTER_MODIFIER     306
-#define IDS_ERROR_REGISTER_EVENTHOOK    307
-#define IDS_ERROR_CREATE_TRAY_ICON      308
-#define IDS_ERROR_CREATE_POPUP_MENU     309
-#define IDS_ERROR_COMMAND_LINE          310
-#define IDS_ERROR_CREATE_DIALOG         311
-#define IDS_ERROR_LOAD_SETTINGS         312
-#define IDS_ERROR_SAVE_SETTINGS         313
+#define IDS_ERROR_INIT_COM               301
+#define IDS_ERROR_INIT_COMMON_CONTROLS   302
+#define IDS_ERROR_REGISTER_WINDOW_CLASS  303
+#define IDS_ERROR_CREATE_WINDOW          304
+#define IDS_ERROR_REGISTER_HOTKEY        305
+#define IDS_ERROR_REGISTER_MODIFIER      306
+#define IDS_ERROR_REGISTER_EVENTHOOK     307
+#define IDS_ERROR_CREATE_TRAY_ICON       308
+#define IDS_ERROR_CREATE_POPUP_MENU      309
+#define IDS_ERROR_COMMAND_LINE           310
+#define IDS_ERROR_CREATE_DIALOG          311
+#define IDS_ERROR_LOAD_SETTINGS          312
+#define IDS_ERROR_SAVE_SETTINGS          313
+
+// bitmaps
+#define IDB_APP                          401
+#define IDB_ABOUT                        402
+#define IDB_EXIT                         403
+#define IDB_SETTINGS                     404
 
 // dialogs
-#define IDD_DIALOG_SETTINGS             401
+#define IDD_DIALOG_SETTINGS              501
 
 // controls
 #define IDC_HOTKEY_MINIMIZE             1001
