@@ -151,16 +151,12 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finestray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_EXECUTABLES "Finestray" "Finestray" )
-set(CPACK_NSIS_CREATE_ICONS_EXTRA
-    "CreateShortCut '$SMSTARTUP\\\\Finestray.lnk' '$INSTDIR\\\\Finestray.exe'"
-)
-set(CPACK_NSIS_DELETE_ICONS_EXTRA
-    "Delete '$SMSTARTUP\\\\Finestray.lnk'"
-)
+set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMSTARTUP\\\\Finestray.lnk' '$INSTDIR\\\\Finestray.exe'")
+set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMSTARTUP\\\\Finestray.lnk'")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "Exec '\\\"$INSTDIR\\\\Finestray.exe\\\"'")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "Finestray.exe")
-set(CPACK_NSIS_MODIFY_PATH "ON")
 set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_header.bmp")
 set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/finestray/")
 set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
