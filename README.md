@@ -168,6 +168,12 @@ These options are:
 Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of
 values that can be used for each of these.
 
+## Limitations
+
+Unfortunately, Finestray can not currently minimize all windows to the tray. Some software creates windows that do not
+adhere to the normal behavior for minimizing. For example, apps obtained from the Windows Store may not be compatible
+with Finestray. WhatsApp is one popular app that Finestray can't currently minimize to the tray.
+
 ## Legal
 
 Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
