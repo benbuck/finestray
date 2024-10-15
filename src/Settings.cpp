@@ -77,6 +77,22 @@ Settings::~Settings()
 {
 }
 
+bool Settings::operator==(const Settings & rhs) const
+{
+    if (this == &rhs) {
+        return true;
+    }
+
+    return (startWithWindows_ == rhs.startWithWindows_) && (hotkeyMinimize_ == rhs.hotkeyMinimize_) &&
+        (hotkeyRestore_ == rhs.hotkeyRestore_) && (modifiersOverride_ == rhs.modifiersOverride_) &&
+        (pollInterval_ == rhs.pollInterval_) && (autoTrays_ == rhs.autoTrays_);
+}
+
+bool Settings::operator!=(const Settings & rhs) const
+{
+    return !(*this == rhs);
+}
+
 bool Settings::readFromFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
@@ -342,6 +358,19 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
     }
 
     return true;
+}
+
+bool Settings::AutoTray::operator==(const AutoTray & rhs) const
+{
+    if (this == &rhs) {
+        return true;
+    }
+    return (executable_ == rhs.executable_) && (windowClass_ == rhs.windowClass_) && (windowTitle_ == rhs.windowTitle_);
+}
+
+bool Settings::AutoTray::operator!=(const AutoTray & rhs) const
+{
+    return !(*this == rhs);
 }
 
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue)

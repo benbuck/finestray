@@ -26,6 +26,9 @@ public:
     Settings();
     ~Settings();
 
+    bool operator==(const Settings & rhs) const;
+    bool operator!=(const Settings & rhs) const;
+
     bool readFromFile(const std::string & fileName);
     bool parseCommandLine(int argc, const char * const * argv);
     bool writeToFile(const std::string & fileName);
@@ -35,6 +38,9 @@ public:
 
     struct AutoTray
     {
+        bool operator==(const AutoTray & rhs) const;
+        bool operator!=(const AutoTray & rhs) const;
+
         std::string executable_;
         std::string windowClass_;
         std::string windowTitle_;

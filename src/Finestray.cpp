@@ -646,7 +646,7 @@ void onMinimizeEvent(
 
 void onSettingsDialogComplete(bool success, const Settings & settings)
 {
-    if (success) {
+    if (success && (settings != settings_)) {
         settings_ = settings;
         DEBUG_PRINTF("got updated settings from dialog:\n");
         settings_.normalize();
