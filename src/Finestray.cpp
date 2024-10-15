@@ -83,6 +83,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)hPrevInstance;
     (void)pCmdLine;
 
+    // initialize COM
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
         CoUninitialize();
@@ -90,6 +91,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_INIT_COM;
     }
 
+    // initialize common controls
     INITCOMMONCONTROLSEX initCommonControlsEx;
     initCommonControlsEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
     initCommonControlsEx.dwICC = ICC_LISTVIEW_CLASSES;
@@ -98,28 +100,32 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_INIT_COMMON_CONTROLS;
     }
 
-    // get settings from file
-    std::string exePath = getExecutablePath();
-    std::string fileName = pathJoin(exePath, std::string(APP_NAME) + ".json");
-    if (settings_.readFromFile(fileName)) {
-        DEBUG_PRINTF("read settings from %s\n", fileName.c_str());
-    } else {
-        if (fileExists(fileName)) {
-            errorMessage(IDS_ERROR_LOAD_SETTINGS);
-            return IDS_ERROR_LOAD_SETTINGS;
-        }
-    }
-
-    // get settings from command line
+    // get command line args
     CommandLine commandLine;
     if (!commandLine.parse()) {
         errorMessage(IDS_ERROR_COMMAND_LINE);
         return IDS_ERROR_COMMAND_LINE;
     }
-    bool parsed = settings_.parseCommandLine(commandLine.getArgc(), commandLine.getArgv());
-    if (!parsed) {
-        errorMessage(IDS_ERROR_COMMAND_LINE);
-        return IDS_ERROR_COMMAND_LINE;
+
+    if (commandLine.getArgc() > 1) {
+        // get settings from command line
+        bool parsed = settings_.parseCommandLine(commandLine.getArgc(), commandLine.getArgv());
+        if (!parsed) {
+            errorMessage(IDS_ERROR_COMMAND_LINE);
+            return IDS_ERROR_COMMAND_LINE;
+        }
+    } else {
+        // get settings from file
+        std::string exePath = getExecutablePath();
+        std::string fileName = pathJoin(exePath, std::string(APP_NAME) + ".json");
+        if (settings_.readFromFile(fileName)) {
+            DEBUG_PRINTF("read settings from %s\n", fileName.c_str());
+        } else {
+            if (fileExists(fileName)) {
+                errorMessage(IDS_ERROR_LOAD_SETTINGS);
+                return IDS_ERROR_LOAD_SETTINGS;
+            }
+        }
     }
 
     DEBUG_PRINTF("final settings:\n");
