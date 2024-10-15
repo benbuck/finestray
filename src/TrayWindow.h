@@ -18,6 +18,7 @@
 #include <Windows.h>
 
 #define WM_TRAYWINDOW (WM_USER + 1)
+#define WM_SHOWSETTINGS (WM_USER + 2)
 
 namespace TrayWindow
 {

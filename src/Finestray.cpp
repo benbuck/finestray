@@ -83,6 +83,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)hPrevInstance;
     (void)pCmdLine;
 
+    HWND oldWnd = FindWindowA(APP_NAME, nullptr);
+    if (oldWnd) {
+        DEBUG_PRINTF("already running\n");
+        SendMessageA(oldWnd, WM_SHOWSETTINGS, 0, 0);
+        return 0;
+    }
+
     // initialize COM
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
@@ -382,6 +389,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     DEBUG_PRINTF("unhandled traywindow message %ld\n", lParam);
                     break;
                 }
+            }
+            break;
+        }
+
+        case WM_SHOWSETTINGS: {
+            if (!settingsDialog_) {
+                settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
             }
             break;
         }
