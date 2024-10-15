@@ -99,7 +99,6 @@ add_executable(Finestray WIN32
     src/File.h
     src/Finestray.cpp
     src/Finestray.h
-    src/Finestray.ico
     src/Finestray.rc
     src/Hotkey.cpp
     src/Hotkey.h
@@ -117,6 +116,7 @@ add_executable(Finestray WIN32
     src/TrayWindow.h
     src/WindowList.cpp
     src/WindowList.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
 
 target_compile_options(Finestray
@@ -143,6 +143,93 @@ target_link_libraries(Finestray
         Shlwapi.lib
 )
 
+set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
+set(ABOUT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2139.svg)
+set(EXIT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u274c.svg)
+set(SETTINGS_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2699.svg)
+
+# the following commands require ImageMagick to be installed: https://www.imagemagick.org/
+
+# create app icon
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+    COMMAND magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+)
+
+# create app bitmap
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/app.bmp"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+    COMMAND magick -background none -filter point -size 16x16 ${APP_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+)
+
+# create about bitmap
+add_custom_command(
+    COMMENT "Converting ${ABOUT_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/about.bmp"
+    DEPENDS ${ABOUT_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/about.bmp
+    COMMAND magick -background none -filter point -size 16x16 ${ABOUT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/about.bmp
+)
+
+# create exit bitmap
+add_custom_command(
+    COMMENT "Converting ${EXIT_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp"
+    DEPENDS ${EXIT_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
+    COMMAND magick -background none -filter point -size 16x16 ${EXIT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
+)
+
+# create settings bitmap
+add_custom_command(
+    COMMENT "Converting ${SETTINGS_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp"
+    DEPENDS ${SETTINGS_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
+    COMMAND magick -background none -filter point -size 16x16 ${SETTINGS_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
+)
+
+# create installer header image (used at top of most installer screens)
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
+    COMMAND magick -size 150x57 -define gradient:direction=east gradient:grey50-white ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
+    COMMAND magick composite -background none -geometry 40x40+15+8 ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp BMP3:${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
+)
+
+# create installer welcome image (used at left side of installer welcome screen)
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
+    COMMAND magick -size 164x314 -define gradient:direction=east gradient:grey50-white ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
+    COMMAND magick composite -background none -geometry 100x100+15+45 ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp BMP3:${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
+)
+
+# create icon for README.md
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png
+    COMMAND magick -background none -define png:exclude-chunks=date,time -filter point -size 16x16 ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png
+)
+
+add_custom_target(
+    generate-images
+    ALL
+    DEPENDS
+        ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+        ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/about.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png
+)
+
 install(
     TARGETS Finestray
     RUNTIME
@@ -158,12 +245,12 @@ set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMSTARTUP\\\\Finestray.lnk' 
 set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMSTARTUP\\\\Finestray.lnk'")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "Exec '\\\"$INSTDIR\\\\Finestray.exe\\\"'")
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "Exec '\\\"$INSTDIR\\\\Finestray.exe\\\"'")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "Finestray.exe")
-set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_header.bmp")
+set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_header.bmp")
 set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/finestray/")
-set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
-set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}\\\\src\\\\images\\\\installer_welcome.bmp")
+set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
+set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
 include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")
