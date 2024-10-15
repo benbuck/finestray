@@ -12,25 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+// App
+#include "DebugPrint.h"
 
 // Windows
 #include <Windows.h>
 
-#define WM_TRAYWINDOW (WM_USER + 1)
-#define WM_SHOWSETTINGS (WM_USER + 2)
-
-namespace TrayWindow
+class MenuWrapper
 {
+public:
+    MenuWrapper(HMENU menu)
+        : menu_(menu)
+    {
+    }
 
-void minimize(HWND hwnd, HWND messageWnd);
-void restore(HWND hwnd);
-void close(HWND hwnd);
-void addAll();
-void restoreAll();
-HWND getFromID(UINT id);
-HWND getLast();
-bool exists(HWND hwnd);
-HICON getIcon(HWND hwnd);
+    ~MenuWrapper()
+    {
+        if (menu_) {
+            if (!DestroyMenu(menu_)) {
+                DEBUG_PRINTF("failed to destroy menu: %#x\n", menu_);
+            }
+        }
+    }
 
-} // namespace TrayWindow
+    operator HMENU() const { return menu_; }
+
+    operator bool() const { return menu_ != nullptr; }
+
+private:
+    HMENU menu_ = nullptr;
+};

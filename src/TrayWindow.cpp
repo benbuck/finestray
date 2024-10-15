@@ -44,7 +44,6 @@ static TrayIcons trayIcons_;
 static TrayIcons::iterator find(HWND hwnd);
 static bool add(HWND hwnd, HWND messageWnd);
 static bool remove(HWND hwnd);
-static HICON getIcon(HWND hwnd);
 
 void minimize(HWND hwnd, HWND messageWnd)
 {
@@ -171,51 +170,6 @@ HWND getLast()
     return trayIcons_.back().hwnd_;
 }
 
-TrayIcons::iterator find(HWND hwnd)
-{
-    for (TrayIcons::iterator it = trayIcons_.begin(); it != trayIcons_.end(); ++it) {
-        const IconData & iconData = *it;
-        if (iconData.hwnd_ == hwnd) {
-            return it;
-        }
-    }
-
-    return trayIcons_.end();
-}
-
-bool exists(HWND hwnd)
-{
-    return find(hwnd) != trayIcons_.end();
-}
-
-bool add(HWND hwnd, HWND messageWnd)
-{
-    // make sure window isn't already tracked
-    TrayIcons::iterator it = find(hwnd);
-    if (it != trayIcons_.end()) {
-        DEBUG_PRINTF("not adding already tracked tray window %#x\n", hwnd);
-        return false;
-    }
-
-    // add the window
-    trayIcons_.emplace_back(hwnd, new TrayIcon());
-    return trayIcons_.back().trayIcon_->create(messageWnd, WM_TRAYWINDOW, getIcon(hwnd));
-}
-
-bool remove(HWND hwnd)
-{
-    // find the window
-    TrayIcons::iterator it = find(hwnd);
-    if (it == trayIcons_.end()) {
-        DEBUG_PRINTF("failed to remove unknown tray window %#x\n", hwnd);
-        return false;
-    }
-
-    // remove the window
-    trayIcons_.erase(it);
-    return true;
-}
-
 HICON getIcon(HWND hwnd)
 {
     HICON icon;
@@ -245,7 +199,56 @@ HICON getIcon(HWND hwnd)
         return icon;
     }
 
-    return LoadIcon(nullptr, IDI_APPLICATION);
+    return nullptr;
+}
+
+TrayIcons::iterator find(HWND hwnd)
+{
+    for (TrayIcons::iterator it = trayIcons_.begin(); it != trayIcons_.end(); ++it) {
+        const IconData & iconData = *it;
+        if (iconData.hwnd_ == hwnd) {
+            return it;
+        }
+    }
+
+    return trayIcons_.end();
+}
+
+bool exists(HWND hwnd)
+{
+    return find(hwnd) != trayIcons_.end();
+}
+
+bool add(HWND hwnd, HWND messageWnd)
+{
+    // make sure window isn't already tracked
+    TrayIcons::iterator it = find(hwnd);
+    if (it != trayIcons_.end()) {
+        DEBUG_PRINTF("not adding already tracked tray window %#x\n", hwnd);
+        return false;
+    }
+
+    // add the window
+    trayIcons_.emplace_back(hwnd, new TrayIcon());
+    HICON hicon = getIcon(hwnd);
+    if (!hicon) {
+        hicon = LoadIcon(nullptr, IDI_APPLICATION);
+    }
+    return trayIcons_.back().trayIcon_->create(messageWnd, WM_TRAYWINDOW, hicon);
+}
+
+bool remove(HWND hwnd)
+{
+    // find the window
+    TrayIcons::iterator it = find(hwnd);
+    if (it == trayIcons_.end()) {
+        DEBUG_PRINTF("failed to remove unknown tray window %#x\n", hwnd);
+        return false;
+    }
+
+    // remove the window
+    trayIcons_.erase(it);
+    return true;
 }
 
 } // namespace TrayWindow

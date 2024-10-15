@@ -1,7 +1,6 @@
 # To do list
 
 - Generate images from cmake
-- Add trayed windows to context menu of main app icon
 - Find a way to properly minimize UWP app windows
 - Add command line support for auto-tray options
 - Add command line support for issuing commands to running app

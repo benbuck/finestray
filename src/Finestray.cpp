@@ -15,10 +15,12 @@
 // App
 #include "Finestray.h"
 #include "AppName.h"
+#include "BitmapWrapper.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"
+#include "MenuWrapper.h"
 #include "Resource.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
@@ -30,6 +32,7 @@
 // Windows
 #include <CommCtrl.h>
 #include <Psapi.h>
+#include <WinUser.h>
 #include <Windows.h>
 
 // Standard library
@@ -40,6 +43,7 @@ static constexpr WORD IDM_APP = 0x1001;
 static constexpr WORD IDM_SETTINGS = 0x1002;
 static constexpr WORD IDM_ABOUT = 0x1003;
 static constexpr WORD IDM_EXIT = 0x1004;
+static constexpr WORD IDM_TRAYWINDOW_BASE = 0x1005;
 
 enum class HotkeyID
 {
@@ -255,7 +259,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg) {
         // command from context menu
         case WM_COMMAND: {
-            switch (LOWORD(wParam)) {
+            WORD id = LOWORD(wParam);
+            switch (id) {
                 case IDM_APP: {
                     break;
                 }
@@ -283,6 +288,20 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case IDM_EXIT: {
                     PostQuitMessage(0);
                     break;
+                }
+
+                default: {
+                    if ((id >= IDM_TRAYWINDOW_BASE) && (id < (IDM_TRAYWINDOW_BASE + autoTrayedWindows_.size()))) {
+                        unsigned int index = id - IDM_TRAYWINDOW_BASE;
+                        unsigned int count = 0;
+                        for (HWND autoTrayedWindow : autoTrayedWindows_) {
+                            if (count == index) {
+                                TrayWindow::restore(autoTrayedWindow);
+                                break;
+                            }
+                            ++count;
+                        }
+                    }
                 }
             }
             break;
@@ -691,7 +710,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 bool showContextMenu(HWND hwnd)
 {
     // create popup menu
-    HMENU menu = CreatePopupMenu();
+    MenuWrapper menu(CreatePopupMenu());
     if (!menu) {
         DEBUG_PRINTF(
             "failed to create context menu, CreatePopupMenu() failed: %s\n",
@@ -708,6 +727,53 @@ bool showContextMenu(HWND hwnd)
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
+
+    if (!autoTrayedWindows_.empty()) {
+        unsigned int count = 0;
+        for (HWND autoTrayedWindow : autoTrayedWindows_) {
+            CHAR title[256];
+            GetWindowTextA(autoTrayedWindow, title, sizeof(title) / sizeof(title[0]));
+            if (!AppendMenuA(menu, MF_STRING, IDM_TRAYWINDOW_BASE + count, title)) {
+                DEBUG_PRINTF(
+                    "failed to create menu entry, AppendMenuA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+                return false;
+            }
+
+            HICON icon = TrayWindow::getIcon(autoTrayedWindow);
+            if (icon) {
+                ICONINFO iconinfo;
+                if (GetIconInfo(icon, &iconinfo)) {
+                    // FIX - is this a really bad thing to do?
+                    uint32_t oldColor = 0;
+                    uint32_t menuColor = GetSysColor(COLOR_MENU);
+                    uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+                    replaceBitmapColor(iconinfo.hbmColor, oldColor, newColor);
+
+                    MENUITEMINFOA menuItemInfo;
+                    memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
+                    menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
+                    menuItemInfo.fMask = MIIM_BITMAP;
+                    menuItemInfo.hbmpItem = iconinfo.hbmColor;
+                    if (!SetMenuItemInfoA(menu, IDM_TRAYWINDOW_BASE + count, FALSE, &menuItemInfo)) {
+                        DEBUG_PRINTF(
+                            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                            StringUtility::lastErrorString().c_str());
+                        return false;
+                    }
+                }
+            }
+
+            ++count;
+        }
+        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+            DEBUG_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+    }
+
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
@@ -721,64 +787,55 @@ bool showContextMenu(HWND hwnd)
         return false;
     }
 
-    MENUITEMINFOA menuItemInfo;
-    memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
-    menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
-    menuItemInfo.fMask = MIIM_BITMAP;
+    BitmapWrapper appBitmap(getResourceBitmap(IDB_APP));
+    BitmapWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
+    BitmapWrapper aboutBitmap(getResourceBitmap(IDB_ABOUT));
+    BitmapWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
-    menuItemInfo.hbmpItem = getResourceBitmap(IDB_APP);
-    if (!menuItemInfo.hbmpItem) {
+    if (!appBitmap || !settingsBitmap || !aboutBitmap || !exitBitmap) {
         DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
-        return false;
-    }
-    if (!SetMenuItemInfoA(menu, IDM_APP, FALSE, &menuItemInfo)) {
-        DEBUG_PRINTF(
-            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        DeleteObject(menuItemInfo.hbmpItem);
-        return false;
-    }
+    } else {
+        uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
+        uint32_t menuColor = GetSysColor(COLOR_MENU);
+        uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+        replaceBitmapColor(appBitmap, oldColor, newColor);
+        replaceBitmapColor(settingsBitmap, oldColor, newColor);
+        replaceBitmapColor(aboutBitmap, oldColor, newColor);
+        replaceBitmapColor(exitBitmap, oldColor, newColor);
 
-    menuItemInfo.hbmpItem = getResourceBitmap(IDB_SETTINGS);
-    if (!menuItemInfo.hbmpItem) {
-        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
-        return false;
-    }
-    if (!SetMenuItemInfoA(menu, IDM_SETTINGS, FALSE, &menuItemInfo)) {
-        DEBUG_PRINTF(
-            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        DeleteObject(menuItemInfo.hbmpItem);
-        return false;
-    }
+        MENUITEMINFOA menuItemInfo;
+        memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
+        menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
+        menuItemInfo.fMask = MIIM_BITMAP;
 
-    menuItemInfo.hbmpItem = getResourceBitmap(IDB_ABOUT);
-    if (!menuItemInfo.hbmpItem) {
-        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
-        return false;
-    }
-    if (!SetMenuItemInfoA(menu, IDM_ABOUT, FALSE, &menuItemInfo)) {
-        DEBUG_PRINTF(
-            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        DeleteObject(menuItemInfo.hbmpItem);
-        return false;
-    }
+        menuItemInfo.hbmpItem = appBitmap;
+        if (!SetMenuItemInfoA(menu, IDM_APP, FALSE, &menuItemInfo)) {
+            DEBUG_PRINTF(
+                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        }
 
-    menuItemInfo.hbmpItem = getResourceBitmap(IDB_EXIT);
-    if (!menuItemInfo.hbmpItem) {
-        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
-        return false;
-    }
-    if (!SetMenuItemInfoA(menu, IDM_EXIT, FALSE, &menuItemInfo)) {
-        DEBUG_PRINTF(
-            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        DeleteObject(menuItemInfo.hbmpItem);
-        return false;
-    }
+        menuItemInfo.hbmpItem = settingsBitmap;
+        if (!SetMenuItemInfoA(menu, IDM_SETTINGS, FALSE, &menuItemInfo)) {
+            DEBUG_PRINTF(
+                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        }
 
-    // FIX - call DeleteObject() on the bitmaps
+        menuItemInfo.hbmpItem = aboutBitmap;
+        if (!SetMenuItemInfoA(menu, IDM_ABOUT, FALSE, &menuItemInfo)) {
+            DEBUG_PRINTF(
+                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        }
+
+        menuItemInfo.hbmpItem = exitBitmap;
+        if (!SetMenuItemInfoA(menu, IDM_EXIT, FALSE, &menuItemInfo)) {
+            DEBUG_PRINTF(
+                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        }
+    }
 
     // activate our window
     if (!SetForegroundWindow(hwnd)) {
@@ -800,23 +857,13 @@ bool showContextMenu(HWND hwnd)
         DEBUG_PRINTF(
             "failed to show context menu, TrackPopupMenu() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        if (!DestroyMenu(menu)) {
-            DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
-        }
         return false;
     }
 
     // force a task switch to our app
     if (!PostMessage(hwnd, WM_USER, 0, 0)) {
         DEBUG_PRINTF("failed to activate app, PostMessage() failed: %s\n", StringUtility::lastErrorString().c_str());
-        if (!DestroyMenu(menu)) {
-            DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
-        }
         return false;
-    }
-
-    if (!DestroyMenu(menu)) {
-        DEBUG_PRINTF("failed to destroy menu: %#x\n", menu);
     }
 
     return true;
@@ -875,16 +922,15 @@ HBITMAP getResourceBitmap(unsigned int id)
             StringUtility::lastErrorString().c_str());
     }
 
-    uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
-    uint32_t menuColor = GetSysColor(COLOR_MENU);
-    uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
-    replaceBitmapColor(bitmap, oldColor, newColor);
-
     return bitmap;
 }
 
 void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
 {
+    if (!hbmp) {
+        return;
+    }
+
     HDC hdc = ::GetDC(HWND_DESKTOP);
     if (!hdc) {
         DEBUG_PRINTF("failed to get desktop DC, GetDC() failed: %s\n", StringUtility::lastErrorString().c_str());

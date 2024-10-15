@@ -89,6 +89,8 @@ include(argh.cmake)
 include(cJSON.cmake)
 
 add_executable(Finestray WIN32
+    src/AppName.h
+    src/BitmapWrapper.h
     src/CommandLine.cpp
     src/CommandLine.h
     src/DebugPrint.cpp
@@ -101,6 +103,7 @@ add_executable(Finestray WIN32
     src/Finestray.rc
     src/Hotkey.cpp
     src/Hotkey.h
+    src/MenuWrapper.h
     src/Resource.h
     src/Settings.cpp
     src/Settings.h
