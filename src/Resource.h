@@ -70,7 +70,8 @@
 #define IDC_AUTO_TRAY_ITEM_DELETE       1011
 #define IDC_AUTO_TRAY_ITEM_SPY          1012
 #define IDC_START_WITH_WINDOWS          1013
-#define IDC_ABOUT                       1014
-#define IDC_EXIT                        1015
+#define IDC_HELP_PAGE                   1014
+#define IDC_ABOUT                       1015
+#define IDC_EXIT                        1016
 
 // clang-format on

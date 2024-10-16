@@ -145,6 +145,17 @@ INT_PTR settingsDialogFunc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
                         break;
                     }
 
+                    case IDC_HELP_PAGE: {
+                        ShellExecuteA(
+                            nullptr,
+                            "open",
+                            "https://github.com/benbuck/finestray/blob/main/README.md",
+                            nullptr,
+                            nullptr,
+                            SW_SHOWNORMAL);
+                        break;
+                    }
+
                     case IDC_ABOUT: {
                         const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
                         const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
