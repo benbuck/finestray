@@ -15,7 +15,7 @@
 // App
 #include "Finestray.h"
 #include "AppName.h"
-#include "BitmapWrapper.h"
+#include "BitmapHandleWrapper.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
 #include "File.h"
@@ -787,10 +787,10 @@ bool showContextMenu(HWND hwnd)
         return false;
     }
 
-    BitmapWrapper appBitmap(getResourceBitmap(IDB_APP));
-    BitmapWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
-    BitmapWrapper aboutBitmap(getResourceBitmap(IDB_ABOUT));
-    BitmapWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
+    BitmapHandleWrapper appBitmap(getResourceBitmap(IDB_APP));
+    BitmapHandleWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
+    BitmapHandleWrapper aboutBitmap(getResourceBitmap(IDB_ABOUT));
+    BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
     if (!appBitmap || !settingsBitmap || !aboutBitmap || !exitBitmap) {
         DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());

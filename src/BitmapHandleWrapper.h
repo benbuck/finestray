@@ -18,15 +18,15 @@
 // Windows
 #include <Windows.h>
 
-class BitmapWrapper
+class BitmapHandleWrapper
 {
 public:
-    BitmapWrapper(HBITMAP hbitmap)
+    BitmapHandleWrapper(HBITMAP hbitmap)
         : hbitmap_(hbitmap)
     {
     }
 
-    ~BitmapWrapper()
+    ~BitmapHandleWrapper()
     {
         if (hbitmap_) {
             if (!DeleteObject(hbitmap_)) {
