@@ -102,7 +102,7 @@ add_executable(Finestray WIN32
     src/Finestray.rc
     src/Hotkey.cpp
     src/Hotkey.h
-    src/MenuWrapper.h
+    src/MenuHandleWrapper.h
     src/Resource.h
     src/Settings.cpp
     src/Settings.h

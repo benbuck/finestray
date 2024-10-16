@@ -20,7 +20,7 @@
 #include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"
-#include "MenuWrapper.h"
+#include "MenuHandleWrapper.h"
 #include "Resource.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
@@ -710,7 +710,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 bool showContextMenu(HWND hwnd)
 {
     // create popup menu
-    MenuWrapper menu(CreatePopupMenu());
+    MenuHandleWrapper menu(CreatePopupMenu());
     if (!menu) {
         DEBUG_PRINTF(
             "failed to create context menu, CreatePopupMenu() failed: %s\n",

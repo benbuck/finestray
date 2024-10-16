@@ -18,15 +18,15 @@
 // Windows
 #include <Windows.h>
 
-class MenuWrapper
+class MenuHandleWrapper
 {
 public:
-    MenuWrapper(HMENU hmenu)
+    MenuHandleWrapper(HMENU hmenu)
         : hmenu_(hmenu)
     {
     }
 
-    ~MenuWrapper()
+    ~MenuHandleWrapper()
     {
         if (hmenu_) {
             if (!DestroyMenu(hmenu_)) {
