@@ -13,7 +13,5 @@ https://github.com/DaveGamble/cJSON
 Finestray uses the Argh! library for command line parsing, which is available under a "3-clause BSD" license.
 https://github.com/adishavit/argh
 
-Finestray uses the emoji U1F4E5 from Google Noto Emoji for the application icon and installer images, which is available
-under an "OFL 1.1" license.
-https://github.com/googlefonts/noto-emoji/blob/v2020-09-16-unicode13_1/svg/emoji_u1f4e5.svg
+Finestray uses some Google Noto Emoji for image artwork, which is available under an "OFL 1.1" license.
 https://github.com/googlefonts/noto-emoji
