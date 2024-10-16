@@ -25,7 +25,7 @@ public:
     TrayIcon();
     ~TrayIcon();
 
-    bool create(HWND hwnd, UINT msg, HICON icon);
+    bool create(HWND hwnd, UINT msg, HICON hicon);
     void destroy();
 
     inline UINT id() const { return nid_.uID; }

@@ -74,29 +74,29 @@ static void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColo
 
 static HWND hwnd_;
 static TrayIcon trayIcon_;
-static HWND settingsDialog_;
+static HWND settingsDialogHwnd_;
 static Settings settings_;
 static std::set<HWND> autoTrayedWindows_;
 static Hotkey hotkeyMinimize_;
 static Hotkey hotkeyRestore_;
 static UINT modifiersOverride_;
 
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
     // unused
-    (void)hPrevInstance;
+    (void)prevHinstance;
     (void)pCmdLine;
 
-    HWND oldWnd = FindWindowA(APP_NAME, nullptr);
-    if (oldWnd) {
+    HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
+    if (oldHwnd) {
         DEBUG_PRINTF("already running\n");
-        SendMessageA(oldWnd, WM_SHOWSETTINGS, 0, 0);
+        SendMessageA(oldHwnd, WM_SHOWSETTINGS, 0, 0);
         return 0;
     }
 
     // initialize COM
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if (FAILED(hr)) {
+    HRESULT hresult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hresult)) {
         CoUninitialize();
         errorMessage(IDS_ERROR_INIT_COM);
         return IDS_ERROR_INIT_COM;
@@ -144,17 +144,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     updateStartWithWindows();
 
-    HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_FINESTRAY));
+    HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
 
     // create the window class
     WNDCLASSEXA wc;
     memset(&wc, 0, sizeof(WNDCLASSEX));
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.lpfnWndProc = wndProc;
-    wc.hInstance = hInstance;
+    wc.hInstance = hinstance;
     wc.lpszClassName = APP_NAME;
-    wc.hIcon = icon;
-    wc.hIconSm = icon;
+    wc.hIcon = hicon;
+    wc.hIconSm = hicon;
     ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
         DEBUG_PRINTF("could not create window class, RegisterClassExA() s", StringUtility::lastErrorString().c_str());
@@ -173,7 +173,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         0, // h
         nullptr, // parent
         nullptr, // menu
-        hInstance, // instance
+        hinstance, // instance
         nullptr // application data
     );
     if (!hwnd) {
@@ -189,7 +189,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     (void)nCmdShow;
 
     // create a tray icon for the app
-    if (!trayIcon_.create(hwnd, WM_TRAYWINDOW, icon)) {
+    if (!trayIcon_.create(hwnd, WM_TRAYWINDOW, hicon)) {
         errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
@@ -215,14 +215,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     int err = start();
     if (err) {
         errorMessage(err);
-        settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+        settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
     }
 
     // run the message loop
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
         // needed to have working tab stops in the dialog
-        if (settingsDialog_ && IsDialogMessageA(settingsDialog_, &msg)) {
+        if (settingsDialogHwnd_ && IsDialogMessageA(settingsDialogHwnd_, &msg)) {
             continue;
         }
         TranslateMessage(&msg);
@@ -266,8 +266,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case IDM_SETTINGS: {
-                    if (!settingsDialog_) {
-                        settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                    if (!settingsDialogHwnd_) {
+                        settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
                     }
                     break;
                 }
@@ -329,22 +329,22 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case HotkeyID::Minimize: {
                     DEBUG_PRINTF("hotkey minimize\n");
                     // get the foreground window to minimize
-                    HWND hwndFg = GetForegroundWindow();
-                    if (hwndFg) {
+                    HWND foregroundHwnd = GetForegroundWindow();
+                    if (foregroundHwnd) {
                         // only minimize windows that have a minimize button
-                        LONG windowStyle = GetWindowLong(hwndFg, GWL_STYLE);
+                        LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
                         if (windowStyle & WS_MINIMIZEBOX) {
 #if !defined(NDEBUG)
                             CHAR text[256];
-                            GetWindowTextA(hwndFg, text, sizeof(text) / sizeof(text[0]));
+                            GetWindowTextA(foregroundHwnd, text, sizeof(text) / sizeof(text[0]));
                             DEBUG_PRINTF("\twindow text '%s'\n", text);
 
                             CHAR className[256];
-                            GetClassNameA(hwndFg, className, sizeof(className) / sizeof(className[0]));
+                            GetClassNameA(foregroundHwnd, className, sizeof(className) / sizeof(className[0]));
                             DEBUG_PRINTF("\twindow class name '%s'\n", className);
 #endif
 
-                            TrayWindow::minimize(hwndFg, hwnd);
+                            TrayWindow::minimize(foregroundHwnd, hwnd);
                         }
                     }
                     break;
@@ -352,9 +352,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case HotkeyID::Restore: {
                     DEBUG_PRINTF("hotkey restore\n");
-                    HWND hwndLast = TrayWindow::getLast();
-                    if (hwndLast) {
-                        TrayWindow::restore(hwndLast);
+                    HWND lastHwnd = TrayWindow::getLast();
+                    if (lastHwnd) {
+                        TrayWindow::restore(lastHwnd);
                     }
                     break;
                 }
@@ -393,11 +393,11 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (hwndTray) {
                         TrayWindow::restore(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
-                        if (!settingsDialog_) {
-                            settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                        if (!settingsDialogHwnd_) {
+                            settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
                         } else {
-                            if (DestroyWindow(settingsDialog_)) {
-                                settingsDialog_ = nullptr;
+                            if (DestroyWindow(settingsDialogHwnd_)) {
+                                settingsDialogHwnd_ = nullptr;
                             }
                         }
                     }
@@ -413,8 +413,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_SHOWSETTINGS: {
-            if (!settingsDialog_) {
-                settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+            if (!settingsDialogHwnd_) {
+                settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
             }
             break;
         }
@@ -536,17 +536,17 @@ bool isAutoTrayWindow(HWND hwnd)
     if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
         DEBUG_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
-        if (!hProc) {
+        HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
+        if (!hproc) {
             DEBUG_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            if (!GetModuleFileNameExA((HMODULE)hProc, nullptr, executable, sizeof(executable))) {
+            if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, executable, sizeof(executable))) {
                 DEBUG_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
             }
         }
-        CloseHandle(hProc);
+        CloseHandle(hproc);
     }
 
     CHAR windowText[128];
@@ -690,7 +690,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         int err = start();
         if (err) {
             errorMessage(err);
-            settingsDialog_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+            settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
             return;
         }
 
@@ -704,7 +704,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         updateStartWithWindows();
     }
 
-    settingsDialog_ = nullptr;
+    settingsDialogHwnd_ = nullptr;
 }
 
 bool showContextMenu(HWND hwnd)
@@ -740,10 +740,10 @@ bool showContextMenu(HWND hwnd)
                 return false;
             }
 
-            HICON icon = TrayWindow::getIcon(autoTrayedWindow);
-            if (icon) {
+            HICON hicon = TrayWindow::getIcon(autoTrayedWindow);
+            if (hicon) {
                 ICONINFO iconinfo;
-                if (GetIconInfo(icon, &iconinfo)) {
+                if (GetIconInfo(hicon, &iconinfo)) {
                     // FIX - is this a really bad thing to do?
                     uint32_t oldColor = 0;
                     uint32_t menuColor = GetSysColor(COLOR_MENU);
@@ -896,11 +896,11 @@ void updateStartWithWindows()
 
 std::string getResourceString(unsigned int id)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
+    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
 
     std::string str;
     str.resize(256);
-    if (!LoadStringA(hInstance, id, &str[0], (int)str.size())) {
+    if (!LoadStringA(hinstance, id, &str[0], (int)str.size())) {
         DEBUG_PRINTF(
             "failed to load resources string %u, LoadStringA() failed: %s\n",
             id,
@@ -913,8 +913,8 @@ std::string getResourceString(unsigned int id)
 
 HBITMAP getResourceBitmap(unsigned int id)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(nullptr);
-    HBITMAP bitmap = (HBITMAP)LoadImageA(hInstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0);
+    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+    HBITMAP bitmap = (HBITMAP)LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0);
     if (!bitmap) {
         DEBUG_PRINTF(
             "failed to load resources bitmap %u, LoadImage() failed: %s\n",

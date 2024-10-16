@@ -30,7 +30,7 @@ TrayIcon::~TrayIcon()
     destroy();
 }
 
-bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
+bool TrayIcon::create(HWND hwnd, UINT msg, HICON hicon)
 {
     if (nid_.uID) {
         DEBUG_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
@@ -45,7 +45,7 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON icon)
     nid_.uID = (UINT)id;
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid_.uCallbackMessage = msg;
-    nid_.hIcon = icon;
+    nid_.hIcon = hicon;
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
         DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
     }

@@ -21,24 +21,24 @@
 class MenuWrapper
 {
 public:
-    MenuWrapper(HMENU menu)
-        : menu_(menu)
+    MenuWrapper(HMENU hmenu)
+        : hmenu_(hmenu)
     {
     }
 
     ~MenuWrapper()
     {
-        if (menu_) {
-            if (!DestroyMenu(menu_)) {
-                DEBUG_PRINTF("failed to destroy menu: %#x\n", menu_);
+        if (hmenu_) {
+            if (!DestroyMenu(hmenu_)) {
+                DEBUG_PRINTF("failed to destroy menu: %#x\n", hmenu_);
             }
         }
     }
 
-    operator HMENU() const { return menu_; }
+    operator HMENU() const { return hmenu_; }
 
-    operator bool() const { return menu_ != nullptr; }
+    operator bool() const { return hmenu_ != nullptr; }
 
 private:
-    HMENU menu_ = nullptr;
+    HMENU hmenu_ = nullptr;
 };

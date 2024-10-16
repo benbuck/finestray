@@ -42,10 +42,10 @@ typedef std::list<IconData> TrayIcons;
 static TrayIcons trayIcons_;
 
 static TrayIcons::iterator find(HWND hwnd);
-static bool add(HWND hwnd, HWND messageWnd);
+static bool add(HWND hwnd, HWND messageHwnd);
 static bool remove(HWND hwnd);
 
-void minimize(HWND hwnd, HWND messageWnd)
+void minimize(HWND hwnd, HWND messageHwnd)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
 
@@ -64,7 +64,7 @@ void minimize(HWND hwnd, HWND messageWnd)
 
     // add tray icon
     if (find(hwnd) == trayIcons_.end()) {
-        if (!add(hwnd, messageWnd)) {
+        if (!add(hwnd, messageHwnd)) {
             // un-hide window on failure, but leave it minimized
 
             DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
@@ -172,31 +172,31 @@ HWND getLast()
 
 HICON getIcon(HWND hwnd)
 {
-    HICON icon;
+    HICON hicon;
 
-    icon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0);
-    if (icon) {
-        return icon;
+    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0);
+    if (hicon) {
+        return hicon;
     }
 
-    icon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0);
-    if (icon) {
-        return icon;
+    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0);
+    if (hicon) {
+        return hicon;
     }
 
-    icon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_BIG, 0);
-    if (icon) {
-        return icon;
+    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_BIG, 0);
+    if (hicon) {
+        return hicon;
     }
 
-    icon = (HICON)GetClassLongPtr(hwnd, GCLP_HICONSM);
-    if (icon) {
-        return icon;
+    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICONSM);
+    if (hicon) {
+        return hicon;
     }
 
-    icon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
-    if (icon) {
-        return icon;
+    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
+    if (hicon) {
+        return hicon;
     }
 
     return nullptr;
@@ -219,7 +219,7 @@ bool exists(HWND hwnd)
     return find(hwnd) != trayIcons_.end();
 }
 
-bool add(HWND hwnd, HWND messageWnd)
+bool add(HWND hwnd, HWND messageHwnd)
 {
     // make sure window isn't already tracked
     TrayIcons::iterator it = find(hwnd);
@@ -234,7 +234,7 @@ bool add(HWND hwnd, HWND messageWnd)
     if (!hicon) {
         hicon = LoadIcon(nullptr, IDI_APPLICATION);
     }
-    return trayIcons_.back().trayIcon_->create(messageWnd, WM_TRAYWINDOW, hicon);
+    return trayIcons_.back().trayIcon_->create(messageHwnd, WM_TRAYWINDOW, hicon);
 }
 
 bool remove(HWND hwnd)

@@ -29,16 +29,16 @@ std::string fileRead(const std::string & fileName)
 {
     std::string contents;
 
-    HANDLE file =
+    HANDLE hfile =
         CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE) {
+    if (hfile == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF(
             "could not open '%s' for reading, CreateFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
     } else {
         LARGE_INTEGER fileSize;
-        if (!GetFileSizeEx(file, &fileSize)) {
+        if (!GetFileSizeEx(hfile, &fileSize)) {
             DEBUG_PRINTF(
                 "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
                 fileName.c_str(),
@@ -49,7 +49,7 @@ std::string fileRead(const std::string & fileName)
             buffer[buffer.size() - 1] = '\0';
 
             DWORD bytesRead = 0;
-            if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
+            if (!ReadFile(hfile, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
                 DEBUG_PRINTF(
                     "could not read %d bytes from '%s', ReadFile() failed: %s\n",
                     fileSize,
@@ -64,7 +64,7 @@ std::string fileRead(const std::string & fileName)
             }
         }
 
-        CloseHandle(file);
+        CloseHandle(hfile);
     }
 
     return contents;
@@ -72,9 +72,9 @@ std::string fileRead(const std::string & fileName)
 
 bool fileWrite(const std::string & fileName, const std::string & contents)
 {
-    HANDLE file =
+    HANDLE hfile =
         CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE) {
+    if (hfile == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF(
             "could not open '%s' for writing, CreateFileA() failed: %s\n",
             fileName.c_str(),
@@ -82,7 +82,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
         return false;
     } else {
         DWORD bytesWritten = 0;
-        if (!WriteFile(file, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
+        if (!WriteFile(hfile, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
             DEBUG_PRINTF(
                 "could not write %d bytes to '%s', WriteFile() failed: %s\n",
                 contents.size(),
@@ -97,7 +97,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
         }
     }
 
-    CloseHandle(file);
+    CloseHandle(hfile);
 
     return true;
 }
@@ -155,11 +155,11 @@ std::string getAppDataPath()
 {
     CHAR path[MAX_PATH];
 
-    HRESULT result = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path);
-    if (FAILED(result)) {
+    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path);
+    if (FAILED(hresult)) {
         DEBUG_PRINTF(
             "could not get app data path, SHGetFolderPath() failed: %s\n",
-            StringUtility::errorToString(result).c_str());
+            StringUtility::errorToString(hresult).c_str());
         return std::string();
     }
 
@@ -170,11 +170,11 @@ std::string getStartupPath()
 {
     CHAR path[MAX_PATH];
 
-    HRESULT result = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, path);
-    if (FAILED(result)) {
+    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, path);
+    if (FAILED(hresult)) {
         DEBUG_PRINTF(
             "could not get startup path, SHGetFolderPath() failed: %s\n",
-            StringUtility::errorToString(result).c_str());
+            StringUtility::errorToString(hresult).c_str());
         return std::string();
     }
 
@@ -202,31 +202,32 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
 bool createShortcut(const std::string & shortcutPath, const std::string & executablePath)
 {
     IShellLinkA * pShellLink = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&pShellLink);
-    if (FAILED(hr)) {
-        DEBUG_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hr).c_str());
+    HRESULT hresult =
+        CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&pShellLink);
+    if (FAILED(hresult)) {
+        DEBUG_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
-    hr = pShellLink->SetPath(executablePath.c_str());
-    if (FAILED(hr)) {
-        DEBUG_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hr).c_str());
+    hresult = pShellLink->SetPath(executablePath.c_str());
+    if (FAILED(hresult)) {
+        DEBUG_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
         pShellLink->Release();
         return false;
     }
 
     IPersistFile * pPersistFile = nullptr;
-    hr = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID *)&pPersistFile);
-    if (FAILED(hr)) {
-        DEBUG_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hr).c_str());
+    hresult = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID *)&pPersistFile);
+    if (FAILED(hresult)) {
+        DEBUG_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
         pShellLink->Release();
         return false;
     }
 
     std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutPath);
-    hr = pPersistFile->Save(shortcutPathW.c_str(), TRUE);
-    if (FAILED(hr)) {
-        DEBUG_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hr).c_str());
+    hresult = pPersistFile->Save(shortcutPathW.c_str(), TRUE);
+    if (FAILED(hresult)) {
+        DEBUG_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
         pPersistFile->Release();
         pShellLink->Release();
         return false;

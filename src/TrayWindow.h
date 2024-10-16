@@ -23,7 +23,7 @@
 namespace TrayWindow
 {
 
-void minimize(HWND hwnd, HWND messageWnd);
+void minimize(HWND hwnd, HWND messageHwnd);
 void restore(HWND hwnd);
 void close(HWND hwnd);
 void addAll();

@@ -1,5 +1,7 @@
 # To do list
 
+- add FileWrapper
+- Consistent handle variable naming
 - Add setting for individual tray icons / context menu items / both
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows

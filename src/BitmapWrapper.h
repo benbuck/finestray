@@ -21,24 +21,24 @@
 class BitmapWrapper
 {
 public:
-    BitmapWrapper(HBITMAP bitmap)
-        : bitmap_(bitmap)
+    BitmapWrapper(HBITMAP hbitmap)
+        : hbitmap_(hbitmap)
     {
     }
 
     ~BitmapWrapper()
     {
-        if (bitmap_) {
-            if (!DeleteObject(bitmap_)) {
-                DEBUG_PRINTF("failed to destroy bitmap: %#x\n", bitmap_);
+        if (hbitmap_) {
+            if (!DeleteObject(hbitmap_)) {
+                DEBUG_PRINTF("failed to destroy bitmap: %#x\n", hbitmap_);
             }
         }
     }
 
-    operator HBITMAP() const { return bitmap_; }
+    operator HBITMAP() const { return hbitmap_; }
 
-    operator bool() const { return bitmap_ != nullptr; }
+    operator bool() const { return hbitmap_ != nullptr; }
 
 private:
-    HBITMAP bitmap_ = nullptr;
+    HBITMAP hbitmap_ = nullptr;
 };
