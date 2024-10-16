@@ -2,12 +2,13 @@
 
 Finestray (pronounced fin-es-tray) is a program that can minimize windows to the system tray area (typically bottom
 right corner, formally known as the "notification area") of the Windows desktop. This is useful if you want to have a
-window not be visible, and also not show in the taskbar (the usual behavior when a window is minimized) to reduce visual
-clutter.
+window not be visible, and also not show in the taskbar (the usual behavior when a window is minimized) in order to
+reduce visual clutter.
 
 ## Basic Operation
 
-After launching the Finestray application, it will add an icon for itself to your tray. The icon looks like this: ![Finestray icon](src/images/icon.png "Finestray icon")
+After launching the Finestray application, it will add an icon for itself to your tray. The icon looks like this:
+![Finestray icon](src/images/icon.png "Finestray icon")
 
 Finestray supports a number of features to help you control when to minimize windows to the tray and restore them back
 to their normal placement:
@@ -23,8 +24,8 @@ to their normal placement:
     of a window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
     functionality.
 - **Tray Icons**:
-    If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and
-    if you click it again it will hide the Settings window.
+    If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
+    click it again it will hide the Settings window.
 
     For any window that has been minimized to an icon in the tray, simply click it to restore it to its original
     location.
@@ -93,8 +94,8 @@ At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and 
 - **OK**:
     Closes the Settings window and saves settings.
 
-Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same location
-as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
+Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same
+location as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
 
 ### Modifiers and Hotkeys
 
