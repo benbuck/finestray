@@ -155,7 +155,7 @@ std::string getAppDataPath()
 {
     CHAR path[MAX_PATH];
 
-    HRESULT result = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, path);
+    HRESULT result = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path);
     if (FAILED(result)) {
         DEBUG_PRINTF(
             "could not get app data path, SHGetFolderPath() failed: %s\n",
@@ -170,7 +170,7 @@ std::string getStartupPath()
 {
     CHAR path[MAX_PATH];
 
-    HRESULT result = SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL, 0, path);
+    HRESULT result = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, path);
     if (FAILED(result)) {
         DEBUG_PRINTF(
             "could not get startup path, SHGetFolderPath() failed: %s\n",
