@@ -1,7 +1,6 @@
 # To do list
 
 - Add setting for individual tray icons / context menu items / both
-- Improve appearance of app bitmap in windows uninstaller
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
 - Add command line support for auto-tray options
