@@ -40,16 +40,17 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON hicon)
     LONG id = InterlockedIncrement(&gid_);
 
     ZeroMemory(&nid_, sizeof(nid_));
-    nid_.cbSize = NOTIFYICONDATA_V2_SIZE;
+    nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
     nid_.hWnd = hwnd;
     nid_.uID = (UINT)id;
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid_.uCallbackMessage = msg;
     nid_.hIcon = hicon;
+    nid_.uVersion = NOTIFYICON_VERSION;
+
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
         DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
-    nid_.uVersion = NOTIFYICON_VERSION;
 
     if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
         DEBUG_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %s\n", StringUtility::lastErrorString().c_str());
