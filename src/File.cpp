@@ -16,6 +16,7 @@
 
 // App
 #include "DebugPrint.h"
+#include "HandleWrapper.h"
 #include "StringUtility.h"
 
 // Windows
@@ -29,16 +30,16 @@ std::string fileRead(const std::string & fileName)
 {
     std::string contents;
 
-    HANDLE hfile =
-        CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    HandleWrapper file(
+        CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+    if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF(
             "could not open '%s' for reading, CreateFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
     } else {
         LARGE_INTEGER fileSize;
-        if (!GetFileSizeEx(hfile, &fileSize)) {
+        if (!GetFileSizeEx(file, &fileSize)) {
             DEBUG_PRINTF(
                 "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
                 fileName.c_str(),
@@ -49,7 +50,7 @@ std::string fileRead(const std::string & fileName)
             buffer[buffer.size() - 1] = '\0';
 
             DWORD bytesRead = 0;
-            if (!ReadFile(hfile, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
+            if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
                 DEBUG_PRINTF(
                     "could not read %d bytes from '%s', ReadFile() failed: %s\n",
                     fileSize,
@@ -63,8 +64,6 @@ std::string fileRead(const std::string & fileName)
                 }
             }
         }
-
-        CloseHandle(hfile);
     }
 
     return contents;
@@ -72,9 +71,9 @@ std::string fileRead(const std::string & fileName)
 
 bool fileWrite(const std::string & fileName, const std::string & contents)
 {
-    HANDLE hfile =
-        CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    HandleWrapper file(
+        CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
+    if (file == INVALID_HANDLE_VALUE) {
         DEBUG_PRINTF(
             "could not open '%s' for writing, CreateFileA() failed: %s\n",
             fileName.c_str(),
@@ -82,7 +81,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
         return false;
     } else {
         DWORD bytesWritten = 0;
-        if (!WriteFile(hfile, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
+        if (!WriteFile(file, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
             DEBUG_PRINTF(
                 "could not write %d bytes to '%s', WriteFile() failed: %s\n",
                 contents.size(),
@@ -96,8 +95,6 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
             }
         }
     }
-
-    CloseHandle(hfile);
 
     return true;
 }
