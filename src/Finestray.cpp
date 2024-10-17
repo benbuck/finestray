@@ -29,6 +29,7 @@
 #include "TrayIcon.h"
 #include "TrayWindow.h"
 #include "WinEventHookHandleWrapper.h"
+#include "WindowHandleWrapper.h"
 #include "WindowList.h"
 
 // Windows
@@ -74,9 +75,9 @@ static void updateStartWithWindows();
 static HBITMAP getResourceBitmap(unsigned int id);
 static void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor);
 
-static HWND hwnd_;
+static WindowHandleWrapper appWindow_;
 static TrayIcon trayIcon_;
-static HWND settingsDialogHwnd_;
+static WindowHandleWrapper settingsDialogWindow_;
 static Settings settings_;
 static std::set<HWND> autoTrayedWindows_;
 static Hotkey hotkeyMinimize_;
@@ -165,7 +166,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // create the window
-    hwnd_ = CreateWindowA(
+    appWindow_ = CreateWindowA(
         APP_NAME, // class name
         APP_NAME, // window name
         WS_OVERLAPPEDWINDOW, // style
@@ -178,18 +179,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         hinstance, // instance
         nullptr // application data
     );
-    if (!hwnd_) {
+    if (!appWindow_) {
         DEBUG_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_WINDOW);
         return IDS_ERROR_CREATE_WINDOW;
     }
 
     // we intentionally don't show the window
-    // ShowWindow(hwnd_, nCmdShow);
+    // ShowWindow(appWindow_, nCmdShow);
     (void)nCmdShow;
 
     // create a tray icon for the app
-    if (!trayIcon_.create(hwnd_, WM_TRAYWINDOW, hicon)) {
+    if (!trayIcon_.create(appWindow_, WM_TRAYWINDOW, hicon)) {
         errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
@@ -206,7 +207,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!winEventHook) {
         DEBUG_PRINTF(
             "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
-            hwnd_,
+            appWindow_,
             StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
         return IDS_ERROR_REGISTER_EVENTHOOK;
@@ -215,14 +216,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     int err = start();
     if (err) {
         errorMessage(err);
-        settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+        settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
     }
 
     // run the message loop
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
         // needed to have working tab stops in the dialog
-        if (settingsDialogHwnd_ && IsDialogMessageA(settingsDialogHwnd_, &msg)) {
+        if (settingsDialogWindow_ && IsDialogMessageA(settingsDialogWindow_, &msg)) {
             continue;
         }
         TranslateMessage(&msg);
@@ -232,7 +233,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!UnhookWinEvent(winEventHook)) {
         DEBUG_PRINTF(
             "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
-            hwnd_,
+            appWindow_,
             StringUtility::lastErrorString().c_str());
     }
 
@@ -240,12 +241,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
 
     stop();
 
-    if (!DestroyWindow(hwnd_)) {
-        DEBUG_PRINTF(
-            "failed to destroy window %#x, DestroyWindow() failed: %s\n",
-            hwnd_,
-            StringUtility::lastErrorString().c_str());
-    }
+    appWindow_.destroy();
 
     return 0;
 }
@@ -264,8 +260,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case IDM_SETTINGS: {
-                    if (!settingsDialogHwnd_) {
-                        settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
+                    if (!settingsDialogWindow_) {
+                        settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                     }
                     break;
                 }
@@ -391,12 +387,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (hwndTray) {
                         TrayWindow::restore(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
-                        if (!settingsDialogHwnd_) {
-                            settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
+                        if (!settingsDialogWindow_) {
+                            settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                         } else {
-                            if (DestroyWindow(settingsDialogHwnd_)) {
-                                settingsDialogHwnd_ = nullptr;
-                            }
+                            settingsDialogWindow_ = nullptr;
                         }
                     }
                     break;
@@ -411,8 +405,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_SHOWSETTINGS: {
-            if (!settingsDialogHwnd_) {
-                settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
+            if (!settingsDialogWindow_) {
+                settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
             }
             break;
         }
@@ -439,7 +433,7 @@ int start()
     if (!vkMinimize || !modifiersMinimize) {
         DEBUG_PRINTF("no hotkey to minimize windows\n");
     } else {
-        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, hwnd_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
         }
     }
@@ -453,7 +447,7 @@ int start()
     if (!vkRestore || !modifiersRestore) {
         DEBUG_PRINTF("no hotkey to restore windows\n");
     } else {
-        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, hwnd_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
         }
     }
@@ -471,7 +465,7 @@ int start()
         return IDS_ERROR_REGISTER_MODIFIER;
     }
 
-    WindowList::start(hwnd_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
+    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
 
     return 0;
 }
@@ -623,7 +617,7 @@ void onAddWindow(HWND hwnd)
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            TrayWindow::minimize(hwnd, hwnd_);
+            TrayWindow::minimize(hwnd, appWindow_);
             autoTrayedWindows_.insert(hwnd);
         }
     }
@@ -663,14 +657,14 @@ void onMinimizeEvent(
     if (!isAutoTrayWindow(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifiers active, minimizing\n");
-            TrayWindow::minimize(hwnd, hwnd_);
+            TrayWindow::minimize(hwnd, appWindow_);
         }
     } else {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            TrayWindow::minimize(hwnd, hwnd_);
+            TrayWindow::minimize(hwnd, appWindow_);
         }
     }
 }
@@ -688,7 +682,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         int err = start();
         if (err) {
             errorMessage(err);
-            settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+            settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
             return;
         }
 
@@ -702,7 +696,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         updateStartWithWindows();
     }
 
-    settingsDialogHwnd_ = nullptr;
+    settingsDialogWindow_ = nullptr;
 }
 
 bool showContextMenu(HWND hwnd)

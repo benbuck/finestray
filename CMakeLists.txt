@@ -115,6 +115,7 @@ add_executable(Finestray WIN32
     src/TrayIcon.h
     src/TrayWindow.cpp
     src/TrayWindow.h
+    src/WindowHandleWrapper.h
     src/WindowList.cpp
     src/WindowList.h
     src/WinEventHookHandleWrapper.h
