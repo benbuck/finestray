@@ -91,6 +91,7 @@ include(cJSON.cmake)
 add_executable(Finestray WIN32
     src/AppName.h
     src/BitmapHandleWrapper.h
+    src/COMLibraryWrapper.h
     src/CommandLine.cpp
     src/CommandLine.h
     src/DebugPrint.cpp

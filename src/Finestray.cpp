@@ -16,6 +16,7 @@
 #include "Finestray.h"
 #include "AppName.h"
 #include "BitmapHandleWrapper.h"
+#include "COMLibraryWrapper.h"
 #include "CommandLine.h"
 #include "DebugPrint.h"
 #include "File.h"
@@ -95,9 +96,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // initialize COM
-    HRESULT hresult = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if (FAILED(hresult)) {
-        CoUninitialize();
+    COMLibraryWrapper comLibrary;
+    if (!comLibrary.initialized()) {
         errorMessage(IDS_ERROR_INIT_COM);
         return IDS_ERROR_INIT_COM;
     }
@@ -246,8 +246,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
             hwnd,
             StringUtility::lastErrorString().c_str());
     }
-
-    CoUninitialize();
 
     return 0;
 }
