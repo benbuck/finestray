@@ -117,6 +117,7 @@ add_executable(Finestray WIN32
     src/TrayWindow.h
     src/WindowList.cpp
     src/WindowList.h
+    src/WinEventHookHandleWrapper.h
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
 

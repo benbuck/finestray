@@ -28,6 +28,7 @@
 #include "StringUtility.h"
 #include "TrayIcon.h"
 #include "TrayWindow.h"
+#include "WinEventHookHandleWrapper.h"
 #include "WindowList.h"
 
 // Windows
@@ -60,7 +61,7 @@ static bool isAutoTrayWindow(HWND hwnd);
 static void onAddWindow(HWND hwnd);
 static void onRemoveWindow(HWND hwnd);
 static void onMinimizeEvent(
-    HWINEVENTHOOK hook,
+    HWINEVENTHOOK hwineventhook,
     DWORD event,
     HWND hwnd,
     LONG idObject,
@@ -195,15 +196,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // monitor minimize events
-    HWINEVENTHOOK hWinEventHook = SetWinEventHook(
+    WinEventHookHandleWrapper winEventHook(SetWinEventHook(
         EVENT_SYSTEM_MINIMIZESTART,
         EVENT_SYSTEM_MINIMIZESTART,
         nullptr,
         onMinimizeEvent,
         0,
         0,
-        WINEVENT_OUTOFCONTEXT);
-    if (!hWinEventHook) {
+        WINEVENT_OUTOFCONTEXT));
+    if (!winEventHook) {
         DEBUG_PRINTF(
             "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
             hwnd,
@@ -229,7 +230,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         DispatchMessage(&msg);
     }
 
-    if (!UnhookWinEvent(hWinEventHook)) {
+    if (!UnhookWinEvent(winEventHook)) {
         DEBUG_PRINTF(
             "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
             hwnd,
@@ -646,7 +647,7 @@ void onRemoveWindow(HWND hwnd)
 }
 
 void onMinimizeEvent(
-    HWINEVENTHOOK /*hook*/,
+    HWINEVENTHOOK /* hwineventhook */,
     DWORD event,
     HWND hwnd,
     LONG /*idObject*/,
