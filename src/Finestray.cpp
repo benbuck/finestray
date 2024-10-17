@@ -164,7 +164,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // create the window
-    HWND hwnd = CreateWindowA(
+    hwnd_ = CreateWindowA(
         APP_NAME, // class name
         APP_NAME, // window name
         WS_OVERLAPPEDWINDOW, // style
@@ -177,20 +177,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         hinstance, // instance
         nullptr // application data
     );
-    if (!hwnd) {
+    if (!hwnd_) {
         DEBUG_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_WINDOW);
         return IDS_ERROR_CREATE_WINDOW;
     }
 
-    hwnd_ = hwnd;
-
     // we intentionally don't show the window
-    // ShowWindow(hwnd, nCmdShow);
+    // ShowWindow(hwnd_, nCmdShow);
     (void)nCmdShow;
 
     // create a tray icon for the app
-    if (!trayIcon_.create(hwnd, WM_TRAYWINDOW, hicon)) {
+    if (!trayIcon_.create(hwnd_, WM_TRAYWINDOW, hicon)) {
         errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
@@ -207,7 +205,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!winEventHook) {
         DEBUG_PRINTF(
             "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
-            hwnd,
+            hwnd_,
             StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
         return IDS_ERROR_REGISTER_EVENTHOOK;
@@ -233,7 +231,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!UnhookWinEvent(winEventHook)) {
         DEBUG_PRINTF(
             "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
-            hwnd,
+            hwnd_,
             StringUtility::lastErrorString().c_str());
     }
 
@@ -241,10 +239,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
 
     stop();
 
-    if (!DestroyWindow(hwnd)) {
+    if (!DestroyWindow(hwnd_)) {
         DEBUG_PRINTF(
             "failed to destroy window %#x, DestroyWindow() failed: %s\n",
-            hwnd,
+            hwnd_,
             StringUtility::lastErrorString().c_str());
     }
 
@@ -266,7 +264,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case IDM_SETTINGS: {
                     if (!settingsDialogHwnd_) {
-                        settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                        settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                     }
                     break;
                 }
@@ -393,7 +391,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         TrayWindow::restore(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
                         if (!settingsDialogHwnd_) {
-                            settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                            settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                         } else {
                             if (DestroyWindow(settingsDialogHwnd_)) {
                                 settingsDialogHwnd_ = nullptr;
@@ -413,7 +411,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_SHOWSETTINGS: {
             if (!settingsDialogHwnd_) {
-                settingsDialogHwnd_ = SettingsDialog::create(hwnd_, settings_, onSettingsDialogComplete);
+                settingsDialogHwnd_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
             }
             break;
         }
