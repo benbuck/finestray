@@ -21,7 +21,7 @@
 class HandleWrapper
 {
 public:
-    HandleWrapper(HANDLE handle)
+    explicit HandleWrapper(HANDLE handle)
         : handle_(handle)
     {
     }

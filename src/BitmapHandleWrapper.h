@@ -21,7 +21,7 @@
 class BitmapHandleWrapper
 {
 public:
-    BitmapHandleWrapper(HBITMAP hbitmap)
+    explicit BitmapHandleWrapper(HBITMAP hbitmap)
         : hbitmap_(hbitmap)
     {
     }

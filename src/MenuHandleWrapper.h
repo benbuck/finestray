@@ -21,7 +21,7 @@
 class MenuHandleWrapper
 {
 public:
-    MenuHandleWrapper(HMENU hmenu)
+    explicit MenuHandleWrapper(HMENU hmenu)
         : hmenu_(hmenu)
     {
     }

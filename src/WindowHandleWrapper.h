@@ -27,7 +27,7 @@ public:
     {
     }
 
-    WindowHandleWrapper(HWND hwnd)
+    explicit WindowHandleWrapper(HWND hwnd)
         : hwnd_(hwnd)
     {
     }

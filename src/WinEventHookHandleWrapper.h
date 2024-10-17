@@ -22,7 +22,7 @@
 class WinEventHookHandleWrapper
 {
 public:
-    WinEventHookHandleWrapper(HWINEVENTHOOK hwineventhook)
+    explicit WinEventHookHandleWrapper(HWINEVENTHOOK hwineventhook)
         : hwineventhook_(hwineventhook)
     {
     }
