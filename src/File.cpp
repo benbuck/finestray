@@ -22,9 +22,12 @@
 // Windows
 #include <ShlObj.h>
 #include <Shlwapi.h>
+#include <wrl/client.h>
 
 // Standard library
 #include <cstring>
+
+using Microsoft::WRL::ComPtr;
 
 std::string fileRead(const std::string & fileName)
 {
@@ -198,40 +201,37 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
 
 bool createShortcut(const std::string & shortcutPath, const std::string & executablePath)
 {
-    IShellLinkA * pShellLink = nullptr;
-    HRESULT hresult =
-        CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&pShellLink);
+    ComPtr<IShellLinkA> shellLink;
+    HRESULT hresult = CoCreateInstance(
+        CLSID_ShellLink,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        IID_IShellLinkA,
+        (LPVOID *)shellLink.ReleaseAndGetAddressOf());
     if (FAILED(hresult)) {
         DEBUG_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
-    hresult = pShellLink->SetPath(executablePath.c_str());
+    hresult = shellLink->SetPath(executablePath.c_str());
     if (FAILED(hresult)) {
         DEBUG_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
-        pShellLink->Release();
         return false;
     }
 
-    IPersistFile * pPersistFile = nullptr;
-    hresult = pShellLink->QueryInterface(IID_IPersistFile, (LPVOID *)&pPersistFile);
+    ComPtr<IPersistFile> persistFile;
+    hresult = shellLink->QueryInterface(IID_IPersistFile, (LPVOID *)persistFile.ReleaseAndGetAddressOf());
     if (FAILED(hresult)) {
         DEBUG_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
-        pShellLink->Release();
         return false;
     }
 
     std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutPath);
-    hresult = pPersistFile->Save(shortcutPathW.c_str(), TRUE);
+    hresult = persistFile->Save(shortcutPathW.c_str(), TRUE);
     if (FAILED(hresult)) {
         DEBUG_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
-        pPersistFile->Release();
-        pShellLink->Release();
         return false;
     }
-
-    pPersistFile->Release();
-    pShellLink->Release();
 
     return true;
 }
