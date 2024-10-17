@@ -89,6 +89,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     (void)prevHinstance;
     (void)pCmdLine;
 
+    // check if already running
     HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
     if (oldHwnd) {
         DEBUG_PRINTF("already running\n");
@@ -648,10 +649,10 @@ void onMinimizeEvent(
     HWINEVENTHOOK /* hwineventhook */,
     DWORD event,
     HWND hwnd,
-    LONG /*idObject*/,
-    LONG /*idChild*/,
-    DWORD /*dwEventThread*/,
-    DWORD /*dwmsEventTime*/)
+    LONG /* idObject */,
+    LONG /* idChild */,
+    DWORD /* dwEventThread */,
+    DWORD /* dwmsEventTime */)
 {
     if (event != EVENT_SYSTEM_MINIMIZESTART) {
         DEBUG_PRINTF("unexpected non-minimize event %#x\n", event);
