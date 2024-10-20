@@ -30,7 +30,7 @@ TrayIcon::~TrayIcon()
     destroy();
 }
 
-bool TrayIcon::create(HWND hwnd, UINT msg, HICON hicon)
+bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
     if (nid_.uID) {
         DEBUG_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
@@ -41,7 +41,7 @@ bool TrayIcon::create(HWND hwnd, UINT msg, HICON hicon)
 
     ZeroMemory(&nid_, sizeof(nid_));
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
-    nid_.hWnd = hwnd;
+    nid_.hWnd = messageHwnd;
     nid_.uID = (UINT)id;
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid_.uCallbackMessage = msg;

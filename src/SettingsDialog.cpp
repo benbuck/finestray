@@ -97,11 +97,45 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
 
     switch (message) {
         case WM_INITDIALOG: {
-            CheckDlgButton(dialogHwnd, IDC_START_WITH_WINDOWS, settings_.startWithWindows_ ? BST_CHECKED : BST_UNCHECKED);
-            SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str());
-            SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str());
-            SetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str());
-            SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str());
+            if (!CheckDlgButton(
+                    dialogHwnd,
+                    IDC_START_WITH_WINDOWS,
+                    settings_.startWithWindows_ ? BST_CHECKED : BST_UNCHECKED)) {
+                DEBUG_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+
+            int checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
+            switch (settings_.minimizePlacement_) {
+                case MinimizePlacement::Tray: checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY; break;
+                case MinimizePlacement::Menu: checkButtonId = IDC_MINIMIZE_PLACEMENT_MENU; break;
+                case MinimizePlacement::TrayAndMenu: checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU; break;
+                case MinimizePlacement::None:
+                default: {
+                    DEBUG_PRINTF("bad minimize placement %d\n", settings_.minimizePlacement_);
+                    break;
+                }
+            }
+
+            if (!CheckRadioButton(
+                    dialogHwnd,
+                    IDC_MINIMIZE_PLACEMENT_TRAY,
+                    ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU,
+                    checkButtonId)) {
+                DEBUG_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+
+            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str())) {
+                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
+                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str())) {
+                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
+                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
 
             autoTrayListViewInit(dialogHwnd);
 
@@ -124,6 +158,21 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     case IDC_START_WITH_WINDOWS: {
                         settings_.startWithWindows_ = IsDlgButtonChecked(dialogHwnd, IDC_START_WITH_WINDOWS) ==
                             BST_CHECKED;
+                        break;
+                    }
+
+                    case IDC_MINIMIZE_PLACEMENT_TRAY: {
+                        settings_.minimizePlacement_ = MinimizePlacement::Tray;
+                        break;
+                    }
+
+                    case IDC_MINIMIZE_PLACEMENT_MENU: {
+                        settings_.minimizePlacement_ = MinimizePlacement::Menu;
+                        break;
+                    }
+
+                    case ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU: {
+                        settings_.minimizePlacement_ = MinimizePlacement::TrayAndMenu;
                         break;
                     }
 

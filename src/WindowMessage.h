@@ -19,18 +19,3 @@
 
 #define WM_TRAYWINDOW (WM_USER + 1)
 #define WM_SHOWSETTINGS (WM_USER + 2)
-
-namespace TrayWindow
-{
-
-void minimize(HWND hwnd, HWND messageHwnd);
-void restore(HWND hwnd);
-void close(HWND hwnd);
-void addAll();
-void restoreAll();
-HWND getFromID(UINT id);
-HWND getLast();
-bool exists(HWND hwnd);
-HICON getIcon(HWND hwnd);
-
-} // namespace TrayWindow

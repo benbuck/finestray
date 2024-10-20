@@ -1,8 +1,5 @@
 # To do list
 
-- add FileWrapper
-- Consistent handle variable naming
-- Add setting for individual tray icons / context menu items / both
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
 - Add command line support for auto-tray options
@@ -11,3 +8,7 @@
 - Save settings changes provided by command line args
 - Improve debug logging facilities (use loguru or plog?)
 - Add auto-close feature
+
+## Legal
+
+Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)

@@ -14,6 +14,9 @@
 
 #pragma once
 
+// App
+#include "MinimizePlacement.h"
+
 // Standard library
 #include <string>
 #include <vector>
@@ -49,6 +52,7 @@ public:
     void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
 
     bool startWithWindows_;
+    MinimizePlacement minimizePlacement_;
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
     std::string modifiersOverride_;

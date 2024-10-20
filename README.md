@@ -14,38 +14,39 @@ Finestray supports a number of features to help you control when to minimize win
 to their normal placement:
 
 - **Minimize hotkey**:
-    First select a window, then press the configurable hotkey (typically Alt+Ctrl+Shift+Down) to minimize the window to
-    the tray.
+  First select a window, then press the configurable hotkey (typically Alt+Ctrl+Shift+Down) to minimize the window to
+  the tray.
 - **Restore hotkey**:
-    Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
-    will be restored to its original location.
+  Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
+  will be restored to its original location.
 - **Override modifier**:
-    Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button
-    of a window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
-    functionality.
+  Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of a
+  window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
+  functionality.
 - **Tray Icons**:
-    If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
-    click it again it will hide the Settings window.
+  If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
+  click it again it will hide the Settings window.
 
-    For any window that has been minimized to an icon in the tray, simply click it to restore it to its original
-    location.
+  For any window that has been minimized to an icon in the tray, simply click it to restore it to its original location.
 - **Auto-trays**:
-    This feature allows specific windows to be minimized to the tray as soon as they appear. Please see the [Auto-tray
-    Settings](#auto-tray-settings) section for more information.
+  This feature allows specific windows to be minimized to the tray as soon as they appear. Please see the [Auto-tray
+  Settings](#auto-tray-settings) section for more information.
 - **Context menu**:
-    For any of the tray icons created by Finestray, including its own, you can right click on it to see the context
-    menu.
+  For any of the tray icons created by Finestray, including its own, you can right click on it to see the context menu.
 
-    ![Context menu](src/images/context-menu.png "Context menu")
+  ![Context menu](src/images/context-menu.png "Context menu")
 
 From the context menu, you can select one of the menu items:
 
 - **Settings**:
-    Shows the [Settings](#settings) window.
+  Shows the [Settings](#settings) window.
 - **About**:
-    Shows a some basic information about Finestray.
+  Shows a some basic information about Finestray.
 - **Exit**:
-    Exits the Finestray application.
+  Exits the Finestray application.
+
+Additionally, if your `Minimize placement` is set to `Menu` or `Tray and Menu`, then minimized windows will be listed in
+the context menu. You can click on these to restore a window to its original location.
 
 ## Settings
 
@@ -58,41 +59,46 @@ icon.
 The available settings correspond to some of the above features. The settings are:
 
 - **Start with windows**:
-    This toggles whether Finestray is launched when you start Windows. This creates a shortcut link located in your
-    startup folder (typically `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which
-    which launches the Finestray executable.
+  This toggles whether Finestray is launched when you start Windows. This creates a shortcut link located in your
+  startup folder (typically `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which
+  which launches the Finestray executable.
+- **Minimize placement**:
+  This controls where to place minimized windows minimized using Finestray. The choices are:
+  - **Tray**: the window will get its own icon in the tray.
+  - **Menu**: the window will get an entry in the context menu.
+  - **Tray and Menu**: the window will get a tray icon and a context menu entry.
 - **Minimize hotkey**:
-    This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
-    [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+  This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Restore hotkey**:
-    This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
-    [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+  This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Override modifier**:
-    This lets you configure the modifier that is used to override some Finestray behavior. Please see the
-    [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+  This lets you configure the modifier that is used to override some Finestray behavior. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Poll interval**:
-    Finestray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
-    how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
-    one second, and Finestray will scan the windows once every second. You can increase the value if you think Finestray
-    is checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to
-    happen more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior
-    when a window first opens.
+  Finestray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
+  how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
+  one second, and Finestray will scan the windows once every second. You can increase the value if you think Finestray
+  is checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to
+  happen more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior
+  when a window first opens.
 - **Auto-trays**:
-    This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
-    windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing
-    the Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update
-    button. Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
+  This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
+  windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing the
+  Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update button.
+  Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
 
 At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and OK:
 
 - **About**:
-    Shows a some basic information about Finestray.
+  Shows a some basic information about Finestray.
 - **Exit**:
-    Exits the Finestray application after saving settings.
+  Exits the Finestray application after saving settings.
 - **Cancel**:
-    Closes the Settings window but does not save settings (settings are restored to their unmodified values).
+  Closes the Settings window but does not save settings (settings are restored to their unmodified values).
 - **OK**:
-    Closes the Settings window and saves settings.
+  Closes the Settings window and saves settings.
 
 Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same
 location as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
@@ -102,8 +108,8 @@ location as the Finestray application, and if that's not possible it saves them 
 Modifier choices: `alt`, `ctrl`, `shift`, `win`
 
 Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`,
-    `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
-    `home`, `end`, `ins`, `del`, and normal letters, numbers, and punctuation.
+  `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
+  `home`, `end`, `ins`, `del`, and normal letters, numbers, and punctuation.
 
 For the override modifier, you can provide one or more modifiers using spaces in between. For example you could provide
 a modifier `alt`, or a modifier `ctrl shift`.
@@ -121,18 +127,18 @@ to the tray when it opens, and when you minimize it. The complication is that it
 window. Because of this, Finestray provides three possible ways, which can be used in combination, to identify a window:
 
 - **Executable name**:
-    This value corresponds to executable the created the window. Provide the full path to the executable, for example
-    `C:\Windows\notepad.exe`. This must match (case insensitive) the path of the executable that owns the window, or you
-    can leave this empty if you don't care which executable created the window.
+  This value corresponds to executable the created the window. Provide the full path to the executable, for example
+  `C:\Windows\notepad.exe`. This must match (case insensitive) the path of the executable that owns the window, or you
+  can leave this empty if you don't care which executable created the window.
 - **Window class**:
-    This value corresponds to the "class" of the window. The class is an internal value, which you can find using the
-    [Spy feature](#spy-feature). The class you provide must exactly match the internal value, or you can leave this
-    empty if you don't care what the class name is.
+  This value corresponds to the "class" of the window. The class is an internal value, which you can find using the
+  [Spy feature](#spy-feature). The class you provide must exactly match the internal value, or you can leave this empty
+  if you don't care what the class name is.
 - **Window title**:
-    This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
-    is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
-    expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window
-    which has a title like "My Document - Notepad", you could use a regular expression like: `.*Notepad$`.
+  This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
+  is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
+  expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window which
+  has a title like "My Document - Notepad", you could use a regular expression like: `.*Notepad$`.
 
 Note that the Override modifier also has an effect on auto-trays. It overrides the normal auto-tray behavior. For
 example, if you are holding down the override modifier keys when a window is created, it will prevent the normal

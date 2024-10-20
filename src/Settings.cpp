@@ -41,6 +41,7 @@ static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, vo
 enum SettingKeys : unsigned int
 {
     SK_StartWithWindows,
+    SK_MinimizePlacement,
     SK_Executable,
     SK_WindowClass,
     SK_WindowTitle,
@@ -54,17 +55,20 @@ enum SettingKeys : unsigned int
 };
 
 static const bool startWithWindowsDefault_ = false;
+static const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
 static const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
 static const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
 static const char modifiersOverrideDefault_[] = "alt ctrl shift";
 static const unsigned int pollIntervalDefault_ = 500;
-static const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false };
-static const char * settingKeys_[SK_Count] = { "start-with-windows", "executable",      "window-class",
-                                               "window-title",       "hotkey-minimize", "hotkey-restore",
-                                               "modifiers-override", "poll-interval",   "auto-tray" };
+static const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
+static const char * settingKeys_[SK_Count] = { "start-with-windows", "minimize-placement", "executable",
+                                               "window-class",       "window-title",       "hotkey-minimize",
+                                               "hotkey-restore",     "modifiers-override", "poll-interval",
+                                               "auto-tray" };
 
 Settings::Settings()
     : startWithWindows_(startWithWindowsDefault_)
+    , minimizePlacement_(minimizePlacementDefault_)
     , hotkeyMinimize_(hotkeyMinimizeDefault_)
     , hotkeyRestore_(hotkeyRestoreDefault_)
     , modifiersOverride_(modifiersOverrideDefault_)
@@ -83,9 +87,10 @@ bool Settings::operator==(const Settings & rhs) const
         return true;
     }
 
-    return (startWithWindows_ == rhs.startWithWindows_) && (hotkeyMinimize_ == rhs.hotkeyMinimize_) &&
-        (hotkeyRestore_ == rhs.hotkeyRestore_) && (modifiersOverride_ == rhs.modifiersOverride_) &&
-        (pollInterval_ == rhs.pollInterval_) && (autoTrays_ == rhs.autoTrays_);
+    return (startWithWindows_ == rhs.startWithWindows_) && (minimizePlacement_ == rhs.minimizePlacement_) &&
+        (hotkeyMinimize_ == rhs.hotkeyMinimize_) && (hotkeyRestore_ == rhs.hotkeyRestore_) &&
+        (modifiersOverride_ == rhs.modifiersOverride_) && (pollInterval_ == rhs.pollInterval_) &&
+        (autoTrays_ == rhs.autoTrays_);
 }
 
 bool Settings::operator!=(const Settings & rhs) const
@@ -154,6 +159,14 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         return false;
     }
 
+    const std::string minimizePlacementString =
+        args(settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_)).str();
+    minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
+    if (minimizePlacement_ == MinimizePlacement::None) {
+        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
+        return false;
+    }
+
     hotkeyMinimize_ = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_).str();
     hotkeyRestore_ = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_).str();
     modifiersOverride_ = args(settingKeys_[SK_ModifiersOverride], modifiersOverride_).str();
@@ -204,6 +217,22 @@ bool Settings::writeToFile(const std::string & fileName)
 
 void Settings::normalize()
 {
+    switch (minimizePlacement_) {
+        case MinimizePlacement::Tray:
+        case MinimizePlacement::Menu:
+        case MinimizePlacement::TrayAndMenu: {
+            // no change
+            break;
+        }
+
+        case MinimizePlacement::None:
+        default: {
+            DEBUG_PRINTF("Fixing bad minimize placement: %d\n", minimizePlacement_);
+            minimizePlacement_ = minimizePlacementDefault_;
+            break;
+        }
+    }
+
     hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
     hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
     modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
@@ -222,6 +251,9 @@ void Settings::normalize()
 void Settings::dump()
 {
 #if !defined(NDEBUG)
+    DEBUG_PRINTF("Settings:\n");
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], startWithWindows_ ? "true" : "false");
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
@@ -257,6 +289,13 @@ bool Settings::parseJson(const std::string & json)
 
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
 
+    const std::string & minimizePlacementString =
+        getString(cjson, settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
+    minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
+    if (minimizePlacement_ == MinimizePlacement::None) {
+        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
+    }
+
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
@@ -283,6 +322,13 @@ std::string Settings::constructJSON()
     bool fail = false;
 
     if (!cJSON_AddBoolToObject(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_)) {
+        fail = true;
+    }
+
+    if (!cJSON_AddStringToObject(
+            cjson,
+            settingKeys_[SK_MinimizePlacement],
+            minimizePlacementToString(minimizePlacement_).c_str())) {
         fail = true;
     }
 

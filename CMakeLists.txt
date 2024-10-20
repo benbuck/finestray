@@ -104,6 +104,10 @@ add_executable(Finestray WIN32
     src/Hotkey.cpp
     src/Hotkey.h
     src/MenuHandleWrapper.h
+    src/MinimizePlacement.cpp
+    src/MinimizePlacement.h
+    src/MinimizedWindow.cpp
+    src/MinimizedWindow.h
     src/Resource.h
     src/Settings.cpp
     src/Settings.h
@@ -113,12 +117,13 @@ add_executable(Finestray WIN32
     src/StringUtility.h
     src/TrayIcon.cpp
     src/TrayIcon.h
-    src/TrayWindow.cpp
-    src/TrayWindow.h
+    src/WinEventHookHandleWrapper.h
     src/WindowHandleWrapper.h
+    src/WindowIcon.cpp
+    src/WindowIcon.h
     src/WindowList.cpp
     src/WindowList.h
-    src/WinEventHookHandleWrapper.h
+    src/WindowMessage.h
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
 

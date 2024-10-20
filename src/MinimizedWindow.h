@@ -14,29 +14,26 @@
 
 #pragma once
 
+// App
+#include "MinimizePlacement.h"
+
 // Windows
 #include <Windows.h>
-#include <shellapi.h>
 
-// manages a single icon in the tray (Windows taskbar notification area)
-class TrayIcon
+// standard library
+#include <vector>
+
+namespace MinimizedWindow
 {
-public:
-    TrayIcon();
-    ~TrayIcon();
 
-    bool create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
-    void destroy();
+void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement);
+void restore(HWND hwnd);
+void addAll(MinimizePlacement minimizePlacement);
+void restoreAll();
+void updatePlacement(MinimizePlacement minimizePlacement);
+HWND getFromID(UINT id);
+HWND getLast();
+std::vector<HWND> getAll();
+bool exists(HWND hwnd);
 
-    inline UINT id() const { return nid_.uID; }
-
-    inline HWND hwnd() const { return nid_.hWnd; }
-
-private:
-    TrayIcon(const TrayIcon &) = delete;
-    TrayIcon & operator=(const TrayIcon &) = delete;
-
-    NOTIFYICONDATAA nid_;
-
-    static volatile LONG gid_;
-};
+} // namespace MinimizedWindow

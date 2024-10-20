@@ -22,15 +22,17 @@
 #include "File.h"
 #include "Hotkey.h"
 #include "MenuHandleWrapper.h"
+#include "MinimizedWindow.h"
 #include "Resource.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
-#include "TrayWindow.h"
 #include "WinEventHookHandleWrapper.h"
 #include "WindowHandleWrapper.h"
+#include "WindowIcon.h"
 #include "WindowList.h"
+#include "WindowMessage.h"
 
 // Windows
 #include <CommCtrl.h>
@@ -46,7 +48,7 @@ static constexpr WORD IDM_APP = 0x1001;
 static constexpr WORD IDM_SETTINGS = 0x1002;
 static constexpr WORD IDM_ABOUT = 0x1003;
 static constexpr WORD IDM_EXIT = 0x1004;
-static constexpr WORD IDM_TRAYWINDOW_BASE = 0x1005;
+static constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1005;
 
 enum class HotkeyID
 {
@@ -58,7 +60,7 @@ static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static int start();
 static void stop();
 static bool modifiersActive(UINT modifiers);
-static bool isAutoTrayWindow(HWND hwnd);
+static bool isAutoMinimizedWindow(HWND hwnd);
 static void onAddWindow(HWND hwnd);
 static void onRemoveWindow(HWND hwnd);
 static void onMinimizeEvent(
@@ -190,7 +192,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     (void)nCmdShow;
 
     // create a tray icon for the app
-    if (!trayIcon_.create(appWindow_, WM_TRAYWINDOW, hicon)) {
+    if (!trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon)) {
         errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
@@ -285,12 +287,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    if ((id >= IDM_TRAYWINDOW_BASE) && (id < (IDM_TRAYWINDOW_BASE + autoTrayedWindows_.size()))) {
-                        unsigned int index = id - IDM_TRAYWINDOW_BASE;
+                    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+                    if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id < (IDM_MINIMIZEDWINDOW_BASE + minimizedWindows.size()))) {
+                        unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
                         unsigned int count = 0;
-                        for (HWND autoTrayedWindow : autoTrayedWindows_) {
+                        for (HWND minimizedWindow : minimizedWindows) {
                             if (count == index) {
-                                TrayWindow::restore(autoTrayedWindow);
+                                MinimizedWindow::restore(minimizedWindow);
                                 break;
                             }
                             ++count;
@@ -309,7 +312,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY: {
             // if there are any minimized windows, restore them
-            TrayWindow::restoreAll();
+            MinimizedWindow::restoreAll();
 
             // exit
             PostQuitMessage(0);
@@ -338,7 +341,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             DEBUG_PRINTF("\twindow class name '%s'\n", className);
 #endif
 
-                            TrayWindow::minimize(foregroundHwnd, hwnd);
+                            MinimizedWindow::minimize(foregroundHwnd, hwnd, settings_.minimizePlacement_);
                         }
                     }
                     break;
@@ -346,9 +349,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case HotkeyID::Restore: {
                     DEBUG_PRINTF("hotkey restore\n");
-                    HWND lastHwnd = TrayWindow::getLast();
+                    HWND lastHwnd = MinimizedWindow::getLast();
                     if (lastHwnd) {
-                        TrayWindow::restore(lastHwnd);
+                        MinimizedWindow::restore(lastHwnd);
                     }
                     break;
                 }
@@ -383,9 +386,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 // user selected and activated icon
                 case NIN_SELECT: {
-                    HWND hwndTray = TrayWindow::getFromID((UINT)wParam);
+                    HWND hwndTray = MinimizedWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
-                        TrayWindow::restore(hwndTray);
+                        MinimizedWindow::restore(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
                         if (!settingsDialogWindow_) {
                             settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
@@ -397,7 +400,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    DEBUG_PRINTF("unhandled traywindow message %ld\n", lParam);
+                    DEBUG_PRINTF("unhandled MinimizedWindow message %ld\n", lParam);
                     break;
                 }
             }
@@ -413,7 +416,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         default: {
             if (uMsg == taskbarCreatedMessage) {
-                TrayWindow::addAll();
+                MinimizedWindow::addAll(settings_.minimizePlacement_);
             }
             break;
         }
@@ -521,7 +524,7 @@ bool modifiersActive(UINT modifiers)
     return true;
 }
 
-bool isAutoTrayWindow(HWND hwnd)
+bool isAutoMinimizedWindow(HWND hwnd)
 {
     CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
@@ -612,12 +615,12 @@ void onAddWindow(HWND hwnd)
         return;
     }
 
-    if (isAutoTrayWindow(hwnd)) {
+    if (isAutoMinimizedWindow(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            TrayWindow::minimize(hwnd, appWindow_);
+            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
             autoTrayedWindows_.insert(hwnd);
         }
     }
@@ -633,7 +636,7 @@ void onRemoveWindow(HWND hwnd)
         return;
     }
 
-    if (!TrayWindow::exists(hwnd)) {
+    if (!MinimizedWindow::exists(hwnd)) {
         DEBUG_PRINTF("\tcleaning up\n");
         autoTrayedWindows_.erase(hwnd);
     }
@@ -654,17 +657,17 @@ void onMinimizeEvent(
     }
 
     DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
-    if (!isAutoTrayWindow(hwnd)) {
+    if (!isAutoMinimizedWindow(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifiers active, minimizing\n");
-            TrayWindow::minimize(hwnd, appWindow_);
+            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
         }
     } else {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            TrayWindow::minimize(hwnd, appWindow_);
+            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
         }
     }
 }
@@ -694,6 +697,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         }
 
         updateStartWithWindows();
+
+        MinimizedWindow::updatePlacement(settings_.minimizePlacement_);
     }
 
     settingsDialogWindow_ = nullptr;
@@ -720,19 +725,20 @@ bool showContextMenu(HWND hwnd)
         return false;
     }
 
-    if (!autoTrayedWindows_.empty()) {
+    if (minimizePlacementIncludesMenu(settings_.minimizePlacement_)) {
         unsigned int count = 0;
-        for (HWND autoTrayedWindow : autoTrayedWindows_) {
+        std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+        for (HWND minimizedWindow : minimizedWindows) {
             CHAR title[256];
-            GetWindowTextA(autoTrayedWindow, title, sizeof(title) / sizeof(title[0]));
-            if (!AppendMenuA(menu, MF_STRING, IDM_TRAYWINDOW_BASE + count, title)) {
+            GetWindowTextA(minimizedWindow, title, sizeof(title) / sizeof(title[0]));
+            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title)) {
                 DEBUG_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
                 return false;
             }
 
-            HICON hicon = TrayWindow::getIcon(autoTrayedWindow);
+            HICON hicon = WindowIcon::get(minimizedWindow);
             if (hicon) {
                 ICONINFO iconinfo;
                 if (GetIconInfo(hicon, &iconinfo)) {
@@ -747,7 +753,7 @@ bool showContextMenu(HWND hwnd)
                     menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
                     menuItemInfo.fMask = MIIM_BITMAP;
                     menuItemInfo.hbmpItem = iconinfo.hbmColor;
-                    if (!SetMenuItemInfoA(menu, IDM_TRAYWINDOW_BASE + count, FALSE, &menuItemInfo)) {
+                    if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
                         DEBUG_PRINTF(
                             "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                             StringUtility::lastErrorString().c_str());
@@ -758,11 +764,13 @@ bool showContextMenu(HWND hwnd)
 
             ++count;
         }
-        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-            DEBUG_PRINTF(
-                "failed to create menu entry, AppendMenuA() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
-            return false;
+        if (count) {
+            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+                DEBUG_PRINTF(
+                    "failed to create menu entry, AppendMenuA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+                return false;
+            }
         }
     }
 

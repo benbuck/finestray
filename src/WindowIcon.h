@@ -16,27 +16,10 @@
 
 // Windows
 #include <Windows.h>
-#include <shellapi.h>
 
-// manages a single icon in the tray (Windows taskbar notification area)
-class TrayIcon
+namespace WindowIcon
 {
-public:
-    TrayIcon();
-    ~TrayIcon();
 
-    bool create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
-    void destroy();
+HICON get(HWND hwnd);
 
-    inline UINT id() const { return nid_.uID; }
-
-    inline HWND hwnd() const { return nid_.hWnd; }
-
-private:
-    TrayIcon(const TrayIcon &) = delete;
-    TrayIcon & operator=(const TrayIcon &) = delete;
-
-    NOTIFYICONDATAA nid_;
-
-    static volatile LONG gid_;
-};
+} // namespace WindowIcon
