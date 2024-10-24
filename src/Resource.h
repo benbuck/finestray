@@ -21,8 +21,7 @@
 
 // strings
 #define IDS_MENU_SETTINGS                         201
-#define IDS_MENU_ABOUT                            202
-#define IDS_MENU_EXIT                             203
+#define IDS_MENU_EXIT                             202
 #define IDS_ABOUT_CAPTION                         211
 #define IDS_ABOUT_TEXT                            212
 #define IDS_COLUMN_INDEX                          221
@@ -49,9 +48,8 @@
 
 // bitmaps
 #define IDB_APP                                   401
-#define IDB_ABOUT                                 402
-#define IDB_EXIT                                  403
-#define IDB_SETTINGS                              404
+#define IDB_EXIT                                  402
+#define IDB_SETTINGS                              403
 
 // dialogs
 #define IDD_DIALOG_SETTINGS                       501

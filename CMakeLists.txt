@@ -152,7 +152,6 @@ target_link_libraries(Finestray
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
-set(ABOUT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2139.svg)
 set(EXIT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u274c.svg)
 set(SETTINGS_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2699.svg)
 
@@ -172,14 +171,6 @@ add_custom_command(
     DEPENDS ${APP_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
     COMMAND magick -background none -filter point -size 16x16 ${APP_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/app.bmp
-)
-
-# create about bitmap
-add_custom_command(
-    COMMENT "Converting ${ABOUT_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/about.bmp"
-    DEPENDS ${ABOUT_IMAGE_SOURCE}
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/about.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${ABOUT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/about.bmp
 )
 
 # create exit bitmap
@@ -230,7 +221,6 @@ add_custom_target(
     DEPENDS
         ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
         ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
-        ${CMAKE_CURRENT_BINARY_DIR}/about.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp

@@ -14,7 +14,12 @@
 
 #pragma once
 
+// Windows
+#include <Windows.h>
+
+// Standard library
 #include <string>
 
+void showAboutDialog(HWND hwnd);
 std::string getResourceString(unsigned int id);
 void errorMessage(unsigned int id);

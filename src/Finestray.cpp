@@ -86,6 +86,7 @@ static std::set<HWND> autoTrayedWindows_;
 static Hotkey hotkeyMinimize_;
 static Hotkey hotkeyRestore_;
 static UINT modifiersOverride_;
+static bool aboutDialogOpen_;
 
 int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
@@ -163,7 +164,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     wc.hIconSm = hicon;
     ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
-        DEBUG_PRINTF("could not create window class, RegisterClassExA() s", StringUtility::lastErrorString().c_str());
+        DEBUG_PRINTF(
+            "could not create window class, RegisterClassExA() failed: %s",
+            StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
@@ -258,10 +261,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND: {
             WORD id = LOWORD(wParam);
             switch (id) {
-                case IDM_APP: {
-                    break;
-                }
-
                 case IDM_SETTINGS: {
                     if (!settingsDialogWindow_) {
                         settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
@@ -270,14 +269,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 // about dialog
+                case IDM_APP:
                 case IDM_ABOUT: {
-                    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-                    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-                    if (!MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), MB_OK | MB_ICONINFORMATION)) {
-                        DEBUG_PRINTF(
-                            "could not create about dialog, MessageBoxA() failed: %s\n",
-                            StringUtility::lastErrorString().c_str());
-                    }
+                    showAboutDialog(hwnd);
                     break;
                 }
 
@@ -728,7 +722,7 @@ bool showContextMenu(HWND hwnd)
     }
 
     // add menu entries
-    if (!AppendMenuA(menu, MF_STRING | MF_DISABLED, IDM_APP, APP_NAME)) {
+    if (!AppendMenuA(menu, MF_STRING, IDM_APP, APP_NAME)) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
@@ -790,10 +784,6 @@ bool showContextMenu(HWND hwnd)
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
-    if (!AppendMenuA(menu, MF_STRING, IDM_ABOUT, getResourceString(IDS_MENU_ABOUT).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
-        return false;
-    }
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
@@ -801,10 +791,9 @@ bool showContextMenu(HWND hwnd)
 
     BitmapHandleWrapper appBitmap(getResourceBitmap(IDB_APP));
     BitmapHandleWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
-    BitmapHandleWrapper aboutBitmap(getResourceBitmap(IDB_ABOUT));
     BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
-    if (!appBitmap || !settingsBitmap || !aboutBitmap || !exitBitmap) {
+    if (!appBitmap || !settingsBitmap || !exitBitmap) {
         DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
@@ -812,7 +801,6 @@ bool showContextMenu(HWND hwnd)
         uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
         replaceBitmapColor(appBitmap, oldColor, newColor);
         replaceBitmapColor(settingsBitmap, oldColor, newColor);
-        replaceBitmapColor(aboutBitmap, oldColor, newColor);
         replaceBitmapColor(exitBitmap, oldColor, newColor);
 
         MENUITEMINFOA menuItemInfo;
@@ -829,13 +817,6 @@ bool showContextMenu(HWND hwnd)
 
         menuItemInfo.hbmpItem = settingsBitmap;
         if (!SetMenuItemInfoA(menu, IDM_SETTINGS, FALSE, &menuItemInfo)) {
-            DEBUG_PRINTF(
-                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
-        }
-
-        menuItemInfo.hbmpItem = aboutBitmap;
-        if (!SetMenuItemInfoA(menu, IDM_ABOUT, FALSE, &menuItemInfo)) {
             DEBUG_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
@@ -903,6 +884,25 @@ void updateStartWithWindows()
                 DEBUG_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
             }
         }
+    }
+}
+
+void showAboutDialog(HWND hwnd)
+{
+    if (aboutDialogOpen_) {
+        return;
+    }
+
+    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
+    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
+    UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
+
+    aboutDialogOpen_ = true;
+    int result = MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), type);
+    aboutDialogOpen_ = false;
+
+    if (!result) {
+        DEBUG_PRINTF("could not create about dialog, MessageBoxA() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 }
 

@@ -207,17 +207,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     }
 
                     case IDC_ABOUT: {
-                        const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-                        const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-                        if (!MessageBoxA(
-                                dialogHwnd,
-                                aboutTextStr.c_str(),
-                                aboutCaptionStr.c_str(),
-                                MB_OK | MB_ICONINFORMATION)) {
-                            DEBUG_PRINTF(
-                                "could not create about dialog, MessageBoxA() failed: %s\n",
-                                StringUtility::lastErrorString().c_str());
-                        }
+                        showAboutDialog(dialogHwnd);
                         break;
                     }
 

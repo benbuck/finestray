@@ -38,10 +38,10 @@ to their normal placement:
 
 From the context menu, you can select one of the menu items:
 
+- **Finestray**:
+  Shows a some basic information about Finestray.
 - **Settings**:
   Shows the [Settings](#settings) window.
-- **About**:
-  Shows a some basic information about Finestray.
 - **Exit**:
   Exits the Finestray application.
 
