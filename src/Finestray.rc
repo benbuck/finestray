@@ -21,6 +21,7 @@
 #define APP_VERSION 0,1,0,0
 #define APP_VERSION_STRING "0.1.0.0"
 #define APP_VERSION_STRING_SIMPLE "0.1"
+#define APP_DATE "2024-10-24"
 #define APP_COPYRIGHT "Copyright 2020 Benbuck Nason"
 
 IDI_FINESTRAY ICON "Finestray.ico"
@@ -36,7 +37,7 @@ BEGIN
     IDS_MENU_SETTINGS               "Settings"
     IDS_MENU_EXIT                   "Exit"
     IDS_ABOUT_CAPTION               "About " APP_NAME
-    IDS_ABOUT_TEXT                  APP_NAME "\nVersion " APP_VERSION_STRING_SIMPLE "\nhttps://github.com/benbuck/finestray\n\nThis program is distributed under the Apache License,\nVersion 2.0.\n\n" APP_COPYRIGHT
+    IDS_ABOUT_TEXT                  APP_NAME "\nVersion " APP_VERSION_STRING_SIMPLE ", updated " APP_DATE "\nhttps://github.com/benbuck/finestray\n\nThis program is distributed under the Apache License,\nVersion 2.0.\n\n" APP_COPYRIGHT
     IDS_COLUMN_INDEX                ""
     IDS_COLUMN_EXECUTABLE           "Executable"
     IDS_COLUMN_WINDOW_CLASS         "Class"
