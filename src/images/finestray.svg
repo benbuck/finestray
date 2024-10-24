@@ -4,8 +4,8 @@
     <metadata>Copyright 2020 Benbuck Nason</metadata>
     <defs>
         <linearGradient id="Gradient" x2="0.1" y2="1" x1="0" y1="0">
-            <stop offset="0%" stop-color="deepskyblue" />
-            <stop offset="87%" stop-color="lightblue" />
+            <stop offset="0%" stop-color="lightskyblue" />
+            <stop offset="87%" stop-color="lightcyan" />
         </linearGradient>
     </defs>
     <path
@@ -17,7 +17,7 @@
             -36 36 36 36 -911 30
             -36 -36 -36 -36 -7 -576
         z"
-        fill="url(#Gradient)" stroke="darkslategray" stroke-width="50" />
+        fill="url(#Gradient)" stroke="black" stroke-width="50" />
     <path
         d="
         M 120 765
@@ -29,5 +29,5 @@
             -36 -36 36 -36 -576 0
             0 0 0 0 -108 496
         z"
-        fill="dodgerblue" stroke="darkslategray" stroke-width="50" />
+        fill="dodgerblue" stroke="black" stroke-width="50" />
 </svg>
