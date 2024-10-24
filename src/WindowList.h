@@ -17,10 +17,18 @@
 // Windows
 #include <Windows.h>
 
+// Standard library
+#include <string>
+
 namespace WindowList
 {
 
-void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND), void (*removeWindowCallback)(HWND));
+void start(
+    HWND hwnd,
+    UINT pollMillis,
+    void (*addWindowCallback)(HWND),
+    void (*removeWindowCallback)(HWND),
+    void (*changeWindowTitleCallback)(HWND, const std::string &));
 void stop();
 
 } // namespace WindowList

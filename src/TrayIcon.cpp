@@ -81,3 +81,15 @@ void TrayIcon::destroy()
         ZeroMemory(&nid_, sizeof(nid_));
     }
 }
+
+void TrayIcon::updateTip(const std::string & tip)
+{
+    if (nid_.uID) {
+        strncpy_s(nid_.szTip, tip.c_str(), sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
+        if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {
+            DEBUG_PRINTF(
+                "could not update tray icon tip, Shell_NotifyIcon() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        }
+    }
+}

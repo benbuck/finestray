@@ -60,9 +60,10 @@ static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static int start();
 static void stop();
 static bool modifiersActive(UINT modifiers);
-static bool isAutoMinimizedWindow(HWND hwnd);
+static bool windowShouldAutoTray(HWND hwnd);
 static void onAddWindow(HWND hwnd);
 static void onRemoveWindow(HWND hwnd);
+static void onChangeWindowTitle(HWND hwnd, const std::string & title);
 static void onMinimizeEvent(
     HWINEVENTHOOK hwineventhook,
     DWORD event,
@@ -209,7 +210,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!winEventHook) {
         DEBUG_PRINTF(
             "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
-            appWindow_,
+            (HWND)appWindow_,
             StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
         return IDS_ERROR_REGISTER_EVENTHOOK;
@@ -235,7 +236,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (!UnhookWinEvent(winEventHook)) {
         DEBUG_PRINTF(
             "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
-            appWindow_,
+            (HWND)appWindow_,
             StringUtility::lastErrorString().c_str());
     }
 
@@ -468,7 +469,7 @@ int start()
         return IDS_ERROR_REGISTER_MODIFIER;
     }
 
-    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow);
+    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle);
 
     return 0;
 }
@@ -524,7 +525,7 @@ bool modifiersActive(UINT modifiers)
     return true;
 }
 
-bool isAutoMinimizedWindow(HWND hwnd)
+bool windowShouldAutoTray(HWND hwnd)
 {
     CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
@@ -615,7 +616,7 @@ void onAddWindow(HWND hwnd)
         return;
     }
 
-    if (isAutoMinimizedWindow(hwnd)) {
+    if (windowShouldAutoTray(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
@@ -638,7 +639,18 @@ void onRemoveWindow(HWND hwnd)
 
     if (!MinimizedWindow::exists(hwnd)) {
         DEBUG_PRINTF("\tcleaning up\n");
+        MinimizedWindow::remove(hwnd);
         autoTrayedWindows_.erase(hwnd);
+    }
+}
+
+void onChangeWindowTitle(HWND hwnd, const std::string & title)
+{
+    DEBUG_PRINTF("changed window title: %#x\n", hwnd);
+
+    if (MinimizedWindow::exists(hwnd)) {
+        DEBUG_PRINTF("\tupdating title\n");
+        MinimizedWindow::updateTitle(hwnd, title);
     }
 }
 
@@ -657,7 +669,7 @@ void onMinimizeEvent(
     }
 
     DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
-    if (!isAutoMinimizedWindow(hwnd)) {
+    if (!windowShouldAutoTray(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifiers active, minimizing\n");
             MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);

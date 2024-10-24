@@ -18,6 +18,9 @@
 #include <Windows.h>
 #include <shellapi.h>
 
+// Standard library
+#include <string>
+
 // manages a single icon in the tray (Windows taskbar notification area)
 class TrayIcon
 {
@@ -27,6 +30,8 @@ public:
 
     bool create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
     void destroy();
+
+    void updateTip(const std::string & tip);
 
     inline UINT id() const { return nid_.uID; }
 

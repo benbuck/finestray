@@ -109,9 +109,14 @@ void restore(HWND hwnd)
             StringUtility::lastErrorString().c_str());
     }
 
+    remove(hwnd);
+}
+
+void remove(HWND hwnd)
+{
     MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
-        DEBUG_PRINTF("failed to restore minimized window %#x, not found\n", hwnd);
+        DEBUG_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
     } else {
         minimizedWindows_.erase(it);
     }
@@ -150,6 +155,17 @@ void updatePlacement(MinimizePlacement minimizePlacement)
             MinimizedWindowData & minimizedWindow = *it;
             minimizedWindow.trayIcon_.reset();
         }
+    }
+}
+
+void updateTitle(HWND hwnd, const std::string & title)
+{
+    MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    if (it == minimizedWindows_.end()) {
+        DEBUG_PRINTF("failed to update title for minimized window %#x, not found\n", hwnd);
+    } else {
+        MinimizedWindowData & minimizedWindow = *it;
+        minimizedWindow.trayIcon_->updateTip(title);
     }
 }
 

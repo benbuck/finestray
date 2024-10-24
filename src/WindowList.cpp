@@ -19,7 +19,7 @@
 #include "StringUtility.h"
 
 // Standard library
-#include <set>
+#include <map>
 
 namespace WindowList
 {
@@ -31,15 +31,22 @@ static HWND hwnd_;
 static UINT pollMillis_;
 static void (*addWindowCallback_)(HWND);
 static void (*removeWindowCallback_)(HWND);
+static void (*changeWindowTitleCallback_)(HWND, const std::string &);
 static UINT_PTR timer_;
-static std::set<HWND> windowList_;
+static std::map<HWND, std::string> windowList_;
 
-void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND), void (*removeWindowCallback)(HWND))
+void start(
+    HWND hwnd,
+    UINT pollMillis,
+    void (*addWindowCallback)(HWND),
+    void (*removeWindowCallback)(HWND),
+    void (*changeWindowTitleCallback)(HWND, const std::string &))
 {
     hwnd_ = hwnd;
     pollMillis_ = pollMillis;
     addWindowCallback_ = addWindowCallback;
     removeWindowCallback_ = removeWindowCallback;
+    changeWindowTitleCallback_ = changeWindowTitleCallback;
 
     if (pollMillis_ > 0) {
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
@@ -66,27 +73,41 @@ void stop()
 
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
-    std::set<HWND> newWindowList;
+    std::map<HWND, std::string> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
         DEBUG_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
     if (removeWindowCallback_) {
-        for (HWND hwnd : windowList_) {
-            if (newWindowList.find(hwnd) == newWindowList.end()) {
+        for (std::pair<HWND, std::string> window : windowList_) {
+            if (newWindowList.find(window.first) == newWindowList.end()) {
                 // removed window found
-                removeWindowCallback_(hwnd);
+                removeWindowCallback_(window.first);
             }
         }
     }
 
     // check for added windows
     if (addWindowCallback_) {
-        for (HWND hwnd : newWindowList) {
-            if (windowList_.find(hwnd) == windowList_.end()) {
+        for (std::pair<HWND, std::string> window : newWindowList) {
+            if (windowList_.find(window.first) == windowList_.end()) {
                 // added window found
-                addWindowCallback_(hwnd);
+                addWindowCallback_(window.first);
+            }
+        }
+    }
+
+    // check for changed window titles
+    if (changeWindowTitleCallback_) {
+        for (std::pair<HWND, std::string> window : newWindowList) {
+            auto it = windowList_.find(window.first);
+            if (it != windowList_.end()) {
+                // existing window found
+                if (it->second != window.second) {
+                    // window title changed
+                    changeWindowTitleCallback_(window.first, window.second);
+                }
             }
         }
     }
@@ -97,13 +118,19 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    if (!IsWindowVisible(hwnd)) {
+    if (!IsWindowVisible(hwnd) && windowList_.find(hwnd) == windowList_.end()) {
         // DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
         return TRUE;
     }
 
-    std::set<HWND> & windowList = *(std::set<HWND> *)lParam;
-    windowList.insert(hwnd);
+    CHAR title[256];
+    if (!GetWindowTextA(hwnd, title, sizeof(title) / sizeof(title[0]))) {
+        DEBUG_PRINTF("could not get window text: GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        return TRUE;
+    }
+
+    std::map<HWND, std::string> & windowList = *(std::map<HWND, std::string> *)lParam;
+    windowList[hwnd] = title;
 
     return TRUE;
 }
