@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 
 // Windows
 #include <Windows.h>
@@ -22,7 +22,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void debugPrintf(const char * fmt, ...)
+static const char * levelStrings_[] = { "DEBUG - ", "INFO - ", "WARNING - ", "ERROR - " };
+
+namespace Log
+{
+
+void printf(Level level, const char * fmt, ...)
 {
     char buf[1024];
 
@@ -35,5 +40,30 @@ void debugPrintf(const char * fmt, ...)
         __debugbreak();
     }
 
-    OutputDebugStringA(buf);
+    print(level, buf);
 }
+
+void print(Level level, const char * str)
+{
+    SYSTEMTIME systemTime;
+    memset(&systemTime, 0, sizeof(systemTime));
+    GetLocalTime(&systemTime);
+    char timeStr[32];
+    snprintf(
+        timeStr,
+        sizeof(timeStr),
+        "%02u:%02u:%02u.%03u - ",
+        systemTime.wHour,
+        systemTime.wMinute,
+        systemTime.wSecond,
+        systemTime.wMilliseconds);
+    OutputDebugStringA(timeStr);
+
+    if ((level >= Level::Debug) && (level <= Level::Error)) {
+        OutputDebugStringA(levelStrings_[(unsigned int)level]);
+    }
+
+    OutputDebugStringA(str);
+}
+
+} // namespace Log

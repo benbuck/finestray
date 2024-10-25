@@ -15,7 +15,7 @@
 #pragma once
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Windows
@@ -33,7 +33,7 @@ public:
     {
         if (hwineventhook_) {
             if (!UnhookWinEvent(hwineventhook_)) {
-                DEBUG_PRINTF(
+                WARNING_PRINTF(
                     "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
                     hwineventhook_,
                     StringUtility::lastErrorString().c_str());

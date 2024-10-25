@@ -15,7 +15,7 @@
 #include "StringUtility.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 
 // Windows
 #include <Windows.h>
@@ -64,7 +64,7 @@ std::string wideStringToString(const std::wstring & ws)
 {
     int ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (ret <= 0) {
-        DEBUG_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
+        WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return std::string();
     }
 
@@ -73,7 +73,7 @@ std::string wideStringToString(const std::wstring & ws)
 
     ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, &s[0], (int)s.size(), nullptr, nullptr);
     if (ret <= 0) {
-        DEBUG_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
+        WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return std::string();
     }
 
@@ -84,7 +84,7 @@ std::wstring stringToWideString(const std::string & s)
 {
     int ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
     if (ret <= 0) {
-        DEBUG_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
+        WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
         return std::wstring();
     }
 
@@ -93,7 +93,7 @@ std::wstring stringToWideString(const std::string & s)
 
     ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, &ws[0], (int)ws.size());
     if (ret <= 0) {
-        DEBUG_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
+        WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
         return std::wstring();
     }
 

@@ -15,7 +15,7 @@
 #pragma once
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 
 // Windows
 #include <Windows.h>
@@ -32,7 +32,7 @@ public:
     {
         if (hbitmap_) {
             if (!DeleteObject(hbitmap_)) {
-                DEBUG_PRINTF("failed to destroy bitmap: %#x\n", hbitmap_);
+                WARNING_PRINTF("failed to destroy bitmap: %#x\n", hbitmap_);
             }
         }
     }

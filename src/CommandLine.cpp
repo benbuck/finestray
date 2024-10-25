@@ -15,7 +15,7 @@
 #include "CommandLine.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Windows
@@ -31,7 +31,7 @@ bool CommandLine::parse()
 {
     LPWSTR commandLine = GetCommandLineW();
     if (!commandLine) {
-        DEBUG_PRINTF("GetCommandLine() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("GetCommandLine() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -40,7 +40,7 @@ bool CommandLine::parse()
     int argc = 0;
     wchar_t ** wargv = CommandLineToArgvW(commandLine, &argc);
     if (!argc || !wargv) {
-        DEBUG_PRINTF("CommandLineToArgvW() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("CommandLineToArgvW() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -58,7 +58,7 @@ bool CommandLine::parse()
     }
 
     if (LocalFree(wargv)) {
-        DEBUG_PRINTF("LocalFree() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("LocalFree() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     return true;

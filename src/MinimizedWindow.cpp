@@ -15,7 +15,7 @@
 #include "MinimizedWindow.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
 #include "WindowIcon.h"
@@ -61,7 +61,7 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 
     // minimize window
     if (!ShowWindow(hwnd, SW_MINIMIZE)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to minimize window %#x, ShowWindow() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
@@ -69,7 +69,10 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 
     // hide window
     if (!ShowWindow(hwnd, SW_HIDE)) {
-        DEBUG_PRINTF("failed to hide window %#x, ShowWindow() failed: %s\n", hwnd, StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF(
+            "failed to hide window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     std::unique_ptr<TrayIcon> trayIcon;
@@ -78,9 +81,9 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
     }
 
     // un-hide window on failure, but leave it minimized
-    // DEBUG_PRINTF("failed to add tray icon for %#x\n", hwnd);
+    // WARNING_PRINTF("failed to add tray icon for %#x\n", hwnd);
     // if (!ShowWindow(hwnd, SW_SHOW)) {
-    //    DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %s\n", hwnd,
+    //    WARNING_PRINTF("failed to show window %#x, ShowWindow() failed: %s\n", hwnd,
     //    StringUtility::lastErrorString().c_str());
     // }
 
@@ -92,18 +95,21 @@ void restore(HWND hwnd)
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
     if (!ShowWindow(hwnd, SW_SHOW)) {
-        DEBUG_PRINTF("failed to show window %#x, ShowWindow() failed: %s\n", hwnd, StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF(
+            "failed to show window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
     }
 
     if (!ShowWindow(hwnd, SW_RESTORE)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to restore window %#x, ShowWindow() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
     }
 
     if (!SetForegroundWindow(hwnd)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to set foreground window %#x, SetForegroundWindow() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
@@ -116,7 +122,7 @@ void remove(HWND hwnd)
 {
     MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
-        DEBUG_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
+        WARNING_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
     } else {
         minimizedWindows_.erase(it);
     }
@@ -162,7 +168,7 @@ void updateTitle(HWND hwnd, const std::string & title)
 {
     MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
-        DEBUG_PRINTF("failed to update title for minimized window %#x, not found\n", hwnd);
+        WARNING_PRINTF("failed to update title for minimized window %#x, not found\n", hwnd);
     } else {
         MinimizedWindowData & minimizedWindow = *it;
         minimizedWindow.trayIcon_->updateTip(title);

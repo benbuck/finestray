@@ -15,7 +15,7 @@
 #pragma once
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Windows
@@ -47,7 +47,7 @@ public:
     {
         if (hwnd_) {
             if (!DestroyWindow(hwnd_)) {
-                DEBUG_PRINTF("DestroyWindow() failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("DestroyWindow() failed: %s\n", StringUtility::lastErrorString().c_str());
             }
         }
     }

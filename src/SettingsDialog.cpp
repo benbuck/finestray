@@ -15,9 +15,9 @@
 #include "SettingsDialog.h"
 
 // App
-#include "DebugPrint.h"
 #include "Finestray.h"
 #include "Hotkey.h"
+#include "Log.h"
 #include "Resource.h"
 #include "StringUtility.h"
 
@@ -101,7 +101,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     dialogHwnd,
                     IDC_START_WITH_WINDOWS,
                     settings_.startWithWindows_ ? BST_CHECKED : BST_UNCHECKED)) {
-                DEBUG_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
             int checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
@@ -111,7 +111,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 case MinimizePlacement::TrayAndMenu: checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU; break;
                 case MinimizePlacement::None:
                 default: {
-                    DEBUG_PRINTF("bad minimize placement %d\n", settings_.minimizePlacement_);
+                    WARNING_PRINTF("bad minimize placement %d\n", settings_.minimizePlacement_);
                     break;
                 }
             }
@@ -121,20 +121,20 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     IDC_MINIMIZE_PLACEMENT_TRAY,
                     ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU,
                     checkButtonId)) {
-                DEBUG_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str())) {
-                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
-                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str())) {
-                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
-                DEBUG_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
             autoTrayListViewInit(dialogHwnd);
@@ -196,6 +196,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     }
 
                     case IDC_HELP_PAGE: {
+                        INFO_PRINTF("Opening help page\n");
                         ShellExecuteA(
                             nullptr,
                             "open",
@@ -213,7 +214,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
 
                     case IDC_EXIT:
                     case IDOK: {
-                        DEBUG_PRINTF("Settings dialog done, updating settings\n");
+                        INFO_PRINTF("Settings dialog done, updating settings\n");
 
                         CHAR dlgItemText[256];
                         if (GetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
@@ -245,7 +246,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     }
 
                     case IDCANCEL: {
-                        DEBUG_PRINTF("Settings dialog cancelled\n");
+                        INFO_PRINTF("Settings dialog cancelled\n");
 
                         EndDialog(dialogHwnd, wParam);
 
@@ -280,7 +281,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
 
     unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -304,7 +305,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
     LoadStringA(hinstance, IDS_COLUMN_EXECUTABLE, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -312,7 +313,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
     ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
     LoadStringA(hinstance, IDS_COLUMN_WINDOW_CLASS, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -320,13 +321,13 @@ void autoTrayListViewInit(HWND dialogHwnd)
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
     LoadStringA(hinstance, IDS_COLUMN_WINDOW_TITLE, szText, sizeof(szText) / sizeof(szText[0]));
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
 
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMCOUNT, (WPARAM)settings_.autoTrays_.size(), 0) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETITEMCOUNT failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETITEMCOUNT failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -341,21 +342,21 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].executable_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
-            DEBUG_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
             errorMessage(IDS_ERROR_CREATE_DIALOG);
             return;
         }
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowClass_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
-            DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
             errorMessage(IDS_ERROR_CREATE_DIALOG);
             return;
         }
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowTitle_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
-            DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
             errorMessage(IDS_ERROR_CREATE_DIALOG);
             return;
         }
@@ -509,7 +510,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -518,7 +519,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -527,7 +528,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -546,7 +547,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
     if ((item < 0) || (item >= itemCount)) {
-        DEBUG_PRINTF("Item %d out of range\n", item);
+        WARNING_PRINTF("Item %d out of range\n", item);
         return;
     }
 
@@ -562,7 +563,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -571,7 +572,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -580,7 +581,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
     listViewItem.pszText = str;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        DEBUG_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
@@ -593,12 +594,12 @@ void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
     if ((item < 0) || (item >= itemCount)) {
-        DEBUG_PRINTF("Item %d out of range\n", item);
+        WARNING_PRINTF("Item %d out of range\n", item);
         return;
     }
 
     if (!SendMessageA(autoTrayListViewHwnd_, LVM_DELETEITEM, item, 0)) {
-        DEBUG_PRINTF("SendMessage LVM_DELETEITEM failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("SendMessage LVM_DELETEITEM failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
@@ -624,7 +625,7 @@ void autoTrayListViewItemSpy(HWND dialogHwnd)
 
     mouseHhook_ = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, nullptr, 0);
     if (!mouseHhook_) {
-        DEBUG_PRINTF("Failed to install mouse hook!\n");
+        WARNING_PRINTF("Failed to install mouse hook!\n");
     } else {
         DEBUG_PRINTF("Mouse hook installed.\n");
     }
@@ -640,7 +641,7 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
     if ((item < 0) || (item >= itemCount)) {
-        DEBUG_PRINTF("Item %d out of range\n", item);
+        WARNING_PRINTF("Item %d out of range\n", item);
         SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), "");
         SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), "");
         SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), "");
@@ -693,15 +694,15 @@ void autoTrayListViewUpdateSelected(HWND /*dialogHwnd*/)
         listViewItem.state = 0;
         listViewItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&listViewItem) == -1) {
-            DEBUG_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     } else {
         if (!SetFocus(autoTrayListViewHwnd_)) {
-            DEBUG_PRINTF("SetFocus failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SetFocus failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         if (SendMessageA(autoTrayListViewHwnd_, LVM_ENSUREVISIBLE, autoTrayListViewActiveItem_, (LPARAM)TRUE) == -1) {
-            DEBUG_PRINTF("SendMessage LVM_ENSUREVISIBLE failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_ENSUREVISIBLE failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         LVITEM listViewItem;
@@ -711,7 +712,7 @@ void autoTrayListViewUpdateSelected(HWND /*dialogHwnd*/)
         listViewItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMSTATE, autoTrayListViewActiveItem_, (LPARAM)&listViewItem) ==
             -1) {
-            DEBUG_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SendMessage LVM_SETITEMSTATE failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 }
@@ -769,7 +770,7 @@ void spySelectWindowAtPoint(const POINT & point)
 
         HWND rootHwnd = GetAncestor(hwnd, GA_ROOT);
         if (!rootHwnd) {
-            DEBUG_PRINTF("Failed to get root hwnd, falling back to original\n");
+            WARNING_PRINTF("Failed to get root hwnd, falling back to original\n");
             rootHwnd = hwnd;
         }
 
@@ -781,22 +782,22 @@ void spySelectWindowAtPoint(const POINT & point)
         GetWindowThreadProcessId(rootHwnd, &processID);
         HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
         if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH)) {
-            DEBUG_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             exePath[0] = '\0';
         }
         DEBUG_PRINTF("Exe path: '%s'\n", exePath);
         CloseHandle(hproc);
 
         if (!GetClassNameA(rootHwnd, className, sizeof(className))) {
-            DEBUG_PRINTF("GetClassNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("GetClassNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             className[0] = '\0';
         }
         DEBUG_PRINTF("Class name: '%s'\n", className);
 
         int length = GetWindowTextLengthA(rootHwnd);
         title.resize(length + 1);
-        if (!GetWindowTextA(rootHwnd, &title[0], (int)title.size())) {
-            DEBUG_PRINTF("GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        if (!GetWindowTextA(rootHwnd, &title[0], (int)title.size()) && (GetLastError() != ERROR_SUCCESS)) {
+            WARNING_PRINTF("GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
             title.clear();
         }
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());

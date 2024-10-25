@@ -15,7 +15,7 @@
 #include "TrayIcon.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 volatile LONG TrayIcon::gid_ = 0;
@@ -33,7 +33,7 @@ TrayIcon::~TrayIcon()
 bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
     if (nid_.uID) {
-        DEBUG_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
+        WARNING_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
         return false;
     }
 
@@ -48,18 +48,21 @@ bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
     nid_.hIcon = hicon;
     nid_.uVersion = NOTIFYICON_VERSION;
 
-    if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
-        DEBUG_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+    if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0])) &&
+        (GetLastError() != ERROR_SUCCESS)) {
+        WARNING_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
-        DEBUG_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF(
+            "could not add tray icon, Shell_NotifyIcon() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         ZeroMemory(&nid_, sizeof(nid_));
         return false;
     }
 
     if (!Shell_NotifyIconA(NIM_SETVERSION, &nid_)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not set tray icon version, Shell_NotifyIcon() failed: %s\n",
             StringUtility::lastErrorString().c_str());
         destroy();
@@ -73,7 +76,7 @@ void TrayIcon::destroy()
 {
     if (nid_.uID) {
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
         }
@@ -87,7 +90,7 @@ void TrayIcon::updateTip(const std::string & tip)
     if (nid_.uID) {
         strncpy_s(nid_.szTip, tip.c_str(), sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
         if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "could not update tray icon tip, Shell_NotifyIcon() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
         }

@@ -16,9 +16,9 @@
 
 // App
 #include "AppName.h"
-#include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"
+#include "Log.h"
 
 // argh
 #include <argh.h>
@@ -138,7 +138,7 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
                         break;
                     }
                     default: {
-                        DEBUG_PRINTF("error, unexpected flag: %s\n", flag.c_str());
+                        WARNING_PRINTF("unexpected flag: %s\n", flag.c_str());
                         return false;
                     }
                 }
@@ -146,15 +146,15 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
             }
         }
         if (!found) {
-            DEBUG_PRINTF("error, unknown flag: %s\n", flag.c_str());
+            WARNING_PRINTF("unknown flag: %s\n", flag.c_str());
             return false;
         }
     }
 
     if (args.pos_args().size() > 1) {
-        DEBUG_PRINTF("error, unexpected command line arguments:\n");
+        WARNING_PRINTF("unexpected command line arguments:\n");
         for (unsigned int pa = 1; pa < args.pos_args().size(); ++pa) {
-            DEBUG_PRINTF("\t%s\n", args.pos_args()[pa].c_str());
+            WARNING_PRINTF("\t%s\n", args.pos_args()[pa].c_str());
         }
         return false;
     }
@@ -163,7 +163,7 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
         args(settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_)).str();
     minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
     if (minimizePlacement_ == MinimizePlacement::None) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
+        WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
         return false;
     }
 
@@ -173,7 +173,7 @@ bool Settings::parseCommandLine(int argc, const char * const * argv)
 
     argh::string_stream pollIntervalArg = args(settingKeys_[SK_PollInterval], pollInterval_);
     if (!(pollIntervalArg >> pollInterval_)) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
+        WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
     }
 
     // note: "auto-tray" options are not supported on the command line, only in json, since the
@@ -199,7 +199,7 @@ bool Settings::writeToFile(const std::string & fileName)
         std::string appDataPath = pathJoin(getAppDataPath(), APP_NAME);
         if (!directoryExists(appDataPath)) {
             if (!CreateDirectoryA(appDataPath.c_str(), nullptr)) {
-                DEBUG_PRINTF(
+                WARNING_PRINTF(
                     "could not create directory '%s', CreateDirectoryA() failed: %s\n",
                     appDataPath.c_str(),
                     GetLastError());
@@ -281,7 +281,7 @@ bool Settings::parseJson(const std::string & json)
 {
     const cJSON * cjson = cJSON_Parse(json.c_str());
     if (!cjson) {
-        DEBUG_PRINTF("failed to parse settings JSON:\n%s\n", cJSON_GetErrorPtr());
+        WARNING_PRINTF("failed to parse settings JSON:\n%s\n", cJSON_GetErrorPtr());
         return false;
     }
 
@@ -293,7 +293,7 @@ bool Settings::parseJson(const std::string & json)
         getString(cjson, settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
     minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
     if (minimizePlacement_ == MinimizePlacement::None) {
-        DEBUG_PRINTF("error, bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
+        WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
     }
 
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
@@ -315,7 +315,7 @@ std::string Settings::constructJSON()
 {
     cJSON * cjson = cJSON_CreateObject();
     if (!cjson) {
-        DEBUG_PRINTF("failed to create settings JSON object\n");
+        WARNING_PRINTF("failed to create settings JSON object\n");
         return std::string();
     }
 
@@ -380,7 +380,7 @@ std::string Settings::constructJSON()
     }
 
     if (fail) {
-        DEBUG_PRINTF("Failed to construct json settings\n");
+        WARNING_PRINTF("failed to construct json settings\n");
         cJSON_Delete(cjson);
         return std::string();
     }
@@ -391,7 +391,7 @@ std::string Settings::constructJSON()
 bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
 {
     if (!cJSON_IsObject(cjson)) {
-        DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
+        WARNING_PRINTF("bad type for '%s'\n", cjson->string);
         return false;
     }
 
@@ -427,7 +427,7 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
     }
 
     if (!cJSON_IsBool(item)) {
-        DEBUG_PRINTF("bad type for '%s'\n", item->string);
+        WARNING_PRINTF("bad type for '%s'\n", item->string);
         return defaultValue;
     }
 
@@ -442,7 +442,7 @@ double getNumber(const cJSON * cjson, const char * key, double defaultValue)
     }
 
     if (!cJSON_IsNumber(item)) {
-        DEBUG_PRINTF("bad type for '%s'\n", item->string);
+        WARNING_PRINTF("bad type for '%s'\n", item->string);
         return defaultValue;
     }
 
@@ -458,7 +458,7 @@ const char * getString(const cJSON * cjson, const char * key, const char * defau
 
     const char * str = cJSON_GetStringValue(item);
     if (!str) {
-        DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
+        WARNING_PRINTF("bad type for '%s'\n", cjson->string);
         return defaultValue;
     }
 
@@ -468,7 +468,7 @@ const char * getString(const cJSON * cjson, const char * key, const char * defau
 void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData)
 {
     if (!cJSON_IsArray(cjson)) {
-        DEBUG_PRINTF("bad type for '%s'\n", cjson->string);
+        WARNING_PRINTF("bad type for '%s'\n", cjson->string);
     } else {
         int arrSize = cJSON_GetArraySize(cjson);
         for (int i = 0; i < arrSize; ++i) {

@@ -14,7 +14,7 @@
 
 // App
 #include "MinimizePlacement.h"
-#include "DebugPrint.h"
+#include "Log.h"
 
 std::string minimizePlacementToString(MinimizePlacement minimizePlacement)
 {
@@ -25,7 +25,7 @@ std::string minimizePlacementToString(MinimizePlacement minimizePlacement)
         case MinimizePlacement::TrayAndMenu: return "tray-and-menu";
 
         default: {
-            DEBUG_PRINTF("error, bad minimize placement: %d\n", minimizePlacement);
+            WARNING_PRINTF("error, bad minimize placement: %d\n", minimizePlacement);
             return "none";
         }
     }
@@ -42,7 +42,7 @@ MinimizePlacement minimizePlacementFromString(const std::string & minimizePlacem
     } else if (minimizePlacementString == "tray-and-menu") {
         return MinimizePlacement::TrayAndMenu;
     } else {
-        DEBUG_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString.c_str());
+        WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString.c_str());
         return MinimizePlacement::None;
     }
 }

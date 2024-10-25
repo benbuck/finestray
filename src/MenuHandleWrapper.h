@@ -15,7 +15,7 @@
 #pragma once
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 
 // Windows
 #include <Windows.h>
@@ -32,7 +32,7 @@ public:
     {
         if (hmenu_) {
             if (!DestroyMenu(hmenu_)) {
-                DEBUG_PRINTF("failed to destroy menu: %#x\n", hmenu_);
+                WARNING_PRINTF("failed to destroy menu: %#x\n", hmenu_);
             }
         }
     }

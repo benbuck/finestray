@@ -15,7 +15,7 @@
 #include "WindowList.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Standard library
@@ -51,7 +51,7 @@ void start(
     if (pollMillis_ > 0) {
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
         if (!timer_) {
-            DEBUG_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 }
@@ -75,7 +75,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
     std::map<HWND, std::string> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
-        DEBUG_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
@@ -124,8 +124,10 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
     }
 
     CHAR title[256];
-    if (!GetWindowTextA(hwnd, title, sizeof(title) / sizeof(title[0]))) {
-        DEBUG_PRINTF("could not get window text: GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+    if (!GetWindowTextA(hwnd, title, sizeof(title) / sizeof(title[0])) && (GetLastError() != ERROR_SUCCESS)) {
+        WARNING_PRINTF(
+            "could not get window text: GetWindowTextA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         return TRUE;
     }
 

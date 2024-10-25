@@ -15,7 +15,7 @@
 #pragma once
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 
 // Windows
 #include <Windows.h>
@@ -32,7 +32,7 @@ public:
     {
         if (handle_ != INVALID_HANDLE_VALUE) {
             if (!CloseHandle((HANDLE)handle_)) {
-                DEBUG_PRINTF("failed to close handle: %#x\n", handle_);
+                WARNING_PRINTF("failed to close handle: %#x\n", handle_);
             }
         }
     }

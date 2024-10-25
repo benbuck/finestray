@@ -18,9 +18,9 @@
 #include "BitmapHandleWrapper.h"
 #include "COMLibraryWrapper.h"
 #include "CommandLine.h"
-#include "DebugPrint.h"
 #include "File.h"
 #include "Hotkey.h"
+#include "Log.h"
 #include "MenuHandleWrapper.h"
 #include "MinimizedWindow.h"
 #include "Resource.h"
@@ -97,7 +97,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     // check if already running
     HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
     if (oldHwnd) {
-        DEBUG_PRINTF("already running\n");
+        INFO_PRINTF("already running\n");
         SendMessageA(oldHwnd, WM_SHOWSETTINGS, 0, 0);
         return 0;
     }
@@ -164,7 +164,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     wc.hIconSm = hicon;
     ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
-        DEBUG_PRINTF(
+        ERROR_PRINTF(
             "could not create window class, RegisterClassExA() failed: %s",
             StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
@@ -186,7 +186,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         nullptr // application data
     );
     if (!appWindow_) {
-        DEBUG_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
+        ERROR_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_WINDOW);
         return IDS_ERROR_CREATE_WINDOW;
     }
@@ -211,7 +211,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         0,
         WINEVENT_OUTOFCONTEXT));
     if (!winEventHook) {
-        DEBUG_PRINTF(
+        ERROR_PRINTF(
             "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
             (HWND)appWindow_,
             StringUtility::lastErrorString().c_str());
@@ -237,7 +237,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     if (!UnhookWinEvent(winEventHook)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
             (HWND)appWindow_,
             StringUtility::lastErrorString().c_str());
@@ -319,7 +319,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             HotkeyID hkid = (HotkeyID)wParam;
             switch (hkid) {
                 case HotkeyID::Minimize: {
-                    DEBUG_PRINTF("hotkey minimize\n");
+                    INFO_PRINTF("hotkey minimize\n");
                     // get the foreground window to minimize
                     HWND foregroundHwnd = GetForegroundWindow();
                     if (foregroundHwnd) {
@@ -343,7 +343,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case HotkeyID::Restore: {
-                    DEBUG_PRINTF("hotkey restore\n");
+                    INFO_PRINTF("hotkey restore\n");
                     HWND lastHwnd = MinimizedWindow::getLast();
                     if (lastHwnd) {
                         MinimizedWindow::restore(lastHwnd);
@@ -352,7 +352,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    DEBUG_PRINTF("invalid hotkey id %d\n", hkid);
+                    WARNING_PRINTF("invalid hotkey id %d\n", hkid);
                     break;
                 }
             }
@@ -395,7 +395,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    DEBUG_PRINTF("unhandled MinimizedWindow message %ld\n", lParam);
+                    WARNING_PRINTF("unhandled MinimizedWindow message %ld\n", lParam);
                     break;
                 }
             }
@@ -429,7 +429,7 @@ int start()
         return IDS_ERROR_REGISTER_HOTKEY;
     }
     if (!vkMinimize || !modifiersMinimize) {
-        DEBUG_PRINTF("no hotkey to minimize windows\n");
+        INFO_PRINTF("no hotkey to minimize windows\n");
     } else {
         if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
@@ -443,7 +443,7 @@ int start()
         return IDS_ERROR_REGISTER_HOTKEY;
     }
     if (!vkRestore || !modifiersRestore) {
-        DEBUG_PRINTF("no hotkey to restore windows\n");
+        INFO_PRINTF("no hotkey to restore windows\n");
     } else {
         if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
@@ -457,9 +457,9 @@ int start()
         return IDS_ERROR_REGISTER_MODIFIER;
     }
     if (!modifiersOverride_) {
-        DEBUG_PRINTF("no override modifiers\n");
+        INFO_PRINTF("no override modifiers\n");
     } else if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
-        DEBUG_PRINTF("invalid override modifiers\n");
+        WARNING_PRINTF("invalid override modifiers\n");
         return IDS_ERROR_REGISTER_MODIFIER;
     }
 
@@ -483,7 +483,7 @@ bool modifiersActive(UINT modifiers)
     }
 
     if (modifiers & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT)) {
-        DEBUG_PRINTF("invalid modifiers: %#x\n", modifiers);
+        WARNING_PRINTF("invalid modifiers: %#x\n", modifiers);
         return false;
     }
 
@@ -524,14 +524,14 @@ bool windowShouldAutoTray(HWND hwnd)
     CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
     if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
-        DEBUG_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
         if (!hproc) {
-            DEBUG_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
             if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, executable, sizeof(executable))) {
-                DEBUG_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
             }
@@ -540,8 +540,8 @@ bool windowShouldAutoTray(HWND hwnd)
     }
 
     CHAR windowText[128];
-    if (!GetWindowTextA(hwnd, windowText, sizeof(windowText))) {
-        // DEBUG_PRINTF("failed to get window text %#x, GetWindowTextA() failed: %s\n", hwnd,
+    if (!GetWindowTextA(hwnd, windowText, sizeof(windowText)) && (GetLastError() != ERROR_SUCCESS)) {
+        // WARNING_PRINTF("failed to get window text %#x, GetWindowTextA() failed: %s\n", hwnd,
         // StringUtility::lastErrorString().c_str());
     } else {
         DEBUG_PRINTF("\ttitle: %s\n", windowText);
@@ -549,7 +549,7 @@ bool windowShouldAutoTray(HWND hwnd)
 
     CHAR className[1024];
     if (!GetClassNameA(hwnd, className, sizeof(className))) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to get window class name %#x, GetClassNameA() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
@@ -658,7 +658,7 @@ void onMinimizeEvent(
     DWORD /* dwmsEventTime */)
 {
     if (event != EVENT_SYSTEM_MINIMIZESTART) {
-        DEBUG_PRINTF("unexpected non-minimize event %#x\n", event);
+        WARNING_PRINTF("unexpected non-minimize event %#x\n", event);
         return;
     }
 
@@ -715,7 +715,7 @@ bool showContextMenu(HWND hwnd)
     // create popup menu
     MenuHandleWrapper menu(CreatePopupMenu());
     if (!menu) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to create context menu, CreatePopupMenu() failed: %s\n",
             StringUtility::lastErrorString().c_str());
         return false;
@@ -723,11 +723,11 @@ bool showContextMenu(HWND hwnd)
 
     // add menu entries
     if (!AppendMenuA(menu, MF_STRING, IDM_APP, APP_NAME)) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -738,7 +738,7 @@ bool showContextMenu(HWND hwnd)
             CHAR title[256];
             GetWindowTextA(minimizedWindow, title, sizeof(title) / sizeof(title[0]));
             if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title)) {
-                DEBUG_PRINTF(
+                WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
                 return false;
@@ -760,7 +760,7 @@ bool showContextMenu(HWND hwnd)
                     menuItemInfo.fMask = MIIM_BITMAP;
                     menuItemInfo.hbmpItem = iconinfo.hbmColor;
                     if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
-                        DEBUG_PRINTF(
+                        WARNING_PRINTF(
                             "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                             StringUtility::lastErrorString().c_str());
                         return false;
@@ -772,7 +772,7 @@ bool showContextMenu(HWND hwnd)
         }
         if (count) {
             if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-                DEBUG_PRINTF(
+                WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
                 return false;
@@ -781,11 +781,11 @@ bool showContextMenu(HWND hwnd)
     }
 
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
-        DEBUG_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -794,7 +794,7 @@ bool showContextMenu(HWND hwnd)
     BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
     if (!appBitmap || !settingsBitmap || !exitBitmap) {
-        DEBUG_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
         uint32_t menuColor = GetSysColor(COLOR_MENU);
@@ -810,21 +810,21 @@ bool showContextMenu(HWND hwnd)
 
         menuItemInfo.hbmpItem = appBitmap;
         if (!SetMenuItemInfoA(menu, IDM_APP, FALSE, &menuItemInfo)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
         }
 
         menuItemInfo.hbmpItem = settingsBitmap;
         if (!SetMenuItemInfoA(menu, IDM_SETTINGS, FALSE, &menuItemInfo)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
         }
 
         menuItemInfo.hbmpItem = exitBitmap;
         if (!SetMenuItemInfoA(menu, IDM_EXIT, FALSE, &menuItemInfo)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
         }
@@ -832,7 +832,7 @@ bool showContextMenu(HWND hwnd)
 
     // activate our window
     if (!SetForegroundWindow(hwnd)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to activate context menu, SetForegroundWindow() failed: %s\n",
             StringUtility::lastErrorString().c_str());
         return false;
@@ -841,13 +841,15 @@ bool showContextMenu(HWND hwnd)
     // get the current mouse position
     POINT point = { 0, 0 };
     if (!GetCursorPos(&point)) {
-        DEBUG_PRINTF("failed to get menu position, GetCursorPos() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF(
+            "failed to get menu position, GetCursorPos() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
         return false;
     }
 
     // show the popup menu
     if (!TrackPopupMenu(menu, 0, point.x, point.y, 0, hwnd, nullptr)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to show context menu, TrackPopupMenu() failed: %s\n",
             StringUtility::lastErrorString().c_str());
         return false;
@@ -855,7 +857,7 @@ bool showContextMenu(HWND hwnd)
 
     // force a task switch to our app
     if (!PostMessage(hwnd, WM_USER, 0, 0)) {
-        DEBUG_PRINTF("failed to activate app, PostMessage() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to activate app, PostMessage() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
@@ -873,7 +875,7 @@ void updateStartWithWindows()
             std::string exePath = getExecutablePath();
             std::string exeFilename = pathJoin(exePath, APP_NAME ".exe");
             if (!createShortcut(startupShortcutPath, exeFilename)) {
-                DEBUG_PRINTF("failed to create startup link: %s\n", startupShortcutPath.c_str());
+                WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutPath.c_str());
             }
         }
     } else {
@@ -881,7 +883,7 @@ void updateStartWithWindows()
             DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutPath.c_str());
         } else {
             if (!deleteFile(startupShortcutPath)) {
-                DEBUG_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
+                WARNING_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
             }
         }
     }
@@ -902,7 +904,9 @@ void showAboutDialog(HWND hwnd)
     aboutDialogOpen_ = false;
 
     if (!result) {
-        DEBUG_PRINTF("could not create about dialog, MessageBoxA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF(
+            "could not create about dialog, MessageBoxA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
     }
 }
 
@@ -913,7 +917,7 @@ std::string getResourceString(unsigned int id)
     std::string str;
     str.resize(256);
     if (!LoadStringA(hinstance, id, &str[0], (int)str.size())) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to load resources string %u, LoadStringA() failed: %s\n",
             id,
             StringUtility::lastErrorString().c_str());
@@ -928,7 +932,7 @@ HBITMAP getResourceBitmap(unsigned int id)
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
     HBITMAP bitmap = (HBITMAP)LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0);
     if (!bitmap) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to load resources bitmap %u, LoadImage() failed: %s\n",
             id,
             StringUtility::lastErrorString().c_str());
@@ -945,14 +949,14 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
 
     HDC hdc = ::GetDC(HWND_DESKTOP);
     if (!hdc) {
-        DEBUG_PRINTF("failed to get desktop DC, GetDC() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to get desktop DC, GetDC() failed: %s\n", StringUtility::lastErrorString().c_str());
         return;
     }
 
     BITMAP bitmap;
     memset(&bitmap, 0, sizeof(bitmap));
     if (!GetObject(hbmp, sizeof(bitmap), &bitmap)) {
-        DEBUG_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
         ::ReleaseDC(HWND_DESKTOP, hdc);
         return;
     }
@@ -967,7 +971,7 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
 
     std::vector<uint32_t> pixels(bitmap.bmWidth * bitmap.bmHeight);
     if (!GetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
-        DEBUG_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         ::ReleaseDC(HWND_DESKTOP, hdc);
         return;
     }
@@ -979,7 +983,7 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
     }
 
     if (!SetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
-        DEBUG_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     ::ReleaseDC(HWND_DESKTOP, hdc);
@@ -988,9 +992,9 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
-    DEBUG_PRINTF("error: %s\n", err.c_str());
+    ERROR_PRINTF("%s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to display error message %u, MessageBoxA() failed\n",
             id,
             StringUtility::lastErrorString().c_str());

@@ -15,7 +15,7 @@
 #include "Hotkey.h"
 
 // App
-#include "DebugPrint.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Windows
@@ -59,7 +59,7 @@ bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
     id_ = id;
 
     if (!RegisterHotKey(hwnd, id, hotkeyModifiers, hotkey)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "failed to register hotkey %d, RegisterHotKey() failed: %s\n",
             id_,
             StringUtility::lastErrorString().c_str());
@@ -73,7 +73,7 @@ void Hotkey::destroy()
 {
     if (id_ >= 0) {
         if (!UnregisterHotKey(hwnd_, id_)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "failed to unregister hotkey %d, UnregisterHotKey failed: %s\n",
                 id_,
                 StringUtility::lastErrorString().c_str());
@@ -109,7 +109,7 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
                 }
             } else {
                 if (!key.empty()) {
-                    DEBUG_PRINTF("more than one key in hotkey, ignoring '%s'\n", token.c_str());
+                    WARNING_PRINTF("more than one key in hotkey, ignoring '%s'\n", token.c_str());
                 } else {
                     // look for vkey string
                     const auto & vkit = vkeyMap_.find(token);
@@ -118,11 +118,11 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
                     } else {
                         // look for key character
                         if (token.length() != 1) {
-                            DEBUG_PRINTF("unknown value in hotkey, ignoring '%s'\n", token.c_str());
+                            WARNING_PRINTF("unknown value in hotkey, ignoring '%s'\n", token.c_str());
                         } else {
                             SHORT scan = VkKeyScanA(token[0]);
                             if ((unsigned int)scan == 0xFFFF) {
-                                DEBUG_PRINTF("unknown key in hotkey, ignoring '%s'\n", token.c_str());
+                                WARNING_PRINTF("unknown key in hotkey, ignoring '%s'\n", token.c_str());
                             } else {
                                 key = token;
                             }
@@ -180,7 +180,7 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
             const auto & vkit = vkeyMap_.find(token);
             if (vkit != vkeyMap_.end()) {
                 if (key) {
-                    DEBUG_PRINTF("more than one key in hotkey\n");
+                    WARNING_PRINTF("more than one key in hotkey\n");
                     return false;
                 }
                 key = vkit->second;
@@ -188,16 +188,16 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
                 // look for key character
                 if (token.length() == 1) {
                     if (key) {
-                        DEBUG_PRINTF("more than one key in hotkey\n");
+                        WARNING_PRINTF("more than one key in hotkey\n");
                         return false;
                     }
                     key = VkKeyScanA(token[0]);
                     if (key == 0xFFFF) {
-                        DEBUG_PRINTF("unknown key %s in hotkey\n", token.c_str());
+                        WARNING_PRINTF("unknown key %s in hotkey\n", token.c_str());
                         return false;
                     }
                 } else {
-                    DEBUG_PRINTF("unknown value in hotkey\n");
+                    WARNING_PRINTF("unknown value in hotkey\n");
                     return false;
                 }
             }

@@ -15,8 +15,8 @@
 #include "File.h"
 
 // App
-#include "DebugPrint.h"
 #include "HandleWrapper.h"
+#include "Log.h"
 #include "StringUtility.h"
 
 // Windows
@@ -36,14 +36,14 @@ std::string fileRead(const std::string & fileName)
     HandleWrapper file(
         CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (file == INVALID_HANDLE_VALUE) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not open '%s' for reading, CreateFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
     } else {
         LARGE_INTEGER fileSize;
         if (!GetFileSizeEx(file, &fileSize)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
                 fileName.c_str(),
                 StringUtility::lastErrorString().c_str());
@@ -54,14 +54,14 @@ std::string fileRead(const std::string & fileName)
 
             DWORD bytesRead = 0;
             if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
-                DEBUG_PRINTF(
+                WARNING_PRINTF(
                     "could not read %d bytes from '%s', ReadFile() failed: %s\n",
                     fileSize,
                     fileName.c_str(),
                     GetLastError());
             } else {
                 if (bytesRead != fileSize.LowPart) {
-                    DEBUG_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+                    WARNING_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
                 } else {
                     contents = buffer;
                 }
@@ -77,7 +77,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     HandleWrapper file(
         CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (file == INVALID_HANDLE_VALUE) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not open '%s' for writing, CreateFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
@@ -85,7 +85,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     } else {
         DWORD bytesWritten = 0;
         if (!WriteFile(file, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
-            DEBUG_PRINTF(
+            WARNING_PRINTF(
                 "could not write %d bytes to '%s', WriteFile() failed: %s\n",
                 contents.size(),
                 fileName.c_str(),
@@ -93,7 +93,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
             return false;
         } else {
             if (bytesWritten != contents.size()) {
-                DEBUG_PRINTF("wrote %d bytes to '%s', expected %zu\n", bytesWritten, fileName.c_str(), contents.size());
+                WARNING_PRINTF("wrote %d bytes to '%s', expected %zu\n", bytesWritten, fileName.c_str(), contents.size());
                 return false;
             }
         }
@@ -117,7 +117,7 @@ bool directoryExists(const std::string & directory)
 bool deleteFile(const std::string & fileName)
 {
     if (!DeleteFileA(fileName.c_str())) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not delete '%s', DeleteFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
@@ -131,7 +131,7 @@ std::string getExecutablePath()
 {
     CHAR path[MAX_PATH];
     if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not get executable path, GetModuleFileNameA() failed: %s\n",
             StringUtility::lastErrorString().c_str());
         return std::string();
@@ -139,7 +139,7 @@ std::string getExecutablePath()
 
     char * sep = strrchr(path, '\\');
     if (!sep) {
-        DEBUG_PRINTF("path '%s' has no separator\n", path);
+        WARNING_PRINTF("path '%s' has no separator\n", path);
         return std::string();
     }
 
@@ -157,7 +157,7 @@ std::string getAppDataPath()
 
     HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path);
     if (FAILED(hresult)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not get app data path, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
         return std::string();
@@ -172,7 +172,7 @@ std::string getStartupPath()
 
     HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, path);
     if (FAILED(hresult)) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not get startup path, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
         return std::string();
@@ -188,7 +188,7 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
 
     LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
     if (!result) {
-        DEBUG_PRINTF(
+        WARNING_PRINTF(
             "could not join paths '%s' and '%s', PathCombineA() failed: %s\n",
             path1.c_str(),
             path2.c_str(),
@@ -209,27 +209,27 @@ bool createShortcut(const std::string & shortcutPath, const std::string & execut
         IID_IShellLinkA,
         (LPVOID *)shellLink.ReleaseAndGetAddressOf());
     if (FAILED(hresult)) {
-        DEBUG_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
     hresult = shellLink->SetPath(executablePath.c_str());
     if (FAILED(hresult)) {
-        DEBUG_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
     ComPtr<IPersistFile> persistFile;
     hresult = shellLink->QueryInterface(IID_IPersistFile, (LPVOID *)persistFile.ReleaseAndGetAddressOf());
     if (FAILED(hresult)) {
-        DEBUG_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
     std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutPath);
     hresult = persistFile->Save(shortcutPathW.c_str(), TRUE);
     if (FAILED(hresult)) {
-        DEBUG_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 

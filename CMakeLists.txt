@@ -94,8 +94,6 @@ add_executable(Finestray WIN32
     src/COMLibraryWrapper.h
     src/CommandLine.cpp
     src/CommandLine.h
-    src/DebugPrint.cpp
-    src/DebugPrint.h
     src/File.cpp
     src/File.h
     src/Finestray.cpp
@@ -103,6 +101,8 @@ add_executable(Finestray WIN32
     src/Finestray.rc
     src/Hotkey.cpp
     src/Hotkey.h
+    src/Log.cpp
+    src/Log.h
     src/MenuHandleWrapper.h
     src/MinimizePlacement.cpp
     src/MinimizePlacement.h
