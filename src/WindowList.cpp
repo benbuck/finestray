@@ -21,19 +21,24 @@
 // Standard library
 #include <map>
 
-namespace WindowList
+namespace
 {
 
-static VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
-static BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
+VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
+BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
-static HWND hwnd_;
-static UINT pollMillis_;
-static void (*addWindowCallback_)(HWND);
-static void (*removeWindowCallback_)(HWND);
-static void (*changeWindowTitleCallback_)(HWND, const std::string &);
-static UINT_PTR timer_;
-static std::map<HWND, std::string> windowList_;
+HWND hwnd_;
+UINT pollMillis_;
+void (*addWindowCallback_)(HWND);
+void (*removeWindowCallback_)(HWND);
+void (*changeWindowTitleCallback_)(HWND, const std::string &);
+UINT_PTR timer_;
+std::map<HWND, std::string> windowList_;
+
+} // anonymous namespace
+
+namespace WindowList
+{
 
 void start(
     HWND hwnd,
@@ -70,6 +75,11 @@ void stop()
     pollMillis_ = 0;
     hwnd_ = nullptr;
 }
+
+} // namespace WindowList
+
+namespace
+{
 
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
@@ -137,4 +147,4 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
     return TRUE;
 }
 
-} // namespace WindowList
+} // anonymous namespace

@@ -22,7 +22,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static const char * levelStrings_[] = { "DEBUG - ", "INFO - ", "WARNING - ", "ERROR - " };
+namespace
+{
+const char * levelStrings_[] = { "DEBUG - ", "INFO - ", "WARNING - ", "ERROR - " };
+} // anonymous namespace
 
 namespace Log
 {

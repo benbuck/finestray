@@ -33,10 +33,13 @@
 // Standard library
 #include <stdlib.h>
 
-static bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
-static double getNumber(const cJSON * cjson, const char * key, double defaultValue);
-static const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
-static void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
+namespace
+{
+
+bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
+double getNumber(const cJSON * cjson, const char * key, double defaultValue);
+const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
+void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
 
 enum SettingKeys : unsigned int
 {
@@ -54,17 +57,19 @@ enum SettingKeys : unsigned int
     SK_Count
 };
 
-static const bool startWithWindowsDefault_ = false;
-static const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
-static const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
-static const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
-static const char modifiersOverrideDefault_[] = "alt ctrl shift";
-static const unsigned int pollIntervalDefault_ = 500;
-static const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
-static const char * settingKeys_[SK_Count] = { "start-with-windows", "minimize-placement", "executable",
-                                               "window-class",       "window-title",       "hotkey-minimize",
-                                               "hotkey-restore",     "modifiers-override", "poll-interval",
-                                               "auto-tray" };
+const bool startWithWindowsDefault_ = false;
+const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
+const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
+const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
+const char modifiersOverrideDefault_[] = "alt ctrl shift";
+const unsigned int pollIntervalDefault_ = 500;
+const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
+const char * settingKeys_[SK_Count] = { "start-with-windows", "minimize-placement", "executable",
+                                        "window-class",       "window-title",       "hotkey-minimize",
+                                        "hotkey-restore",     "modifiers-override", "poll-interval",
+                                        "auto-tray" };
+
+} // anonymous namespace
 
 Settings::Settings()
     : startWithWindows_(startWithWindowsDefault_)
@@ -419,6 +424,9 @@ bool Settings::AutoTray::operator!=(const AutoTray & rhs) const
     return !(*this == rhs);
 }
 
+namespace
+{
+
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
@@ -479,3 +487,5 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
         }
     }
 }
+
+} // anonymous namespace

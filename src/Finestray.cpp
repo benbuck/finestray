@@ -44,11 +44,14 @@
 #include <regex>
 #include <set>
 
-static constexpr WORD IDM_APP = 0x1001;
-static constexpr WORD IDM_SETTINGS = 0x1002;
-static constexpr WORD IDM_ABOUT = 0x1003;
-static constexpr WORD IDM_EXIT = 0x1004;
-static constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1005;
+namespace
+{
+
+constexpr WORD IDM_APP = 0x1001;
+constexpr WORD IDM_SETTINGS = 0x1002;
+constexpr WORD IDM_ABOUT = 0x1003;
+constexpr WORD IDM_EXIT = 0x1004;
+constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1005;
 
 enum class HotkeyID
 {
@@ -56,15 +59,15 @@ enum class HotkeyID
     Restore
 };
 
-static LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static int start();
-static void stop();
-static bool modifiersActive(UINT modifiers);
-static bool windowShouldAutoTray(HWND hwnd);
-static void onAddWindow(HWND hwnd);
-static void onRemoveWindow(HWND hwnd);
-static void onChangeWindowTitle(HWND hwnd, const std::string & title);
-static void onMinimizeEvent(
+LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+int start();
+void stop();
+bool modifiersActive(UINT modifiers);
+bool windowShouldAutoTray(HWND hwnd);
+void onAddWindow(HWND hwnd);
+void onRemoveWindow(HWND hwnd);
+void onChangeWindowTitle(HWND hwnd, const std::string & title);
+void onMinimizeEvent(
     HWINEVENTHOOK hwineventhook,
     DWORD event,
     HWND hwnd,
@@ -72,21 +75,24 @@ static void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
-static void onSettingsDialogComplete(bool success, const Settings & settings);
-static bool showContextMenu(HWND hwnd);
-static void updateStartWithWindows();
-static HBITMAP getResourceBitmap(unsigned int id);
-static void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor);
+void onSettingsDialogComplete(bool success, const Settings & settings);
+bool showContextMenu(HWND hwnd);
+void updateStartWithWindows();
+HBITMAP getResourceBitmap(unsigned int id);
+void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor);
 
-static WindowHandleWrapper appWindow_;
-static TrayIcon trayIcon_;
-static WindowHandleWrapper settingsDialogWindow_;
-static Settings settings_;
-static std::set<HWND> autoTrayedWindows_;
-static Hotkey hotkeyMinimize_;
-static Hotkey hotkeyRestore_;
-static UINT modifiersOverride_;
-static bool aboutDialogOpen_;
+WindowHandleWrapper appWindow_;
+TrayIcon trayIcon_;
+WindowHandleWrapper settingsDialogWindow_;
+Settings settings_;
+std::set<HWND> autoTrayedWindows_;
+Hotkey hotkeyMinimize_;
+Hotkey hotkeyRestore_;
+UINT modifiersOverride_;
+UINT taskbarCreatedMessage_;
+bool aboutDialogOpen_;
+
+} // anonymous namespace
 
 int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
@@ -252,10 +258,61 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     return 0;
 }
 
+void showAboutDialog(HWND hwnd)
+{
+    if (aboutDialogOpen_) {
+        return;
+    }
+
+    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
+    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
+    UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
+
+    aboutDialogOpen_ = true;
+    int result = MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), type);
+    aboutDialogOpen_ = false;
+
+    if (!result) {
+        WARNING_PRINTF(
+            "could not create about dialog, MessageBoxA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+    }
+}
+
+std::string getResourceString(unsigned int id)
+{
+    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+
+    std::string str;
+    str.resize(256);
+    if (!LoadStringA(hinstance, id, &str[0], (int)str.size())) {
+        WARNING_PRINTF(
+            "failed to load resources string %u, LoadStringA() failed: %s\n",
+            id,
+            StringUtility::lastErrorString().c_str());
+        str = "Error ID: " + std::to_string(id);
+    }
+
+    return str;
+}
+
+void errorMessage(unsigned int id)
+{
+    const std::string & err = getResourceString(id);
+    ERROR_PRINTF("%s\n", err.c_str());
+    if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
+        WARNING_PRINTF(
+            "failed to display error message %u, MessageBoxA() failed\n",
+            id,
+            StringUtility::lastErrorString().c_str());
+    }
+}
+
+namespace
+{
+
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    static UINT taskbarCreatedMessage;
-
     switch (uMsg) {
         // command from context menu
         case WM_COMMAND: {
@@ -301,7 +358,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_CREATE: {
             // get the message id to be notified when taskbar is (re-)created
-            taskbarCreatedMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
+            taskbarCreatedMessage_ = RegisterWindowMessage(TEXT("TaskbarCreated"));
             break;
         }
 
@@ -410,7 +467,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         default: {
-            if (uMsg == taskbarCreatedMessage) {
+            if (uMsg == taskbarCreatedMessage_) {
                 MinimizedWindow::addAll(settings_.minimizePlacement_);
             }
             break;
@@ -889,44 +946,6 @@ void updateStartWithWindows()
     }
 }
 
-void showAboutDialog(HWND hwnd)
-{
-    if (aboutDialogOpen_) {
-        return;
-    }
-
-    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-    UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
-
-    aboutDialogOpen_ = true;
-    int result = MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), type);
-    aboutDialogOpen_ = false;
-
-    if (!result) {
-        WARNING_PRINTF(
-            "could not create about dialog, MessageBoxA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-    }
-}
-
-std::string getResourceString(unsigned int id)
-{
-    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
-
-    std::string str;
-    str.resize(256);
-    if (!LoadStringA(hinstance, id, &str[0], (int)str.size())) {
-        WARNING_PRINTF(
-            "failed to load resources string %u, LoadStringA() failed: %s\n",
-            id,
-            StringUtility::lastErrorString().c_str());
-        str = "Error ID: " + std::to_string(id);
-    }
-
-    return str;
-}
-
 HBITMAP getResourceBitmap(unsigned int id)
 {
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
@@ -989,14 +1008,4 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
     ::ReleaseDC(HWND_DESKTOP, hdc);
 }
 
-void errorMessage(unsigned int id)
-{
-    const std::string & err = getResourceString(id);
-    ERROR_PRINTF("%s\n", err.c_str());
-    if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
-        WARNING_PRINTF(
-            "failed to display error message %u, MessageBoxA() failed\n",
-            id,
-            StringUtility::lastErrorString().c_str());
-    }
-}
+} // anonymous namespace

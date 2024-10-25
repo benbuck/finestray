@@ -28,7 +28,7 @@
 
 // #define SORT_ENABLED
 
-namespace SettingsDialog
+namespace
 {
 
 enum class AutoTrayListViewColumn
@@ -39,36 +39,40 @@ enum class AutoTrayListViewColumn
     Count
 };
 
-static INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM lParam);
-static void autoTrayListViewInit(HWND dialogHwnd);
-static std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND dialogHwnd);
-static void autoTrayListViewNotify(HWND dialogHwnd, LPNMHDR nmhdr);
+INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM lParam);
+void autoTrayListViewInit(HWND dialogHwnd);
+std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND dialogHwnd);
+void autoTrayListViewNotify(HWND dialogHwnd, LPNMHDR nmhdr);
 #ifdef SORT_ENABLED
-static int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
+int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 #endif
-static void autoTrayListViewItemAdd(HWND dialogHwnd);
-static void autoTrayListViewItemUpdate(HWND dialogHwnd, int item);
-static void autoTrayListViewItemDelete(HWND dialogHwnd, int item);
-static void autoTrayListViewItemSpy(HWND dialogHwnd);
-static void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
-static void autoTrayListViewUpdateButtons(HWND dialogHwnd);
-static void autoTrayListViewUpdateSelected(HWND dialogHwnd);
+void autoTrayListViewItemAdd(HWND dialogHwnd);
+void autoTrayListViewItemUpdate(HWND dialogHwnd, int item);
+void autoTrayListViewItemDelete(HWND dialogHwnd, int item);
+void autoTrayListViewItemSpy(HWND dialogHwnd);
+void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
+void autoTrayListViewUpdateButtons(HWND dialogHwnd);
+void autoTrayListViewUpdateSelected(HWND dialogHwnd);
 
-static Settings settings_;
-static CompletionCallback completionCallback_;
-static HWND autoTrayListViewHwnd_;
-static int autoTrayListViewActiveItem_;
+Settings settings_;
+SettingsDialog::CompletionCallback completionCallback_;
+HWND autoTrayListViewHwnd_;
+int autoTrayListViewActiveItem_;
 #ifdef SORT_ENABLED
-static bool autoTrayListViewSortAscending_;
-static int autoTrayListViewSortColumn_;
+bool autoTrayListViewSortAscending_;
+int autoTrayListViewSortColumn_;
 #endif
-static bool spyMode_;
-static HWND spuModeHwnd_;
-static HHOOK mouseHhook_;
+bool spyMode_;
+HWND spuModeHwnd_;
+HHOOK mouseHhook_;
 
-static void spySelectWindowAtPoint(const POINT & point);
-static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
+void spySelectWindowAtPoint(const POINT & point);
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
 
+} // anonymous namespace
+
+namespace SettingsDialog
+{
 HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionCallback)
 {
     settings_ = settings;
@@ -80,6 +84,11 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
 
     return dialogHwnd;
 }
+
+} // namespace SettingsDialog
+
+namespace
+{
 
 INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -826,4 +835,4 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(mouseHhook_, nCode, wParam, lParam);
 }
 
-} // namespace SettingsDialog
+} // anonymous namespace

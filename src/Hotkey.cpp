@@ -26,12 +26,15 @@
 #include <string>
 #include <vector>
 
-static const std::map<std::string, UINT> modifierMap_ = { { "alt", MOD_ALT },
-                                                          { "ctrl", MOD_CONTROL },
-                                                          { "shift", MOD_SHIFT },
-                                                          { "win", MOD_WIN } };
+namespace
+{
 
-static const std::map<std::string, UINT> vkeyMap_ = {
+const std::map<std::string, UINT> modifierMap_ = { { "alt", MOD_ALT },
+                                                   { "ctrl", MOD_CONTROL },
+                                                   { "shift", MOD_SHIFT },
+                                                   { "win", MOD_WIN } };
+
+const std::map<std::string, UINT> vkeyMap_ = {
     { "back", VK_BACK }, { "esc", VK_ESCAPE },  { "f1", VK_F1 },     { "f2", VK_F2 },    { "f3", VK_F3 },
     { "f4", VK_F4 },     { "f5", VK_F5 },       { "f6", VK_F6 },     { "f7", VK_F7 },    { "f8", VK_F8 },
     { "f9", VK_F9 },     { "f10", VK_F10 },     { "f11", VK_F11 },   { "f12", VK_F12 },  { "f13", VK_F13 },
@@ -41,6 +44,8 @@ static const std::map<std::string, UINT> vkeyMap_ = {
     { "down", VK_DOWN }, { "space", VK_SPACE }, { "home", VK_HOME }, { "end", VK_END },  { "ins", VK_INSERT },
     { "del", VK_DELETE }
 };
+
+} // anonymous namespace
 
 Hotkey::Hotkey()
     : hwnd_(nullptr)

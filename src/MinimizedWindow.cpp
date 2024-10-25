@@ -25,7 +25,7 @@
 #include <list>
 #include <memory>
 
-namespace MinimizedWindow
+namespace
 {
 
 struct MinimizedWindowData
@@ -44,10 +44,15 @@ struct MinimizedWindowData
 
 typedef std::vector<MinimizedWindowData> MinimizedWindows;
 
-static MinimizedWindows minimizedWindows_;
+MinimizedWindows minimizedWindows_;
 
-static MinimizedWindows::iterator findMinimizedWindow(HWND hwnd);
-static TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd);
+MinimizedWindows::iterator findMinimizedWindow(HWND hwnd);
+TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd);
+
+} // anonymous namespace
+
+namespace MinimizedWindow
+{
 
 void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 {
@@ -206,6 +211,16 @@ std::vector<HWND> getAll()
     return minimizedWindows;
 }
 
+bool exists(HWND hwnd)
+{
+    return findMinimizedWindow(hwnd) != minimizedWindows_.end();
+}
+
+} // namespace MinimizedWindow
+
+namespace
+{
+
 MinimizedWindows::iterator findMinimizedWindow(HWND hwnd)
 {
     return std::find_if(
@@ -214,11 +229,6 @@ MinimizedWindows::iterator findMinimizedWindow(HWND hwnd)
         [hwnd](const MinimizedWindowData & minimizedWindow) {
             return minimizedWindow.hwnd_ == hwnd;
         });
-}
-
-bool exists(HWND hwnd)
-{
-    return findMinimizedWindow(hwnd) != minimizedWindows_.end();
 }
 
 TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd)
@@ -235,4 +245,4 @@ TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd)
     return trayIcon;
 }
 
-} // namespace MinimizedWindow
+} // anonymous namespace
