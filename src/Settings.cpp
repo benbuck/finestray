@@ -19,6 +19,7 @@
 #include "File.h"
 #include "Hotkey.h"
 #include "Log.h"
+#include "Path.h"
 
 // argh
 #include <argh.h>

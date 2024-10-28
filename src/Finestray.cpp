@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "MenuHandleWrapper.h"
 #include "MinimizedWindow.h"
+#include "Path.h"
 #include "Resource.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
