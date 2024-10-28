@@ -19,8 +19,8 @@
 #include <Windows.h>
 
 // Standard library
-#include <stdarg.h>
-#include <stdio.h>
+#include <cstdarg>
+#include <cstdio>
 
 namespace
 {
