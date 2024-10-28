@@ -1,5 +1,6 @@
 # To do list
 
+- check all GetWindowTextA results
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
 - Add command line support for auto-tray options
