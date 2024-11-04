@@ -80,7 +80,12 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
 
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
     HWND dialogHwnd = CreateDialogA(hinstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
-    ShowWindow(dialogHwnd, SW_SHOW);
+    if (!ShowWindow(dialogHwnd, SW_SHOW)) {
+        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+    if (!SetForegroundWindow(dialogHwnd)) {
+        WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
 
     return dialogHwnd;
 }
@@ -97,8 +102,11 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
     if (spyMode_) {
         if (message == WM_LBUTTONDOWN) {
             POINT point;
-            GetCursorPos(&point);
-            spySelectWindowAtPoint(point);
+            if (!GetCursorPos(&point)) {
+                WARNING_PRINTF("GetCursorPos failed: %s\n", StringUtility::lastErrorString().c_str());
+            } else {
+                spySelectWindowAtPoint(point);
+            }
         }
 
         return FALSE;
