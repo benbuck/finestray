@@ -64,33 +64,14 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
         return;
     }
 
-    // minimize window
-    if (!ShowWindow(hwnd, SW_MINIMIZE)) {
-        WARNING_PRINTF(
-            "failed to minimize window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
-
-    // hide window
-    if (!ShowWindow(hwnd, SW_HIDE)) {
-        WARNING_PRINTF(
-            "failed to hide window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
+    // minimize and hide window
+    ShowWindow(hwnd, SW_MINIMIZE);
+    ShowWindow(hwnd, SW_HIDE);
 
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         trayIcon.reset(createTrayIcon(hwnd, messageHwnd));
     }
-
-    // un-hide window on failure, but leave it minimized
-    // WARNING_PRINTF("failed to add tray icon for %#x\n", hwnd);
-    // if (!ShowWindow(hwnd, SW_SHOW)) {
-    //    WARNING_PRINTF("failed to show window %#x, ShowWindow() failed: %s\n", hwnd,
-    //    StringUtility::lastErrorString().c_str());
-    // }
 
     minimizedWindows_.emplace_back(hwnd, messageHwnd, std::move(trayIcon));
 }
@@ -99,20 +80,10 @@ void restore(HWND hwnd)
 {
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
-    if (!ShowWindow(hwnd, SW_SHOW)) {
-        WARNING_PRINTF(
-            "failed to show window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
+    // show and restore window
+    ShowWindow(hwnd, SW_SHOWNORMAL);
 
-    if (!ShowWindow(hwnd, SW_RESTORE)) {
-        WARNING_PRINTF(
-            "failed to restore window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
-
+    // make window foreground
     if (!SetForegroundWindow(hwnd)) {
         WARNING_PRINTF(
             "failed to set foreground window %#x, SetForegroundWindow() failed: %s\n",

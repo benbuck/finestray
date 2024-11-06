@@ -80,9 +80,8 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
 
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
     HWND dialogHwnd = CreateDialogA(hinstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
-    if (!ShowWindow(dialogHwnd, SW_SHOW)) {
-        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+
+    ShowWindow(dialogHwnd, SW_SHOW);
     if (!SetForegroundWindow(dialogHwnd)) {
         WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
     }
