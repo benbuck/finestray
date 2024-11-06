@@ -209,7 +209,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // monitor minimize events
-    WinEventHookHandleWrapper winEventHook(SetWinEventHook(
+    WinEventHookHandleWrapper minimizeEventHook(SetWinEventHook(
         EVENT_SYSTEM_MINIMIZESTART,
         EVENT_SYSTEM_MINIMIZESTART,
         nullptr,
@@ -217,9 +217,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         0,
         0,
         WINEVENT_OUTOFCONTEXT));
-    if (!winEventHook) {
+    if (!minimizeEventHook) {
         ERROR_PRINTF(
-            "failed to hook win event %#x, SetWinEventHook() failed: %s\n",
+            "failed to hook minimize win event %#x, SetWinEventHook() failed: %s\n",
             (HWND)appWindow_,
             StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
