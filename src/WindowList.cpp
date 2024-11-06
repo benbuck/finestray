@@ -135,9 +135,9 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 
     CHAR title[256];
     if (!GetWindowTextA(hwnd, title, sizeof(title) / sizeof(title[0])) && (GetLastError() != ERROR_SUCCESS)) {
-        WARNING_PRINTF(
-            "could not get window text: GetWindowTextA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
+        // WARNING_PRINTF(
+        //     "could not get window text: GetWindowTextA() failed: %s\n",
+        //     StringUtility::lastErrorString().c_str());
         return TRUE;
     }
 
