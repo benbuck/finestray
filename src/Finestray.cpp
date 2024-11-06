@@ -732,6 +732,7 @@ void onMinimizeEvent(
         } else {
             DEBUG_PRINTF("\tminimizing\n");
             MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
+            autoTrayedWindows_.insert(hwnd);
         }
     }
 }
