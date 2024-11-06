@@ -1,5 +1,10 @@
 # To do list
 
+- Add option to make tray icons persistent even when window is restored
+- Use different popup menu for trayed icons?
+- Add command line arg to minimize a specific window to tray right now
+- Add command line arg to restore a window from tray
+- Add command line arg to restore all windows from tray
 - check all GetWindowTextA results
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
