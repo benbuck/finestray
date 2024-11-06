@@ -243,17 +243,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         DispatchMessage(&msg);
     }
 
-    if (!UnhookWinEvent(winEventHook)) {
-        WARNING_PRINTF(
-            "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
-            (HWND)appWindow_,
-            StringUtility::lastErrorString().c_str());
-    }
-
+    minimizeEventHook.destroy();
     trayIcon_.destroy();
-
     stop();
-
     appWindow_.destroy();
 
     return 0;

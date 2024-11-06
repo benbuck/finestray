@@ -29,7 +29,9 @@ public:
     {
     }
 
-    ~WinEventHookHandleWrapper()
+    ~WinEventHookHandleWrapper() { destroy(); }
+
+    void destroy()
     {
         if (hwineventhook_) {
             if (!UnhookWinEvent(hwineventhook_)) {
@@ -37,7 +39,10 @@ public:
                     "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
                     hwineventhook_,
                     StringUtility::lastErrorString().c_str());
+                return;
             }
+
+            hwineventhook_ = nullptr;
         }
     }
 

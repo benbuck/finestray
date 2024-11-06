@@ -48,7 +48,10 @@ public:
         if (hwnd_) {
             if (!DestroyWindow(hwnd_)) {
                 WARNING_PRINTF("DestroyWindow() failed: %s\n", StringUtility::lastErrorString().c_str());
+                return;
             }
+
+            hwnd_ = nullptr;
         }
     }
 
