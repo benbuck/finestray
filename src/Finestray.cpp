@@ -80,7 +80,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings);
 bool showContextMenu(HWND hwnd);
 void updateStartWithWindows();
 HBITMAP getResourceBitmap(unsigned int id);
-void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor);
+void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor);
+void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
 
 WindowHandleWrapper appWindow_;
 TrayIcon trayIcon_;
@@ -797,19 +798,17 @@ bool showContextMenu(HWND hwnd)
 
             HICON hicon = WindowIcon::get(minimizedWindow);
             if (hicon) {
-                ICONINFO iconinfo;
-                if (GetIconInfo(hicon, &iconinfo)) {
-                    // FIX - is this a really bad thing to do?
-                    uint32_t oldColor = 0;
-                    uint32_t menuColor = GetSysColor(COLOR_MENU);
-                    uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
-                    replaceBitmapColor(iconinfo.hbmColor, oldColor, newColor);
+                ICONINFO iconInfo;
+                if (GetIconInfo(hicon, &iconInfo)) {
+                    DWORD menuColor = GetSysColor(COLOR_MENU);
+                    COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+                    replaceBitmapMaskColor(iconInfo.hbmColor, iconInfo.hbmMask, newColor);
 
                     MENUITEMINFOA menuItemInfo;
                     memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
                     menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
                     menuItemInfo.fMask = MIIM_BITMAP;
-                    menuItemInfo.hbmpItem = iconinfo.hbmColor;
+                    menuItemInfo.hbmpItem = iconInfo.hbmColor;
                     if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
                         WARNING_PRINTF(
                             "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
@@ -835,6 +834,7 @@ bool showContextMenu(HWND hwnd)
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
+
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
@@ -847,9 +847,9 @@ bool showContextMenu(HWND hwnd)
     if (!appBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        uint32_t oldColor = RGB(0xFF, 0xFF, 0xFF);
-        uint32_t menuColor = GetSysColor(COLOR_MENU);
-        uint32_t newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+        COLORREF oldColor = RGB(0xFF, 0xFF, 0xFF);
+        DWORD menuColor = GetSysColor(COLOR_MENU);
+        COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
         replaceBitmapColor(appBitmap, oldColor, newColor);
         replaceBitmapColor(settingsBitmap, oldColor, newColor);
         replaceBitmapColor(exitBitmap, oldColor, newColor);
@@ -860,6 +860,10 @@ bool showContextMenu(HWND hwnd)
         menuItemInfo.fMask = MIIM_BITMAP;
 
         menuItemInfo.hbmpItem = appBitmap;
+        // FIX - why doesn't this work?
+        // menuItemInfo.hbmpItem = HBMMENU_SYSTEM;
+        // menuItemInfo.dwItemData = (ULONG_PTR)(HWND)appWindow_;
+        DEBUG_PRINTF("dwItemData %x, app window: %x\n", menuItemInfo.dwItemData, (HWND)appWindow_);
         if (!SetMenuItemInfoA(menu, IDM_APP, FALSE, &menuItemInfo)) {
             WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
@@ -954,7 +958,36 @@ HBITMAP getResourceBitmap(unsigned int id)
     return bitmap;
 }
 
-void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
+void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
+{
+    BITMAP maskBitmap;
+    GetObjectA(hmask, sizeof(BITMAP), &maskBitmap);
+
+    BITMAP colorBitmap;
+    GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap);
+
+    HDC hdc = GetDC(nullptr);
+    HDC maskDC = CreateCompatibleDC(hdc);
+    HDC colorDC = CreateCompatibleDC(hdc);
+
+    SelectObject(maskDC, hmask);
+    SelectObject(colorDC, hbmp);
+
+    for (int y = 0; y < maskBitmap.bmHeight; ++y) {
+        for (int x = 0; x < maskBitmap.bmWidth; ++x) {
+            COLORREF maskPixel = GetPixel(maskDC, x, y);
+            if (maskPixel == RGB(255, 255, 255)) {
+                SetPixel(colorDC, x, y, newColor);
+            }
+        }
+    }
+
+    DeleteDC(maskDC);
+    DeleteDC(colorDC);
+    ReleaseDC(nullptr, hdc);
+}
+
+void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
 {
     if (!hbmp) {
         return;
@@ -982,14 +1015,14 @@ void replaceBitmapColor(HBITMAP hbmp, uint32_t oldColor, uint32_t newColor)
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
 
-    std::vector<uint32_t> pixels(bitmap.bmWidth * bitmap.bmHeight);
+    std::vector<COLORREF> pixels(bitmap.bmWidth * bitmap.bmHeight);
     if (!GetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         ::ReleaseDC(HWND_DESKTOP, hdc);
         return;
     }
 
-    for (uint32_t & pixelColor : pixels) {
+    for (COLORREF & pixelColor : pixels) {
         if (pixelColor == oldColor) {
             pixelColor = newColor;
         }
