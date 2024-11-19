@@ -18,6 +18,7 @@
 #include "BitmapHandleWrapper.h"
 #include "COMLibraryWrapper.h"
 #include "CommandLine.h"
+#include "DeviceContextHandleWrapper.h"
 #include "File.h"
 #include "Hotkey.h"
 #include "Log.h"
@@ -974,18 +975,51 @@ HBITMAP getResourceBitmap(unsigned int id)
 
 void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
 {
+    if (!hbmp || !hmask) {
+        return;
+    }
+
     BITMAP maskBitmap;
-    GetObjectA(hmask, sizeof(BITMAP), &maskBitmap);
+    if (!GetObjectA(hmask, sizeof(BITMAP), &maskBitmap)) {
+        WARNING_PRINTF(
+            "failed to get mask bitmap object, GetObject() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return;
+    }
 
     BITMAP colorBitmap;
-    GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap);
+    if (!GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap)) {
+        WARNING_PRINTF(
+            "failed to get color bitmap object, GetObject() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return;
+    }
 
-    HDC hdc = GetDC(nullptr);
-    HDC maskDC = CreateCompatibleDC(hdc);
-    HDC colorDC = CreateCompatibleDC(hdc);
+    DeviceContextHandleWrapper hdc(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
+    DeviceContextHandleWrapper maskDC(CreateCompatibleDC(hdc), DeviceContextHandleWrapper::Created);
+    DeviceContextHandleWrapper colorDC(CreateCompatibleDC(hdc), DeviceContextHandleWrapper::Created);
+    if (!hdc || !maskDC || !colorDC) {
+        WARNING_PRINTF("failed to get device contexts\n");
+        return;
+    }
 
-    SelectObject(maskDC, hmask);
-    SelectObject(colorDC, hbmp);
+    HGDIOBJ hgdiobj;
+
+    hgdiobj = SelectObject(maskDC, hmask);
+    if (!hgdiobj || (hgdiobj == HGDI_ERROR)) {
+        WARNING_PRINTF(
+            "failed to select mask bitmap, SelectObject() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return;
+    }
+
+    hgdiobj = SelectObject(colorDC, hbmp);
+    if (!hgdiobj || (hgdiobj == HGDI_ERROR)) {
+        WARNING_PRINTF(
+            "failed to select color bitmap, SelectObject() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return;
+    }
 
     for (int y = 0; y < maskBitmap.bmHeight; ++y) {
         for (int x = 0; x < maskBitmap.bmWidth; ++x) {
@@ -995,10 +1029,6 @@ void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
             }
         }
     }
-
-    DeleteDC(maskDC);
-    DeleteDC(colorDC);
-    ReleaseDC(nullptr, hdc);
 }
 
 void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
@@ -1007,17 +1037,12 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
         return;
     }
 
-    HDC hdc = ::GetDC(HWND_DESKTOP);
-    if (!hdc) {
-        WARNING_PRINTF("failed to get desktop DC, GetDC() failed: %s\n", StringUtility::lastErrorString().c_str());
-        return;
-    }
+    DeviceContextHandleWrapper hdc(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
 
     BITMAP bitmap;
     memset(&bitmap, 0, sizeof(bitmap));
     if (!GetObject(hbmp, sizeof(bitmap), &bitmap)) {
         WARNING_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
-        ::ReleaseDC(HWND_DESKTOP, hdc);
         return;
     }
 
@@ -1032,7 +1057,6 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
     std::vector<COLORREF> pixels(bitmap.bmWidth * bitmap.bmHeight);
     if (!GetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
-        ::ReleaseDC(HWND_DESKTOP, hdc);
         return;
     }
 
@@ -1045,8 +1069,6 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
     if (!SetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
-
-    ::ReleaseDC(HWND_DESKTOP, hdc);
 }
 
 } // anonymous namespace

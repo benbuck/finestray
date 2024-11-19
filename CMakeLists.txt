@@ -94,6 +94,7 @@ add_executable(Finestray WIN32
     src/COMLibraryWrapper.h
     src/CommandLine.cpp
     src/CommandLine.h
+    src/DeviceContextHandleWrapper.h
     src/File.cpp
     src/File.h
     src/Finestray.cpp
