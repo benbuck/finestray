@@ -788,9 +788,13 @@ bool showContextMenu(HWND hwnd)
         unsigned int count = 0;
         std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
         for (HWND minimizedWindow : minimizedWindows) {
-            CHAR title[256];
-            GetWindowTextA(minimizedWindow, title, sizeof(title) / sizeof(title[0]));
-            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title)) {
+            std::string title(32, '\0');
+            int len = GetWindowTextA(minimizedWindow, &title[0], (int)title.size());
+            if (GetWindowTextLength(minimizedWindow) > len) {
+                title.resize(len);
+                title += "..."; // FIX - localize this?
+            }
+            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title.c_str())) {
                 WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
