@@ -800,6 +800,20 @@ bool showContextMenu(HWND hwnd)
             if (hicon) {
                 ICONINFO iconInfo;
                 if (GetIconInfo(hicon, &iconInfo)) {
+                    HBITMAP scaledBitmap = (HBITMAP)CopyImage(
+                        iconInfo.hbmColor,
+                        IMAGE_BITMAP,
+                        GetSystemMetrics(SM_CXMENUCHECK),
+                        GetSystemMetrics(SM_CYMENUCHECK),
+                        LR_COPYDELETEORG);
+                    if (!scaledBitmap) {
+                        WARNING_PRINTF(
+                            "failed to scale bitmap, CopyImage() failed: %s\n",
+                            StringUtility::lastErrorString().c_str());
+                    } else {
+                        iconInfo.hbmColor = scaledBitmap;
+                    }
+
                     DWORD menuColor = GetSysColor(COLOR_MENU);
                     COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
                     replaceBitmapMaskColor(iconInfo.hbmColor, iconInfo.hbmMask, newColor);
