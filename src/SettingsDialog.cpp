@@ -26,6 +26,10 @@
 #include <Psapi.h>
 #include <Windows.h>
 
+// Standard library
+#include <string>
+#include <vector>
+
 // #define SORT_ENABLED
 
 namespace
@@ -53,6 +57,10 @@ void autoTrayListViewItemSpy(HWND dialogHwnd);
 void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
 void autoTrayListViewUpdateButtons(HWND dialogHwnd);
 void autoTrayListViewUpdateSelected(HWND dialogHwnd);
+void spySelectWindowAtPoint(const POINT & point);
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
+std::string getDialogItemText(HWND dialogHwnd, int id);
+std::string getListViewItemText(HWND listViewHwnd, int item, int subItem);
 
 Settings settings_;
 SettingsDialog::CompletionCallback completionCallback_;
@@ -65,9 +73,6 @@ int autoTrayListViewSortColumn_;
 bool spyMode_;
 HWND spuModeHwnd_;
 HHOOK mouseHhook_;
-
-void spySelectWindowAtPoint(const POINT & point);
-LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 } // anonymous namespace
 
@@ -232,20 +237,10 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     case IDOK: {
                         INFO_PRINTF("Settings dialog done, updating settings\n");
 
-                        CHAR dlgItemText[256];
-                        if (GetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, dlgItemText, sizeof(dlgItemText))) {
-                            settings_.hotkeyMinimize_ = dlgItemText;
-                        }
-                        if (GetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, dlgItemText, sizeof(dlgItemText))) {
-                            settings_.hotkeyRestore_ = dlgItemText;
-                        }
-                        if (GetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, dlgItemText, sizeof(dlgItemText))) {
-                            settings_.modifiersOverride_ = dlgItemText;
-                        }
-                        if (GetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, dlgItemText, sizeof(dlgItemText))) {
-                            settings_.pollInterval_ = std::stoul(dlgItemText);
-                        }
-
+                        settings_.hotkeyMinimize_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MINIMIZE);
+                        settings_.hotkeyRestore_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE);
+                        settings_.modifiersOverride_ = getDialogItemText(dialogHwnd, IDC_MODIFIER_OVERRIDE);
+                        settings_.pollInterval_ = std::stoul(getDialogItemText(dialogHwnd, IDC_POLL_INTERVAL));
                         settings_.autoTrays_ = autoTrayListViewGetItems(dialogHwnd);
 
                         EndDialog(dialogHwnd, wParam);
@@ -393,27 +388,12 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* dialogHwnd */)
 
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
-    char str[256];
-    LVITEMA listViewItem;
-    memset(&listViewItem, 0, sizeof(listViewItem));
-    listViewItem.mask = LVIF_TEXT;
-    listViewItem.pszText = str;
-    listViewItem.cchTextMax = sizeof(str);
     for (int item = 0; item < itemCount; ++item) {
         Settings::AutoTray autoTray;
 
-        listViewItem.iItem = item;
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        autoTray.executable_ = str;
-
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        autoTray.windowClass_ = str;
-
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        autoTray.windowTitle_ = str;
+        autoTray.executable_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::Executable);
+        autoTray.windowClass_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowClass);
+        autoTray.windowTitle_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
 
         if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
             autoTrays.push_back(autoTray);
@@ -474,27 +454,10 @@ int autoTrayListViewCompare(LPARAM item1, LPARAM item2, LPARAM sortParam)
 {
     int sortColumn = abs((int)sortParam) - 1;
 
-    char str1[256];
-    LVITEMA listViewItem1;
-    memset(&listViewItem1, 0, sizeof(listViewItem1));
-    listViewItem1.mask = LVIF_TEXT;
-    listViewItem1.iItem = (int)item1;
-    listViewItem1.iSubItem = sortColumn;
-    listViewItem1.pszText = str1;
-    listViewItem1.cchTextMax = sizeof(str1);
-    SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item1, (LPARAM)&listViewItem1);
+    std::string str1 = getListViewItemText(autoTrayListViewHwnd_, (int)item1, sortColumn);
+    std::string str2 = getListViewItemText(autoTrayListViewHwnd_, (int)item2, sortColumn);
 
-    char str2[256];
-    LVITEMA listViewItem2;
-    memset(&listViewItem2, 0, sizeof(listViewItem2));
-    listViewItem2.mask = LVIF_TEXT;
-    listViewItem2.iItem = (int)item2;
-    listViewItem2.iSubItem = sortColumn;
-    listViewItem2.pszText = str2;
-    listViewItem2.cchTextMax = sizeof(str2);
-    SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item2, (LPARAM)&listViewItem2);
-
-    int ret = (sortParam > 0) ? strcmp(str1, str2) : strcmp(str2, str1);
+    int ret = (sortParam > 0) ? str1.compare(str2) : str2.compare(str1);
     DEBUG_PRINTF(
         "autoTrayListViewCompare item1 %ld (%s) item2 %ld (%s) sort %ld (col %d): ret %d\n",
         item1,
@@ -663,25 +626,16 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
         SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), "");
         autoTrayListViewActiveItem_ = -1;
     } else {
-        char str[256];
-        LVITEMA listViewItem;
-        memset(&listViewItem, 0, sizeof(listViewItem));
-        listViewItem.mask = LVIF_TEXT;
-        listViewItem.pszText = str;
-        listViewItem.cchTextMax = sizeof(str);
-        listViewItem.iItem = item;
+        std::string executable = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::Executable);
+        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), executable.c_str());
 
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), str);
+        std::string windowClass =
+            getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowClass);
+        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), windowClass.c_str());
 
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), str);
-
-        listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
-        SendMessage(autoTrayListViewHwnd_, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), str);
+        std::string windowTitle =
+            getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
+        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), windowTitle.c_str());
 
         autoTrayListViewActiveItem_ = item;
     }
@@ -836,6 +790,47 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
     }
 
     return CallNextHookEx(mouseHhook_, nCode, wParam, lParam);
+}
+
+std::string getDialogItemText(HWND dialogHwnd, int id)
+{
+    std::string text;
+    int textLength = GetWindowTextLengthA(GetDlgItem(dialogHwnd, id));
+    if (textLength > 0) {
+        text.resize(textLength + 1);
+        if (!GetDlgItemTextA(dialogHwnd, id, &text[0], (int)text.size())) {
+            WARNING_PRINTF("GetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            text.clear();
+        }
+    }
+    return text;
+}
+
+std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
+{
+    std::string text;
+
+    LVITEMA listViewItem;
+    memset(&listViewItem, 0, sizeof(listViewItem));
+    listViewItem.mask = LVIF_TEXT;
+    listViewItem.iItem = item;
+    listViewItem.iSubItem = subItem;
+
+    LRESULT res;
+    do {
+        text.resize(max(256, text.size() * 2));
+        listViewItem.pszText = &text[0];
+        listViewItem.cchTextMax = (int)text.size();
+        res = SendMessageA(listViewHwnd, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);
+        if (res == -1) {
+            WARNING_PRINTF("SendMessage LVM_GETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
+            return std::string();
+        }
+    } while (res >= (int)text.size() - 1);
+
+    text.resize(res + 1);
+
+    return text;
 }
 
 } // anonymous namespace
