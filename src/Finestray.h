@@ -22,4 +22,5 @@
 
 void showAboutDialog(HWND hwnd);
 std::string getResourceString(unsigned int id);
+std::string getWindowText(HWND hwnd);
 void errorMessage(unsigned int id);

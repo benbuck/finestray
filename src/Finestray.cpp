@@ -45,6 +45,9 @@
 // Standard library
 #include <regex>
 #include <set>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace
 {
@@ -290,6 +293,26 @@ std::string getResourceString(unsigned int id)
     return str;
 }
 
+std::string getWindowText(HWND hwnd)
+{
+    std::string text;
+    int len = GetWindowTextLengthA(hwnd);
+    if (!len) {
+        return std::string();
+    }
+
+    text.resize(len + 1);
+    int res = GetWindowTextA(hwnd, &text[0], (int)text.size());
+    if (!res && (GetLastError() != ERROR_SUCCESS)) {
+        WARNING_PRINTF(
+            "failed to get window text, GetWindowTextA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return std::string();
+    }
+
+    return text;
+}
+
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
@@ -378,9 +401,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
                         if (windowStyle & WS_MINIMIZEBOX) {
 #if !defined(NDEBUG)
-                            CHAR text[256];
-                            GetWindowTextA(foregroundHwnd, text, sizeof(text) / sizeof(text[0]));
-                            DEBUG_PRINTF("\twindow text '%s'\n", text);
+                            std::string text = getWindowText(foregroundHwnd);
+                            DEBUG_PRINTF("\twindow text '%s'\n", text.c_str());
 
                             CHAR className[256];
                             GetClassNameA(foregroundHwnd, className, sizeof(className) / sizeof(className[0]));
@@ -590,12 +612,9 @@ bool windowShouldAutoTray(HWND hwnd)
         CloseHandle(hproc);
     }
 
-    CHAR windowText[128];
-    if (!GetWindowTextA(hwnd, windowText, sizeof(windowText)) && (GetLastError() != ERROR_SUCCESS)) {
-        // WARNING_PRINTF("failed to get window text %#x, GetWindowTextA() failed: %s\n", hwnd,
-        // StringUtility::lastErrorString().c_str());
-    } else {
-        DEBUG_PRINTF("\ttitle: %s\n", windowText);
+    std::string windowText = getWindowText(hwnd);
+    if (!windowText.empty()) {
+        DEBUG_PRINTF("\ttitle: %s\n", windowText.c_str());
     }
 
     CHAR className[1024];
@@ -787,11 +806,12 @@ bool showContextMenu(HWND hwnd)
         unsigned int count = 0;
         std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
         for (HWND minimizedWindow : minimizedWindows) {
-            std::string title(32, '\0');
-            int len = GetWindowTextA(minimizedWindow, &title[0], (int)title.size());
-            if (GetWindowTextLength(minimizedWindow) > len) {
-                title.resize(len);
-                title += "..."; // FIX - localize this?
+            std::string title = getWindowText(minimizedWindow);
+            constexpr size_t maxTitleLength = 30;
+            if (title.length() > maxTitleLength) {
+                std::string_view ellipsis = "...";
+                title.resize(maxTitleLength - ellipsis.length());
+                title += ellipsis; // FIX - localize this?
             }
             if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title.c_str())) {
                 WARNING_PRINTF(

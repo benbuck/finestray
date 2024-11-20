@@ -15,6 +15,7 @@
 #include "WindowList.h"
 
 // App
+#include "Finestray.h"
 #include "Log.h"
 #include "StringUtility.h"
 
@@ -133,11 +134,9 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
         return TRUE;
     }
 
-    CHAR title[256];
-    if (!GetWindowTextA(hwnd, title, sizeof(title) / sizeof(title[0])) && (GetLastError() != ERROR_SUCCESS)) {
-        // WARNING_PRINTF(
-        //     "could not get window text: GetWindowTextA() failed: %s\n",
-        //     StringUtility::lastErrorString().c_str());
+    std::string title = getWindowText(hwnd);
+    if (title.empty()) {
+        // DEBUG_PRINTF("ignoring window with empty title: %#x\n", hwnd);
         return TRUE;
     }
 

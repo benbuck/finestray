@@ -514,35 +514,35 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
 
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
-    char str[256];
-
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
     listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
     listViewItem.iItem = itemCount;
     listViewItem.lParam = itemCount;
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), str, sizeof(str));
+    std::string str;
+
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), str, sizeof(str));
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), str, sizeof(str));
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
@@ -567,35 +567,35 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
         return;
     }
 
-    char str[256];
-
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
     listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
     listViewItem.iItem = itemCount;
     listViewItem.lParam = itemCount;
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), str, sizeof(str));
+    std::string str;
+
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), str, sizeof(str));
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
         return;
     }
 
-    GetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), str, sizeof(str));
+    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
-    listViewItem.pszText = str;
+    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
@@ -792,7 +792,6 @@ void spySelectWindowAtPoint(const POINT & point)
 
         CHAR exePath[MAX_PATH];
         CHAR className[256];
-        std::string title;
 
         DWORD processID;
         GetWindowThreadProcessId(rootHwnd, &processID);
@@ -810,12 +809,7 @@ void spySelectWindowAtPoint(const POINT & point)
         }
         DEBUG_PRINTF("Class name: '%s'\n", className);
 
-        int length = GetWindowTextLengthA(rootHwnd);
-        title.resize(length + 1);
-        if (!GetWindowTextA(rootHwnd, &title[0], (int)title.size()) && (GetLastError() != ERROR_SUCCESS)) {
-            WARNING_PRINTF("GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
-            title.clear();
-        }
+        std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
         SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), exePath);

@@ -140,6 +140,11 @@ target_compile_definitions(Finestray
         UNICODE # Windows headers use wide character by default
 )
 
+target_compile_features(Finestray
+    PRIVATE
+        cxx_std_20
+)
+
 target_link_options(Finestray
     PRIVATE
         ${LINK_CONFIG_OPTIONS}
