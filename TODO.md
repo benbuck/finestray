@@ -5,7 +5,6 @@
 - Add command line arg to minimize a specific window to tray right now
 - Add command line arg to restore a window from tray
 - Add command line arg to restore all windows from tray
-- check all GetClassNameA results
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
 - Add command line support for auto-tray options

@@ -313,6 +313,21 @@ std::string getWindowText(HWND hwnd)
     return text;
 }
 
+std::string getWindowClassName(HWND hwnd)
+{
+    std::string className;
+    className.resize(256);
+    int res = GetClassNameA(hwnd, &className[0], (int)className.size());
+    if (!res) {
+        WARNING_PRINTF(
+            "failed to get window class name, GetClassNameA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return std::string();
+    }
+
+    return className;
+}
+
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
@@ -404,9 +419,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             std::string text = getWindowText(foregroundHwnd);
                             DEBUG_PRINTF("\twindow text '%s'\n", text.c_str());
 
-                            CHAR className[256];
-                            GetClassNameA(foregroundHwnd, className, sizeof(className) / sizeof(className[0]));
-                            DEBUG_PRINTF("\twindow class name '%s'\n", className);
+                            std::string className = getWindowClassName(foregroundHwnd);
+                            DEBUG_PRINTF("\twindow class name '%s'\n", className.c_str());
 #endif
 
                             MinimizedWindow::minimize(foregroundHwnd, hwnd, settings_.minimizePlacement_);
@@ -617,14 +631,9 @@ bool windowShouldAutoTray(HWND hwnd)
         DEBUG_PRINTF("\ttitle: %s\n", windowText.c_str());
     }
 
-    CHAR className[1024];
-    if (!GetClassNameA(hwnd, className, sizeof(className))) {
-        WARNING_PRINTF(
-            "failed to get window class name %#x, GetClassNameA() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    } else {
-        DEBUG_PRINTF("\tclass: %s\n", className);
+    std::string className = getWindowClassName(hwnd);
+    if (!className.empty()) {
+        DEBUG_PRINTF("\tclass: %s\n", className.c_str());
     }
 
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {

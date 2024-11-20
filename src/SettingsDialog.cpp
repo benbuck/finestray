@@ -791,29 +791,31 @@ void spySelectWindowAtPoint(const POINT & point)
         }
 
         CHAR exePath[MAX_PATH];
-        CHAR className[256];
-
+        exePath[0] = '\0';
         DWORD processID;
-        GetWindowThreadProcessId(rootHwnd, &processID);
-        HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-        if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH)) {
-            WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
-            exePath[0] = '\0';
+        if (!GetWindowThreadProcessId(rootHwnd, &processID)) {
+            WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
+        } else {
+            HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+            if (!hproc) {
+                WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
+            } else {
+                if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH)) {
+                    WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+                }
+                CloseHandle(hproc);
+            }
         }
         DEBUG_PRINTF("Exe path: '%s'\n", exePath);
-        CloseHandle(hproc);
 
-        if (!GetClassNameA(rootHwnd, className, sizeof(className))) {
-            WARNING_PRINTF("GetClassNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
-            className[0] = '\0';
-        }
-        DEBUG_PRINTF("Class name: '%s'\n", className);
+        std::string className = getWindowClassName(rootHwnd);
+        DEBUG_PRINTF("Class name: '%s'\n", className.c_str());
 
         std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
         SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), exePath);
-        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className);
+        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className.c_str());
         SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), title.c_str());
 
         ShowWindow(spuModeHwnd_, SW_SHOW);
