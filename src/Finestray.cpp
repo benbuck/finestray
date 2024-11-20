@@ -280,17 +280,18 @@ std::string getResourceString(unsigned int id)
 {
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
 
-    std::string str;
-    str.resize(256);
-    if (!LoadStringA(hinstance, id, &str[0], (int)str.size())) {
+    LPWSTR str = nullptr;
+    int strLength = LoadStringW(hinstance, id, (LPWSTR)&str, 0);
+    if (!strLength) {
         WARNING_PRINTF(
             "failed to load resources string %u, LoadStringA() failed: %s\n",
             id,
             StringUtility::lastErrorString().c_str());
-        str = "Error ID: " + std::to_string(id);
+        return "Error ID: " + std::to_string(id);
     }
 
-    return str;
+    std::wstring wstr(str, strLength);
+    return StringUtility::wideStringToString(wstr);
 }
 
 std::string getWindowText(HWND hwnd)

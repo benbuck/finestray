@@ -307,19 +307,17 @@ void autoTrayListViewInit(HWND dialogHwnd)
     int width = rect.right - rect.left;
     int columnWidth = (width - 18) / (int)AutoTrayListViewColumn::Count;
 
-    CHAR szText[256];
-
     LVCOLUMNA listViewColumn;
     memset(&listViewColumn, 0, sizeof(listViewColumn));
     listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     listViewColumn.fmt = LVCFMT_LEFT;
     listViewColumn.cx = columnWidth;
-    listViewColumn.pszText = szText;
 
-    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+    std::string str;
 
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
-    LoadStringA(hinstance, IDS_COLUMN_EXECUTABLE, szText, sizeof(szText) / sizeof(szText[0]));
+    str = getResourceString(IDS_COLUMN_EXECUTABLE);
+    listViewColumn.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
@@ -327,7 +325,8 @@ void autoTrayListViewInit(HWND dialogHwnd)
     }
 
     ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
-    LoadStringA(hinstance, IDS_COLUMN_WINDOW_CLASS, szText, sizeof(szText) / sizeof(szText[0]));
+    str = getResourceString(IDS_COLUMN_WINDOW_CLASS);
+    listViewColumn.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
@@ -335,7 +334,8 @@ void autoTrayListViewInit(HWND dialogHwnd)
     }
 
     listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
-    LoadStringA(hinstance, IDS_COLUMN_WINDOW_TITLE, szText, sizeof(szText) / sizeof(szText[0]));
+    str = getResourceString(IDS_COLUMN_WINDOW_TITLE);
+    listViewColumn.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
         WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         errorMessage(IDS_ERROR_CREATE_DIALOG);
