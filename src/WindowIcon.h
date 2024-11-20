@@ -21,5 +21,6 @@ namespace WindowIcon
 {
 
 HICON get(HWND hwnd);
+HBITMAP bitmap(HWND hwnd);
 
 } // namespace WindowIcon

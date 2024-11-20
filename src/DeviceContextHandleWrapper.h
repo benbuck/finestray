@@ -16,9 +16,13 @@
 
 // App
 #include "Log.h"
+#include "StringUtility.h"
 
 // Windows
 #include <Windows.h>
+
+// Standard library
+#include <vector>
 
 class DeviceContextHandleWrapper
 {
@@ -41,16 +45,22 @@ public:
     ~DeviceContextHandleWrapper()
     {
         if (hdc_) {
+            for (HGDIOBJ object : objects_) {
+                if (!DeleteObject(object)) {
+                    WARNING_PRINTF("DeleteObject() failed: %s\n", StringUtility::lastErrorString().c_str());
+                }
+            }
+
             switch (mode_) {
                 case Created: {
                     if (!DeleteDC(hdc_)) {
-                        WARNING_PRINTF("failed to delete device context: %#x\n", hdc_);
+                        WARNING_PRINTF("DeleteDC() failed: %s\n", StringUtility::lastErrorString().c_str());
                     }
                     break;
                 }
                 case Referenced: {
                     if (!ReleaseDC(HWND_DESKTOP, hdc_)) {
-                        WARNING_PRINTF("failed to release device context: %#x\n", hdc_);
+                        WARNING_PRINTF("ReleaseDC() failed: %s\n", StringUtility::lastErrorString().c_str());
                     }
                     break;
                 }
@@ -66,7 +76,24 @@ public:
 
     operator bool() const { return hdc_ != nullptr; }
 
+    bool selectObject(HGDIOBJ object)
+    {
+        if (!hdc_) {
+            return false;
+        }
+
+        HGDIOBJ oldObject = SelectObject(hdc_, object);
+        if (!oldObject) {
+            WARNING_PRINTF("SelectObject() failed: %s\n", StringUtility::lastErrorString().c_str());
+            return false;
+        }
+
+        objects_.push_back(oldObject);
+        return true;
+    }
+
 private:
     HDC hdc_ = nullptr;
     Mode mode_;
+    std::vector<HGDIOBJ> objects_;
 };

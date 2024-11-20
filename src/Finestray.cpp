@@ -81,8 +81,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings);
 bool showContextMenu(HWND hwnd);
 void updateStartWithWindows();
 HBITMAP getResourceBitmap(unsigned int id);
-void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor);
-void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
+bool replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
 
 WindowHandleWrapper appWindow_;
 TrayIcon trayIcon_;
@@ -801,39 +800,18 @@ bool showContextMenu(HWND hwnd)
                 return false;
             }
 
-            HICON hicon = WindowIcon::get(minimizedWindow);
-            if (hicon) {
-                ICONINFO iconInfo;
-                if (GetIconInfo(hicon, &iconInfo)) {
-                    HBITMAP scaledBitmap = (HBITMAP)CopyImage(
-                        iconInfo.hbmColor,
-                        IMAGE_BITMAP,
-                        GetSystemMetrics(SM_CXMENUCHECK),
-                        GetSystemMetrics(SM_CYMENUCHECK),
-                        LR_COPYDELETEORG);
-                    if (!scaledBitmap) {
-                        WARNING_PRINTF(
-                            "failed to scale bitmap, CopyImage() failed: %s\n",
-                            StringUtility::lastErrorString().c_str());
-                    } else {
-                        iconInfo.hbmColor = scaledBitmap;
-                    }
-
-                    DWORD menuColor = GetSysColor(COLOR_MENU);
-                    COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
-                    replaceBitmapMaskColor(iconInfo.hbmColor, iconInfo.hbmMask, newColor);
-
-                    MENUITEMINFOA menuItemInfo;
-                    memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
-                    menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
-                    menuItemInfo.fMask = MIIM_BITMAP;
-                    menuItemInfo.hbmpItem = iconInfo.hbmColor;
-                    if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
-                        WARNING_PRINTF(
-                            "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-                            StringUtility::lastErrorString().c_str());
-                        return false;
-                    }
+            HBITMAP hbmp = WindowIcon::bitmap(minimizedWindow);
+            if (hbmp) {
+                MENUITEMINFOA menuItemInfo;
+                memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
+                menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
+                menuItemInfo.fMask = MIIM_BITMAP;
+                menuItemInfo.hbmpItem = hbmp;
+                if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
+                    WARNING_PRINTF(
+                        "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                        StringUtility::lastErrorString().c_str());
+                    return false;
                 }
             }
 
@@ -977,68 +955,10 @@ HBITMAP getResourceBitmap(unsigned int id)
     return bitmap;
 }
 
-void replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
-{
-    if (!hbmp || !hmask) {
-        return;
-    }
-
-    BITMAP maskBitmap;
-    if (!GetObjectA(hmask, sizeof(BITMAP), &maskBitmap)) {
-        WARNING_PRINTF(
-            "failed to get mask bitmap object, GetObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return;
-    }
-
-    BITMAP colorBitmap;
-    if (!GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap)) {
-        WARNING_PRINTF(
-            "failed to get color bitmap object, GetObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return;
-    }
-
-    DeviceContextHandleWrapper hdc(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
-    DeviceContextHandleWrapper maskDC(CreateCompatibleDC(hdc), DeviceContextHandleWrapper::Created);
-    DeviceContextHandleWrapper colorDC(CreateCompatibleDC(hdc), DeviceContextHandleWrapper::Created);
-    if (!hdc || !maskDC || !colorDC) {
-        WARNING_PRINTF("failed to get device contexts\n");
-        return;
-    }
-
-    HGDIOBJ hgdiobj;
-
-    hgdiobj = SelectObject(maskDC, hmask);
-    if (!hgdiobj || (hgdiobj == HGDI_ERROR)) {
-        WARNING_PRINTF(
-            "failed to select mask bitmap, SelectObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return;
-    }
-
-    hgdiobj = SelectObject(colorDC, hbmp);
-    if (!hgdiobj || (hgdiobj == HGDI_ERROR)) {
-        WARNING_PRINTF(
-            "failed to select color bitmap, SelectObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return;
-    }
-
-    for (int y = 0; y < maskBitmap.bmHeight; ++y) {
-        for (int x = 0; x < maskBitmap.bmWidth; ++x) {
-            COLORREF maskPixel = GetPixel(maskDC, x, y);
-            if (maskPixel == RGB(255, 255, 255)) {
-                SetPixel(colorDC, x, y, newColor);
-            }
-        }
-    }
-}
-
-void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
+bool replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
 {
     if (!hbmp) {
-        return;
+        return false;
     }
 
     DeviceContextHandleWrapper hdc(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
@@ -1047,7 +967,7 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
     memset(&bitmap, 0, sizeof(bitmap));
     if (!GetObject(hbmp, sizeof(bitmap), &bitmap)) {
         WARNING_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
-        return;
+        return false;
     }
 
     BITMAPINFO bitmapInfo;
@@ -1061,9 +981,10 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
     std::vector<COLORREF> pixels(bitmap.bmWidth * bitmap.bmHeight);
     if (!GetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
-        return;
+        return false;
     }
 
+    bool replaced = false;
     for (COLORREF & pixelColor : pixels) {
         if (pixelColor == oldColor) {
             pixelColor = newColor;
@@ -1073,6 +994,8 @@ void replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
     if (!SetDIBits(hdc, hbmp, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
+
+    return replaced;
 }
 
 } // anonymous namespace
