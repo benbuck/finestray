@@ -802,6 +802,8 @@ std::string getDialogItemText(HWND dialogHwnd, int id)
         if (!GetDlgItemTextA(dialogHwnd, id, &text[0], (int)text.size())) {
             WARNING_PRINTF("GetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             text.clear();
+        } else {
+            text.resize(textLength); // remove nul terminator
         }
     }
     return text;
@@ -829,7 +831,7 @@ std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
         }
     } while (res >= (int)text.size() - 1);
 
-    text.resize(res + 1);
+    text.resize(res); // don't include nul terminator
 
     return text;
 }
