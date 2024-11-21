@@ -1,5 +1,6 @@
 # To do list
 
+- Add auto-tray option: when created, when minimized, both
 - Add option to make tray icons persistent even when window is restored
 - Use different popup menu for trayed icons?
 - Add command line arg to minimize a specific window to tray right now
