@@ -53,6 +53,8 @@ std::string getWindowText(HWND hwnd)
         return std::string();
     }
 
+    text.resize(res); // remove nul terminator
+
     return text;
 }
 
@@ -67,6 +69,8 @@ std::string getWindowClassName(HWND hwnd)
             StringUtility::lastErrorString().c_str());
         return std::string();
     }
+
+    className.resize(res); // remove nul terminator
 
     return className;
 }
