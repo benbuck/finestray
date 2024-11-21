@@ -26,6 +26,7 @@
 #include "Log.h"
 #include "MenuHandleWrapper.h"
 #include "MinimizedWindow.h"
+#include "Modifiers.h"
 #include "Path.h"
 #include "Resource.h"
 #include "Settings.h"
@@ -63,7 +64,6 @@ enum class HotkeyID
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 int start();
 void stop();
-bool modifiersActive(UINT modifiers);
 bool windowShouldAutoTray(HWND hwnd);
 void onAddWindow(HWND hwnd);
 void onRemoveWindow(HWND hwnd);
@@ -468,49 +468,6 @@ void stop()
 
     hotkeyRestore_.destroy();
     hotkeyMinimize_.destroy();
-}
-
-bool modifiersActive(UINT modifiers)
-{
-    if (!modifiers) {
-        return false;
-    }
-
-    if (modifiers & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT)) {
-        WARNING_PRINTF("invalid modifiers: %#x\n", modifiers);
-        return false;
-    }
-
-    if (modifiers & MOD_ALT) {
-        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
-            DEBUG_PRINTF("\talt modifier not down\n");
-            return false;
-        }
-    }
-
-    if (modifiers & MOD_CONTROL) {
-        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
-            DEBUG_PRINTF("\tctrl modifier not down\n");
-            return false;
-        }
-    }
-
-    if (modifiers & MOD_SHIFT) {
-        if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_LSHIFT) & 0x8000) &&
-            !(GetKeyState(VK_RSHIFT) & 0x8000)) {
-            DEBUG_PRINTF("\tshift modifier not down\n");
-            return false;
-        }
-    }
-
-    if (modifiers & MOD_WIN) {
-        if (!(GetKeyState(VK_LWIN) & 0x8000) && !(GetKeyState(VK_RWIN) & 0x8000)) {
-            DEBUG_PRINTF("\twin modifier not down\n");
-            return false;
-        }
-    }
-
-    return true;
 }
 
 bool windowShouldAutoTray(HWND hwnd)

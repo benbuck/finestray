@@ -117,6 +117,8 @@ add_executable(Finestray WIN32
     src/MinimizedWindow.h
     src/MinimizePlacement.cpp
     src/MinimizePlacement.h
+    src/Modifiers.cpp
+    src/Modifiers.h
     src/Path.cpp
     src/Path.h
     src/Resource.h
