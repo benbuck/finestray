@@ -90,6 +90,8 @@ include(cJSON.cmake)
 
 add_executable(Finestray WIN32
     src/AppName.h
+    src/Bitmap.cpp
+    src/Bitmap.h
     src/BitmapHandleWrapper.h
     src/COMLibraryWrapper.h
     src/CommandLine.cpp
@@ -100,15 +102,16 @@ add_executable(Finestray WIN32
     src/Finestray.cpp
     src/Finestray.h
     src/Finestray.rc
+    src/HandleWrapper.h
     src/Hotkey.cpp
     src/Hotkey.h
     src/Log.cpp
     src/Log.h
     src/MenuHandleWrapper.h
-    src/MinimizePlacement.cpp
-    src/MinimizePlacement.h
     src/MinimizedWindow.cpp
     src/MinimizedWindow.h
+    src/MinimizePlacement.cpp
+    src/MinimizePlacement.h
     src/Path.cpp
     src/Path.h
     src/Resource.h
