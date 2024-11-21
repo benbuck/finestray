@@ -89,6 +89,8 @@ include(argh.cmake)
 include(cJSON.cmake)
 
 add_executable(Finestray WIN32
+    src/AboutDialog.cpp
+    src/AboutDialog.h
     src/AppName.h
     src/Bitmap.cpp
     src/Bitmap.h
@@ -100,7 +102,6 @@ add_executable(Finestray WIN32
     src/File.cpp
     src/File.h
     src/Finestray.cpp
-    src/Finestray.h
     src/Finestray.rc
     src/HandleWrapper.h
     src/Helpers.cpp

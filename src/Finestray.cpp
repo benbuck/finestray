@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // App
-#include "Finestray.h"
+#include "AboutDialog.h"
 #include "AppName.h"
 #include "Bitmap.h"
 #include "BitmapHandleWrapper.h"
@@ -94,7 +94,6 @@ Hotkey hotkeyMinimize_;
 Hotkey hotkeyRestore_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
-bool aboutDialogOpen_;
 
 } // anonymous namespace
 
@@ -252,27 +251,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     appWindow_.destroy();
 
     return 0;
-}
-
-void showAboutDialog(HWND hwnd)
-{
-    if (aboutDialogOpen_) {
-        return;
-    }
-
-    const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
-    const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-    UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
-
-    aboutDialogOpen_ = true;
-    int result = MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), type);
-    aboutDialogOpen_ = false;
-
-    if (!result) {
-        WARNING_PRINTF(
-            "could not create about dialog, MessageBoxA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-    }
 }
 
 namespace

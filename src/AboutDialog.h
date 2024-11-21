@@ -17,7 +17,4 @@
 // Windows
 #include <Windows.h>
 
-// Standard library
-#include <string>
-
 void showAboutDialog(HWND hwnd);

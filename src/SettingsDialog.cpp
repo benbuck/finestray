@@ -15,7 +15,7 @@
 #include "SettingsDialog.h"
 
 // App
-#include "Finestray.h"
+#include "AboutDialog.h"
 #include "Helpers.h"
 #include "Hotkey.h"
 #include "Log.h"
