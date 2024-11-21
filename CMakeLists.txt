@@ -103,6 +103,8 @@ add_executable(Finestray WIN32
     src/Finestray.h
     src/Finestray.rc
     src/HandleWrapper.h
+    src/Helpers.cpp
+    src/Helpers.h
     src/Hotkey.cpp
     src/Hotkey.h
     src/Log.cpp

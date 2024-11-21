@@ -16,6 +16,7 @@
 
 // App
 #include "Finestray.h"
+#include "Helpers.h"
 #include "Hotkey.h"
 #include "Log.h"
 #include "Resource.h"

@@ -15,7 +15,7 @@
 #include "WindowList.h"
 
 // App
-#include "Finestray.h"
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
 
