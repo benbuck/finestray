@@ -18,7 +18,7 @@ to their normal placement:
   the tray.
 - **Restore hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
-  will be restored to its original location.
+  will be restored to its prior location.
 - **Override modifier**:
   Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of a
   window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
@@ -64,9 +64,9 @@ The available settings correspond to some of the above features. The settings ar
   which launches the Finestray executable.
 - **Minimize placement**:
   This controls where to place minimized windows minimized using Finestray. The choices are:
-  - **Tray**: the window will get its own icon in the tray.
+  - **Tray**: the window will get an icon in the tray.
   - **Menu**: the window will get an entry in the context menu.
-  - **Tray and Menu**: the window will get a tray icon and a context menu entry.
+  - **Tray and Menu**: the window will get an icon in the tray and an entry in the context menu.
 - **Minimize hotkey**:
   This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
@@ -101,7 +101,7 @@ At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and 
   Closes the Settings window and saves settings.
 
 Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same
-location as the Finestray application, and if that's not possible it saves them to %APPDATA%\\Finestray\\Finestray.json.
+location as the Finestray application, and if that's not possible it saves them to `%APPDATA%\\Finestray\\Finestray.json`.
 
 ### Modifiers and Hotkeys
 
@@ -109,7 +109,7 @@ Modifier choices: `alt`, `ctrl`, `shift`, `win`
 
 Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`,
   `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
-  `home`, `end`, `ins`, `del`, and normal letters, numbers, and punctuation.
+  `home`, `end`, `ins`, `del`, letters, numbers, and punctuation.
 
 For the override modifier, you can provide one or more modifiers using spaces in between. For example you could provide
 a modifier `alt`, or a modifier `ctrl shift`.
@@ -118,7 +118,7 @@ Similarly, for the minimize and restore hotkeys, you can combine a set of modifi
 example, you could combine the modifier `alt win` with the key `esc` to make a hotkey `alt win esc`. Or you could
 combine a modifier `ctrl win` with the key `-` to make a hotkey `ctrl win -`.
 
-You can also leave a hotkey or modifier empty or specify `none` to disable the it.
+You can also leave a hotkey or modifier empty or specify `none` to disable it.
 
 ### Auto-tray settings
 
@@ -127,7 +127,7 @@ to the tray when it opens, and when you minimize it. The complication is that it
 window. Because of this, Finestray provides three possible ways, which can be used in combination, to identify a window:
 
 - **Executable name**:
-  This value corresponds to executable the created the window. Provide the full path to the executable, for example
+  This value corresponds to program the created the window. Provide the full path to the executable, for example
   `C:\Windows\notepad.exe`. This must match (case insensitive) the path of the executable that owns the window, or you
   can leave this empty if you don't care which executable created the window.
 - **Window class**:
@@ -143,7 +143,7 @@ window. Because of this, Finestray provides three possible ways, which can be us
 Note that the Override modifier also has an effect on auto-trays. It overrides the normal auto-tray behavior. For
 example, if you are holding down the override modifier keys when a window is created, it will prevent the normal
 auto-tray behavior from happening. If you minimize an auto-tray window while holding the override modifier keys, the
-window will minimize like a regular window instead of to the tray.
+window will minimize the standard way instead of to the tray.
 
 ### Spy feature
 
@@ -171,6 +171,8 @@ These options are:
 - `--hotkey-restore=[hotkey]`
 - `--modifiers-override=[modifiers]`
 - `--poll-interval=[milliseconds]`
+
+Note that if your hotkey or modifiers option has spaces in it, you will need to add double quotes around it. For example, `--hotkey-minimize="alt ctrl shift down"`.
 
 Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of
 values that can be used for each of these.
