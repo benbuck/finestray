@@ -5,6 +5,9 @@ right corner, formally known as the "notification area") of the Windows desktop.
 window not be visible, and also not show in the taskbar (the usual behavior when a window is minimized) in order to
 reduce visual clutter.
 
+> [!NOTE]
+> This is a pre-release version, so it will likely have problems. Please report any [issues](https://github.com/benbuck/finestray/issues) that you find.
+
 ## Basic Operation
 
 After launching the Finestray application, it will add an icon for itself to your tray. The icon looks like this:
