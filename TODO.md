@@ -6,6 +6,7 @@
 - Use different popup menu for trayed icons
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
+- Fix handling of elevated windows
 - Add auto-close feature
 - Add command line support for auto-tray options
 - Add command line support for issuing commands to running app
