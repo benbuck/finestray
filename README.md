@@ -6,7 +6,8 @@ window not be visible, and also not show in the taskbar (the usual behavior when
 reduce visual clutter.
 
 > [!NOTE]
-> This is a pre-release version, so it will likely have problems. Please report any [issues](https://github.com/benbuck/finestray/issues) that you find.
+> This is a pre-release version, so it will likely have problems. Please report any
+> [issues](https://github.com/benbuck/finestray/issues) that you find.
 
 ## Basic Operation
 
@@ -32,8 +33,8 @@ to their normal placement:
 
   For any window that has been minimized to an icon in the tray, simply click it to restore it to its original location.
 - **Auto-trays**:
-  This feature allows specific windows to be minimized to the tray as soon as they appear. Please see the [Auto-tray
-  Settings](#auto-tray-settings) section for more information.
+  This feature allows specific windows to be minimized to the tray as soon as they appear or when they are minimized.
+  Please see the [Auto-tray Settings](#auto-tray-settings) section for more information.
 - **Context menu**:
   For any of the tray icons created by Finestray, including its own, you can right click on it to see the context menu.
 
@@ -63,8 +64,9 @@ The available settings correspond to some of the above features. The settings ar
 
 - **Start with windows**:
   This toggles whether Finestray is launched when you start Windows. This creates a shortcut link located in your
-  startup folder (typically `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which
-  which launches the Finestray executable.
+  startup folder (`shell:Startup`, typically
+  `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which which launches the Finestray
+  executable.
 - **Minimize placement**:
   This controls where to place minimized windows minimized using Finestray. The choices are:
   - **Tray**: the window will get an icon in the tray.
@@ -104,7 +106,8 @@ At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and 
   Closes the Settings window and saves settings.
 
 Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them in the same
-location as the Finestray application, and if that's not possible it saves them to `%APPDATA%\\Finestray\\Finestray.json`.
+location as the Finestray application, and if that's not possible it saves them to
+`%APPDATA%\\Finestray\\Finestray.json`.
 
 ### Modifiers and Hotkeys
 
@@ -175,7 +178,8 @@ These options are:
 - `--modifiers-override=[modifiers]`
 - `--poll-interval=[milliseconds]`
 
-Note that if your hotkey or modifiers option has spaces in it, you will need to add double quotes around it. For example, `--hotkey-minimize="alt ctrl shift down"`.
+Note that if your hotkey or modifiers option has spaces in it, you will need to add double quotes around it. For
+example, `--hotkey-minimize="alt ctrl shift down"`.
 
 Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of
 values that can be used for each of these.
