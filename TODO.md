@@ -6,6 +6,7 @@
 - Use different popup menu for trayed icons
 - Show settings dialog on first launch
 - Find a way to properly minimize UWP app windows
+- Handle windows getting restored without Finestray being involved
 - Fix handling of elevated windows
 - Add auto-close feature
 - Add command line support for auto-tray options
