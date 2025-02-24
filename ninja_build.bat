@@ -25,11 +25,9 @@ pushd %BUILD_DIR%
 
 if not defined VCINSTALLDIR (
     rem get latest visual studio install location
-    for /f "tokens=* USEBACKQ" %%x in (`powershell -command "(Get-CimInstance MSFT_VSInstance | Select-Object -Last 1).InstallLocation"`) do set VSTUDIO_INSTALL_DIR=%%x
-
-    rem NOTE: alternative way to get visual studio install location
+    rem for /f "tokens=* USEBACKQ" %%x in (`powershell -command "(Get-CimInstance MSFT_VSInstance | Select-Object -Last 1).InstallLocation"`) do set VSTUDIO_INSTALL_DIR=%%x
     rem winget install vswhere
-    rem for /f "tokens=* USEBACKQ" %%x in (`vswhere -latest -property installationPath`) do set VSTUDIO_INSTALL_DIR=%%x
+    for /f "tokens=* USEBACKQ" %%x in (`vswhere -latest -property installationPath`) do set VSTUDIO_INSTALL_DIR=%%x
 
     rem set environment for visual studio command line builds
     call "!VSTUDIO_INSTALL_DIR!\VC\Auxiliary\Build\vcvars64.bat"
