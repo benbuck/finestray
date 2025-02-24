@@ -77,6 +77,7 @@ void onMinimizeEvent(
     DWORD dwEventThread,
     DWORD dwmsEventTime);
 void onSettingsDialogComplete(bool success, const Settings & settings);
+std::string getStartupShortcutPath();
 void updateStartWithWindows();
 
 WindowHandleWrapper appWindow_;
@@ -138,14 +139,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     } else {
         // get settings from file
         std::string exePath = getExecutablePath();
-        std::string fileName = pathJoin(exePath, std::string(APP_NAME) + ".json");
-        if (settings_.readFromFile(fileName)) {
-            DEBUG_PRINTF("read settings from %s\n", fileName.c_str());
+        std::string settingsPath = pathJoin(exePath, std::string(APP_NAME) + ".json");
+        if (settings_.readFromFile(settingsPath)) {
+            DEBUG_PRINTF("read settings from %s\n", settingsPath.c_str());
         } else {
-            if (fileExists(fileName)) {
+            if (fileExists(settingsPath)) {
                 errorMessage(IDS_ERROR_LOAD_SETTINGS);
                 return IDS_ERROR_LOAD_SETTINGS;
             }
+
+            // update start with windows setting to match reality
+            std::string startupShortcutPath = getStartupShortcutPath();
+            settings_.startWithWindows_ = fileExists(startupShortcutPath);
         }
     }
 
@@ -654,10 +659,15 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
     settingsDialogWindow_ = nullptr;
 }
 
-void updateStartWithWindows()
+std::string getStartupShortcutPath()
 {
     std::string startupPath = getStartupPath();
-    std::string startupShortcutPath = pathJoin(startupPath, APP_NAME ".lnk");
+    return pathJoin(startupPath, APP_NAME ".lnk");
+}
+
+void updateStartWithWindows()
+{
+    std::string startupShortcutPath = getStartupShortcutPath();
     if (settings_.startWithWindows_) {
         if (fileExists(startupShortcutPath)) {
             DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutPath.c_str());
