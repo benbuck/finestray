@@ -1,6 +1,7 @@
 # To do list
 
 - Support package manager (WinGet / Scoop / Chocolatey)
+- Investigate VirusTotal results for installer
 - Simplify obtaining debug logs
 - Add hotkey to show selectable list of minimized windows
 - Add auto-tray option: when created, when minimized, both
