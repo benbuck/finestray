@@ -92,7 +92,7 @@ std::string getStartupPath()
 std::string pathJoin(const std::string & path1, const std::string & path2)
 {
     std::string path;
-    path.reserve(max(MAX_PATH, path1.size() + path2.size() + 2));
+    path.resize(max(MAX_PATH, path1.size() + path2.size() + 2));
 
     LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
     if (!result) {
