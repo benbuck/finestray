@@ -15,6 +15,7 @@
 #include "Path.h"
 
 // App
+#include "HandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"
 
@@ -24,6 +25,15 @@
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
+
+namespace
+{
+
+std::string writeablePath_;
+
+bool checkWriteablePath(const std::string path);
+
+} // anonymous namespace
 
 std::string getAppDataPath()
 {
@@ -97,6 +107,32 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
     return path;
 }
 
+std::string getWriteablePath()
+{
+    if (!writeablePath_.empty()) {
+        return writeablePath_;
+    }
+
+    std::string path;
+
+    path = getExecutablePath();
+    if (!path.empty() && checkWriteablePath(path)) {
+        DEBUG_PRINTF("using executable path '%s' as writeable path\n", path.c_str());
+        writeablePath_ = path;
+        return path;
+    }
+
+    path = getAppDataPath();
+    if (!path.empty() && checkWriteablePath(path)) {
+        DEBUG_PRINTF("using app data path '%s' as writeable path\n", path.c_str());
+        writeablePath_ = path;
+        return path;
+    }
+
+    WARNING_PRINTF("no writeable path found\n");
+    return std::string();
+}
+
 bool createShortcut(const std::string & shortcutPath, const std::string & executablePath)
 {
     ComPtr<IShellLinkA> shellLink;
@@ -133,3 +169,24 @@ bool createShortcut(const std::string & shortcutPath, const std::string & execut
 
     return true;
 }
+
+namespace
+{
+
+bool checkWriteablePath(const std::string path)
+{
+    std::string fileName = pathJoin(path, "test.tmp");
+    HandleWrapper file(CreateFileA(
+        fileName.c_str(),
+        GENERIC_WRITE,
+        0,
+        nullptr,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+        nullptr));
+    bool writeable = file != INVALID_HANDLE_VALUE;
+    DEBUG_PRINTF("path '%s' is %swriteable\n", path.c_str(), writeable ? "" : "not ");
+    return writeable;
+}
+
+} // anonymous namespace
