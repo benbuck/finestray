@@ -76,7 +76,7 @@ void onMinimizeEvent(
     DWORD dwEventThread,
     DWORD dwmsEventTime);
 void onSettingsDialogComplete(bool success, const Settings & settings);
-std::string getSettingsFilename();
+std::string getSettingsFileName();
 std::string getStartupShortcutPath();
 void updateStartWithWindows();
 
@@ -123,7 +123,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // get settings from file
-    std::string settingsFile = getSettingsFilename();
+    std::string settingsFile = getSettingsFileName();
     if (settings_.readFromFile(settingsFile)) {
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
     } else {
@@ -618,7 +618,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 {
     if (success) {
         bool settingsChanged = (settings != settings_);
-        std::string settingsFile = getSettingsFilename();
+        std::string settingsFile = getSettingsFileName();
         if (settingsChanged || !Settings::fileExists(settingsFile)) {
             if (settingsChanged) {
                 settings_ = settings;
@@ -653,7 +653,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
     settingsDialogWindow_ = nullptr;
 }
 
-std::string getSettingsFilename()
+std::string getSettingsFileName()
 {
     return std::string(APP_NAME) + ".json";
 }
@@ -672,8 +672,8 @@ void updateStartWithWindows()
             DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutPath.c_str());
         } else {
             std::string exePath = getExecutablePath();
-            std::string exeFilename = pathJoin(exePath, APP_NAME ".exe");
-            if (!createShortcut(startupShortcutPath, exeFilename)) {
+            std::string exeFileName = pathJoin(exePath, APP_NAME ".exe");
+            if (!createShortcut(startupShortcutPath, exeFileName)) {
                 WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutPath.c_str());
             }
         }

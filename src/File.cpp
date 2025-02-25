@@ -95,9 +95,9 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     return true;
 }
 
-bool fileExists(const std::string & filename)
+bool fileExists(const std::string & fileName)
 {
-    DWORD attrib = GetFileAttributesA(filename.c_str());
+    DWORD attrib = GetFileAttributesA(fileName.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
