@@ -76,7 +76,7 @@ void onMinimizeEvent(
     DWORD dwEventThread,
     DWORD dwmsEventTime);
 void onSettingsDialogComplete(bool success, const Settings & settings);
-std::string getSettingsFilePath();
+std::string getSettingsFilename();
 std::string getStartupShortcutPath();
 void updateStartWithWindows();
 
@@ -123,11 +123,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // get settings from file
-    std::string settingsPath = getSettingsFilePath();
-    if (settings_.readFromFile(settingsPath)) {
-        DEBUG_PRINTF("read settings from %s\n", settingsPath.c_str());
+    std::string settingsFile = getSettingsFilename();
+    if (settings_.readFromFile(settingsFile)) {
+        DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
     } else {
-        if (fileExists(settingsPath)) {
+        if (Settings::fileExists(settingsFile)) {
             errorMessage(IDS_ERROR_LOAD_SETTINGS);
             return IDS_ERROR_LOAD_SETTINGS;
         }
@@ -215,7 +215,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         errorMessage(err);
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
     } else {
-        if (!fileExists(settingsPath)) {
+        if (!Settings::fileExists(settingsFile)) {
             settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
         }
     }
@@ -618,8 +618,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 {
     if (success) {
         bool settingsChanged = (settings != settings_);
-        std::string settingsPath = getSettingsFilePath();
-        if (settingsChanged || !fileExists(settingsPath)) {
+        std::string settingsFile = getSettingsFilename();
+        if (settingsChanged || !Settings::fileExists(settingsFile)) {
             if (settingsChanged) {
                 settings_ = settings;
                 DEBUG_PRINTF("got updated settings from dialog:\n");
@@ -636,10 +636,10 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
                 }
             }
 
-            if (!settings_.writeToFile(settingsPath)) {
+            if (!settings_.writeToFile(settingsFile)) {
                 errorMessage(IDS_ERROR_SAVE_SETTINGS);
             } else {
-                DEBUG_PRINTF("wrote settings to %s\n", settingsPath.c_str());
+                DEBUG_PRINTF("wrote settings to %s\n", settingsFile.c_str());
             }
 
             if (settingsChanged) {
@@ -653,10 +653,9 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
     settingsDialogWindow_ = nullptr;
 }
 
-std::string getSettingsFilePath()
+std::string getSettingsFilename()
 {
-    std::string exePath = getExecutablePath();
-    return pathJoin(exePath, std::string(APP_NAME) + ".json");
+    return std::string(APP_NAME) + ".json";
 }
 
 std::string getStartupShortcutPath()

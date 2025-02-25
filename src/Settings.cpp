@@ -246,6 +246,17 @@ bool Settings::parseJson(const std::string & json)
     return true;
 }
 
+bool Settings::fileExists(const std::string & fileName)
+{
+    std::string path = getWriteablePath();
+    if (path.empty()) {
+        return false;
+    }
+
+    std::string fullPath = pathJoin(path, fileName);
+    return ::fileExists(fullPath);
+}
+
 std::string Settings::constructJSON()
 {
     cJSON * cjson = cJSON_CreateObject();

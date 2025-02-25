@@ -50,6 +50,8 @@ public:
 
     void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
 
+    static bool fileExists(const std::string & fileName);
+
     bool startWithWindows_;
     MinimizePlacement minimizePlacement_;
     std::string hotkeyMinimize_;
