@@ -85,7 +85,6 @@ set(LINK_CONFIG_OPTIONS
     >
 )
 
-include(argh.cmake)
 include(cJSON.cmake)
 
 add_executable(Finestray WIN32
@@ -98,8 +97,6 @@ add_executable(Finestray WIN32
     src/COMLibraryWrapper.h
     src/ContextMenu.cpp
     src/ContextMenu.h
-    src/CommandLine.cpp
-    src/CommandLine.h
     src/DeviceContextHandleWrapper.h
     src/File.cpp
     src/File.h
@@ -162,7 +159,6 @@ target_link_options(Finestray
 
 target_link_libraries(Finestray
     PRIVATE
-        argh
         cJSON
 
         Comctl32.lib

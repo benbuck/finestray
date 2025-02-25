@@ -18,7 +18,6 @@
 #include "Bitmap.h"
 #include "BitmapHandleWrapper.h"
 #include "COMLibraryWrapper.h"
-#include "CommandLine.h"
 #include "ContextMenu.h"
 #include "File.h"
 #include "Helpers.h"
@@ -123,35 +122,19 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         return IDS_ERROR_INIT_COMMON_CONTROLS;
     }
 
-    // get command line args
-    CommandLine commandLine;
-    if (!commandLine.parse()) {
-        errorMessage(IDS_ERROR_COMMAND_LINE);
-        return IDS_ERROR_COMMAND_LINE;
-    }
-
-    if (commandLine.getArgc() > 1) {
-        // get settings from command line
-        bool parsed = settings_.parseCommandLine(commandLine.getArgc(), commandLine.getArgv());
-        if (!parsed) {
-            errorMessage(IDS_ERROR_COMMAND_LINE);
-            return IDS_ERROR_COMMAND_LINE;
-        }
+    // get settings from file
+    std::string settingsPath = getSettingsFilePath();
+    if (settings_.readFromFile(settingsPath)) {
+        DEBUG_PRINTF("read settings from %s\n", settingsPath.c_str());
     } else {
-        // get settings from file
-        std::string settingsPath = getSettingsFilePath();
-        if (settings_.readFromFile(settingsPath)) {
-            DEBUG_PRINTF("read settings from %s\n", settingsPath.c_str());
-        } else {
-            if (fileExists(settingsPath)) {
-                errorMessage(IDS_ERROR_LOAD_SETTINGS);
-                return IDS_ERROR_LOAD_SETTINGS;
-            }
-
-            // update start with windows setting to match reality
-            std::string startupShortcutPath = getStartupShortcutPath();
-            settings_.startWithWindows_ = fileExists(startupShortcutPath);
+        if (fileExists(settingsPath)) {
+            errorMessage(IDS_ERROR_LOAD_SETTINGS);
+            return IDS_ERROR_LOAD_SETTINGS;
         }
+
+        // update start with windows setting to match reality
+        std::string startupShortcutPath = getStartupShortcutPath();
+        settings_.startWithWindows_ = fileExists(startupShortcutPath);
     }
 
     DEBUG_PRINTF("final settings:\n");
@@ -232,7 +215,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         errorMessage(err);
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
     } else {
-        std::string settingsPath = getSettingsFilePath();
         if (!fileExists(settingsPath)) {
             settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
         }

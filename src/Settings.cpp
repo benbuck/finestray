@@ -21,9 +21,6 @@
 #include "Log.h"
 #include "Path.h"
 
-// argh
-#include <argh.h>
-
 // cJSON
 #include <cJSON.h>
 
@@ -120,74 +117,6 @@ bool Settings::readFromFile(const std::string & fileName)
     }
 
     return parseJson(json);
-}
-
-bool Settings::parseCommandLine(int argc, const char * const * argv)
-{
-    argh::parser args;
-    for (unsigned int sk = 0; sk < SK_Count; ++sk) {
-        if (!settingsIsFlag_[sk]) {
-            args.add_param(settingKeys_[sk]);
-        }
-    }
-    args.parse(argc, argv);
-
-    for (const std::string & flag : args.flags()) {
-        DEBUG_PRINTF("flag %s\n", flag.c_str());
-        bool found = false;
-        for (unsigned int sk = 0; sk < SK_Count; ++sk) {
-            if (settingsIsFlag_[sk] && ((flag == settingKeys_[sk]) || (flag == std::string("no-") + settingKeys_[sk]))) {
-                found = true;
-                switch (sk) {
-                    case SK_StartWithWindows: {
-                        startWithWindows_ = (flag == settingKeys_[sk]) ? true : false;
-                        break;
-                    }
-                    default: {
-                        WARNING_PRINTF("unexpected flag: %s\n", flag.c_str());
-                        return false;
-                    }
-                }
-                break;
-            }
-        }
-        if (!found) {
-            WARNING_PRINTF("unknown flag: %s\n", flag.c_str());
-            return false;
-        }
-    }
-
-    if (args.pos_args().size() > 1) {
-        WARNING_PRINTF("unexpected command line arguments:\n");
-        for (unsigned int pa = 1; pa < args.pos_args().size(); ++pa) {
-            WARNING_PRINTF("\t%s\n", args.pos_args()[pa].c_str());
-        }
-        return false;
-    }
-
-    const std::string minimizePlacementString =
-        args(settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_)).str();
-    minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
-    if (minimizePlacement_ == MinimizePlacement::None) {
-        WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
-        return false;
-    }
-
-    hotkeyMinimize_ = args(settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_).str();
-    hotkeyRestore_ = args(settingKeys_[SK_HotkeyRestore], hotkeyRestore_).str();
-    modifiersOverride_ = args(settingKeys_[SK_ModifiersOverride], modifiersOverride_).str();
-
-    argh::string_stream pollIntervalArg = args(settingKeys_[SK_PollInterval], pollInterval_);
-    if (!(pollIntervalArg >> pollInterval_)) {
-        WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_PollInterval], pollIntervalArg.str().c_str());
-    }
-
-    // note: "auto-tray" options are not supported on the command line, only in json, since the
-    // complexity of the syntax to support the various selector strings would be unwieldy
-
-    normalize();
-
-    return true;
 }
 
 bool Settings::writeToFile(const std::string & fileName)

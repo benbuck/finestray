@@ -53,7 +53,6 @@ BEGIN
     IDS_ERROR_REGISTER_EVENTHOOK    "Couldn't register event hook"
     IDS_ERROR_CREATE_TRAY_ICON      "Couldn't create tray icon"
     IDS_ERROR_CREATE_POPUP_MENU     "Error creating popup menu"
-    IDS_ERROR_COMMAND_LINE          "Failed to parse command line options"
     IDS_ERROR_CREATE_DIALOG         "Failed to create dialog window"
     IDS_ERROR_LOAD_SETTINGS         "Failed to load settings"
     IDS_ERROR_SAVE_SETTINGS         "Failed to save settings"

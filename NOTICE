@@ -10,8 +10,5 @@ https://www.apache.org/licenses/LICENSE-2.0
 Finestray uses the cJSON library for JSON parsing, which is available under an "MIT" license.
 https://github.com/DaveGamble/cJSON
 
-Finestray uses the Argh! library for command line parsing, which is available under a "3-clause BSD" license.
-https://github.com/adishavit/argh
-
 Finestray uses some Google Noto Emoji for image artwork, which is available under an "OFL 1.1" license.
 https://github.com/googlefonts/noto-emoji

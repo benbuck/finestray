@@ -33,7 +33,6 @@ public:
     bool operator!=(const Settings & rhs) const;
 
     bool readFromFile(const std::string & fileName);
-    bool parseCommandLine(int argc, const char * const * argv);
     bool writeToFile(const std::string & fileName);
 
     void normalize();

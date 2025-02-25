@@ -165,25 +165,6 @@ If the Spy feature doesn't work for you, alternatively you can use another tool 
 [Spy++](https://learn.microsoft.com/en-us/visualstudio/debugger/introducing-spy-increment) which provide more advanced
 window identification features.
 
-### Command Line Options
-
-The same settings that can be set in the Settings window can also be passed on the command line (except for the
-auto-tray settings).
-
-These options are:
-
-- `--start-with-windows` or `--no-start-with-windows`
-- `--hotkey-minimize=[hotkey]`
-- `--hotkey-restore=[hotkey]`
-- `--modifiers-override=[modifiers]`
-- `--poll-interval=[milliseconds]`
-
-Note that if your hotkey or modifiers option has spaces in it, you will need to add double quotes around it. For
-example, `--hotkey-minimize="alt ctrl shift down"`.
-
-Please see the [Settings](#settings) and [Modifiers and Hotkeys](#modifiers-and-hotkeys) sections for an explanation of
-values that can be used for each of these.
-
 ## Limitations
 
 Unfortunately, Finestray can not currently minimize all windows to the tray. Some software creates windows that do not
@@ -197,7 +178,5 @@ Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 Finestray is distributed under the [Apache License, Version 2.0](LICENSE).
 
 Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
-
-Uses the [Argh! library](https://github.com/adishavit/argh) for command line parsing.
 
 Uses some [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for image artwork.

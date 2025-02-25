@@ -12,13 +12,6 @@
 - Handle windows getting restored without Finestray being involved
 - Fix handling of elevated windows
 - Add auto-close feature
-- Add command line support for auto-tray options
-- Add command line support for issuing commands to running app
-- Add command line arg to minimize a specific window to tray right now
-- Add command line arg to restore a window from tray
-- Add command line arg to restore all windows from tray
-- Command line errors and logs should print to console instead of dialog box
-- Save settings changes provided by command line args
 
 ## Legal
 
