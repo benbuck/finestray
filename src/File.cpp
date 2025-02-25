@@ -101,13 +101,7 @@ bool fileExists(const std::string & filename)
     return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-bool directoryExists(const std::string & directory)
-{
-    DWORD attrib = GetFileAttributesA(directory.c_str());
-    return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
-bool deleteFile(const std::string & fileName)
+bool fileDelete(const std::string & fileName)
 {
     if (!DeleteFileA(fileName.c_str())) {
         WARNING_PRINTF(
@@ -118,6 +112,12 @@ bool deleteFile(const std::string & fileName)
     }
 
     return true;
+}
+
+bool directoryExists(const std::string & directory)
+{
+    DWORD attrib = GetFileAttributesA(directory.c_str());
+    return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 std::string getExecutablePath()

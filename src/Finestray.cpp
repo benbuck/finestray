@@ -682,7 +682,7 @@ void updateStartWithWindows()
         if (!fileExists(startupShortcutPath)) {
             DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutPath.c_str());
         } else {
-            if (!deleteFile(startupShortcutPath)) {
+            if (!fileDelete(startupShortcutPath)) {
                 WARNING_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
             }
         }
