@@ -18,6 +18,7 @@
 #include <string>
 
 std::string getAppDataPath();
+std::string getExecutablePath();
 std::string getStartupPath();
 std::string pathJoin(const std::string & path1, const std::string & path2);
 bool createShortcut(const std::string & shortcutPath, const std::string & executablePath);

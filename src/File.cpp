@@ -119,27 +119,3 @@ bool directoryExists(const std::string & directory)
     DWORD attrib = GetFileAttributesA(directory.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
-
-std::string getExecutablePath()
-{
-    CHAR path[MAX_PATH];
-    if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
-        WARNING_PRINTF(
-            "could not get executable path, GetModuleFileNameA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return std::string();
-    }
-
-    char * sep = strrchr(path, '\\');
-    if (!sep) {
-        WARNING_PRINTF("path '%s' has no separator\n", path);
-        return std::string();
-    }
-
-    size_t pathChars = sep - path;
-    std::string exePath;
-    exePath.reserve(pathChars + 1);
-    exePath.resize(pathChars);
-    strncpy_s(&exePath[0], pathChars + 1, path, pathChars);
-    return exePath;
-}
