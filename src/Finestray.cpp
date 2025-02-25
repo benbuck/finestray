@@ -77,6 +77,7 @@ void onMinimizeEvent(
     DWORD dwEventThread,
     DWORD dwmsEventTime);
 void onSettingsDialogComplete(bool success, const Settings & settings);
+std::string getSettingsFilePath();
 std::string getStartupShortcutPath();
 void updateStartWithWindows();
 
@@ -138,8 +139,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         }
     } else {
         // get settings from file
-        std::string exePath = getExecutablePath();
-        std::string settingsPath = pathJoin(exePath, std::string(APP_NAME) + ".json");
+        std::string settingsPath = getSettingsFilePath();
         if (settings_.readFromFile(settingsPath)) {
             DEBUG_PRINTF("read settings from %s\n", settingsPath.c_str());
         } else {
@@ -231,6 +231,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (err) {
         errorMessage(err);
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+    } else {
+        std::string settingsPath = getSettingsFilePath();
+        if (!fileExists(settingsPath)) {
+            settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+        }
     }
 
     // run the message loop
@@ -629,34 +634,47 @@ void onMinimizeEvent(
 
 void onSettingsDialogComplete(bool success, const Settings & settings)
 {
-    if (success && (settings != settings_)) {
-        settings_ = settings;
-        DEBUG_PRINTF("got updated settings from dialog:\n");
-        settings_.normalize();
-        settings_.dump();
+    if (success) {
+        bool settingsChanged = (settings != settings_);
+        std::string settingsPath = getSettingsFilePath();
+        if (settingsChanged || !fileExists(settingsPath)) {
+            if (settingsChanged) {
+                settings_ = settings;
+                DEBUG_PRINTF("got updated settings from dialog:\n");
+                settings_.normalize();
+                settings_.dump();
 
-        // restart to apply new settings
-        stop();
-        int err = start();
-        if (err) {
-            errorMessage(err);
-            settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
-            return;
+                // restart to apply new settings
+                stop();
+                int err = start();
+                if (err) {
+                    errorMessage(err);
+                    settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+                    return;
+                }
+            }
+
+            if (!settings_.writeToFile(settingsPath)) {
+                errorMessage(IDS_ERROR_SAVE_SETTINGS);
+            } else {
+                DEBUG_PRINTF("wrote settings to %s\n", settingsPath.c_str());
+            }
+
+            if (settingsChanged) {
+                updateStartWithWindows();
+
+                MinimizedWindow::updatePlacement(settings_.minimizePlacement_);
+            }
         }
-
-        std::string fileName(std::string(APP_NAME) + ".json");
-        if (!settings_.writeToFile(fileName)) {
-            errorMessage(IDS_ERROR_SAVE_SETTINGS);
-        } else {
-            DEBUG_PRINTF("wrote settings to %s\n", fileName.c_str());
-        }
-
-        updateStartWithWindows();
-
-        MinimizedWindow::updatePlacement(settings_.minimizePlacement_);
     }
 
     settingsDialogWindow_ = nullptr;
+}
+
+std::string getSettingsFilePath()
+{
+    std::string exePath = getExecutablePath();
+    return pathJoin(exePath, std::string(APP_NAME) + ".json");
 }
 
 std::string getStartupShortcutPath()
