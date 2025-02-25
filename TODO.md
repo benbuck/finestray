@@ -1,5 +1,6 @@
 # To do list
 
+- Support package manager (WinGet / Scoop / Chocolatey)
 - Simplify obtaining debug logs
 - Add hotkey to show selectable list of minimized windows
 - Add auto-tray option: when created, when minimized, both
