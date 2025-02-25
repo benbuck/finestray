@@ -154,7 +154,11 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
         normalized += key;
     }
 
-    DEBUG_PRINTF("normalized hotkey '%s' to '%s'\n", hotkeyStr.c_str(), normalized.c_str());
+    if (hotkeyStr == normalized) {
+        DEBUG_PRINTF("hotkey '%s' already normalized\n", hotkeyStr.c_str());
+    } else {
+        DEBUG_PRINTF("normalized hotkey '%s' to '%s'\n", hotkeyStr.c_str(), normalized.c_str());
+    }
     return normalized;
 }
 
