@@ -30,7 +30,7 @@ public:
     ~Settings();
 
     bool operator==(const Settings & rhs) const;
-    bool operator!=(const Settings & rhs) const;
+    bool operator!=(const Settings & rhs) const = default;
 
     bool readFromFile(const std::string & fileName);
     bool writeToFile(const std::string & fileName);
@@ -53,6 +53,7 @@ public:
     static bool fileExists(const std::string & fileName);
 
     bool startWithWindows_;
+    bool logToFile_;
     MinimizePlacement minimizePlacement_;
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;

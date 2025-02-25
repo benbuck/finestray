@@ -67,6 +67,10 @@ The available settings correspond to some of the above features. The settings ar
   startup folder (`shell:Startup`, typically
   `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which which launches the Finestray
   executable.
+- **Enable log file**:
+  This toggles whether Finestray saves logging information to a file or not. If enabled, Finestray first tries to save
+  the log file in the same location as the Finestray application, and if that's not possible it saves to
+  `%APPDATA%\\Finestray\\Finestray.log`.
 - **Minimize placement**:
   This controls where to place minimized windows minimized using Finestray. The choices are:
   - **Tray**: the window will get an icon in the tray.

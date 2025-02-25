@@ -14,21 +14,86 @@
 
 // App
 #include "Log.h"
+#include "HandleWrapper.h"
+#include "Path.h"
+#include "StringUtility.h"
 
 // Windows
 #include <Windows.h>
 
 // Standard library
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
+#include <vector>
 
 namespace
 {
-const char * levelStrings_[] = { "DEBUG - ", "INFO - ", "WARNING - ", "ERROR - " };
+
+bool started_ = false;
+bool enableLogging_ = false;
+HandleWrapper fileHandle_;
+std::vector<std::string> pendingLogs_;
+
 } // anonymous namespace
 
 namespace Log
 {
+
+void start(bool enable, const std::string & fileName)
+{
+    started_ = true;
+
+    if (!enable || fileName.empty()) {
+        enableLogging_ = false;
+        fileHandle_.close();
+        pendingLogs_.clear();
+        return;
+    }
+
+    if (fileHandle_ != INVALID_HANDLE_VALUE) {
+        WARNING_PRINTF("logging already started\n");
+        enableLogging_ = true;
+        assert(pendingLogs_.empty());
+        return;
+    }
+
+    std::string writeablePath = getWriteablePath();
+    if (writeablePath.empty()) {
+        WARNING_PRINTF("no writeable path found, logging to file disabled\n");
+        enableLogging_ = false;
+        pendingLogs_.clear();
+        return;
+    }
+
+    std::string logFilePath = pathJoin(writeablePath, fileName);
+
+    HandleWrapper fileHandle(
+        CreateFileA(logFilePath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
+
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        WARNING_PRINTF(
+            "could not open log file '%s' for writing, CreateFileA() failed: %s\n",
+            logFilePath.c_str(),
+            StringUtility::lastErrorString().c_str());
+        enableLogging_ = false;
+        pendingLogs_.clear();
+        return;
+    }
+
+    DEBUG_PRINTF("logging to file '%s'\n", logFilePath.c_str());
+    fileHandle_ = std::move(fileHandle);
+    assert(fileHandle_ != INVALID_HANDLE_VALUE);
+    enableLogging_ = true;
+
+    for (size_t p = 0; p < pendingLogs_.size(); ++p) {
+        const std::string & pendingLog = pendingLogs_[p];
+        DWORD bytesWritten = 0;
+        WriteFile(fileHandle_, pendingLog.c_str(), (DWORD)pendingLog.size(), &bytesWritten, nullptr);
+        assert(bytesWritten == pendingLog.size());
+    }
+    pendingLogs_.clear();
+}
 
 void printf(Level level, const char * fmt, ...)
 {
@@ -55,18 +120,40 @@ void print(Level level, const char * str)
     snprintf(
         timeStr,
         sizeof(timeStr),
-        "%02u:%02u:%02u.%03u - ",
+        "%02u:%02u:%02u.%03u",
         systemTime.wHour,
         systemTime.wMinute,
         systemTime.wSecond,
         systemTime.wMilliseconds);
-    OutputDebugStringA(timeStr);
 
-    if ((level >= Level::Debug) && (level <= Level::Error)) {
-        OutputDebugStringA(levelStrings_[(unsigned int)level]);
+    const char * levelString;
+    switch (level) {
+        case Level::Debug: levelString = "DEBUG  "; break;
+        case Level::Info: levelString = "INFO   "; break;
+        case Level::Warning: levelString = "WARNING"; break;
+        case Level::Error: levelString = "ERROR  "; break;
+        default: {
+            levelString = "UNKNOWN";
+            __debugbreak();
+            break;
+        }
     }
 
-    OutputDebugStringA(str);
+    std::string line = std::string(timeStr) + " - " + levelString + " - " + str;
+
+    OutputDebugStringA(line.c_str());
+
+    if (!started_) {
+        pendingLogs_.push_back(line);
+        return;
+    }
+
+    if (enableLogging_) {
+        assert(fileHandle_ != INVALID_HANDLE_VALUE);
+        DWORD bytesWritten = 0;
+        WriteFile(fileHandle_, line.c_str(), (DWORD)line.size(), &bytesWritten, nullptr);
+        assert(bytesWritten == line.size());
+    }
 }
 
 } // namespace Log

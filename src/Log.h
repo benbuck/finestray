@@ -14,19 +14,18 @@
 
 #pragma once
 
-#if defined(NDEBUG)
-#define DEBUG_PRINTF(fmt, ...)
-#define INFO_PRINTF(fmt, ...)
-#else
+// Standard library
+#include <string>
+
 #define DEBUG_PRINTF(fmt, ...) Log::printf(Log::Level::Debug, fmt, ##__VA_ARGS__)
 #define INFO_PRINTF(fmt, ...) Log::printf(Log::Level::Info, fmt, ##__VA_ARGS__)
-#endif
-
 #define WARNING_PRINTF(fmt, ...) Log::printf(Log::Level::Warning, fmt, ##__VA_ARGS__)
 #define ERROR_PRINTF(fmt, ...) Log::printf(Log::Level::Error, fmt, ##__VA_ARGS__)
 
 namespace Log
 {
+
+void start(bool enable, const std::string & fileName);
 
 enum class Level
 {

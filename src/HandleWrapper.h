@@ -23,17 +23,34 @@
 class HandleWrapper
 {
 public:
+    HandleWrapper() = default;
+
     explicit HandleWrapper(HANDLE handle)
         : handle_(handle)
     {
     }
 
-    ~HandleWrapper()
+    ~HandleWrapper() { close(); }
+
+    HandleWrapper & operator=(HandleWrapper && other)
+    {
+        close();
+
+        handle_ = other.handle_;
+        other.handle_ = INVALID_HANDLE_VALUE;
+
+        return *this;
+    }
+
+    void close()
     {
         if (handle_ != INVALID_HANDLE_VALUE) {
             if (!CloseHandle((HANDLE)handle_)) {
                 WARNING_PRINTF("failed to close handle: %#x\n", handle_);
+                return;
             }
+
+            handle_ = INVALID_HANDLE_VALUE;
         }
     }
 

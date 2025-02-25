@@ -408,6 +408,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 int start()
 {
+    Log::start(settings_.logToFile_, APP_NAME ".log");
+
     // register a hotkey that will be used to minimize windows
     UINT vkMinimize = VK_DOWN;
     UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;

@@ -126,6 +126,10 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
+            if (!CheckDlgButton(dialogHwnd, IDC_LOG_TO_FILE, settings_.logToFile_ ? BST_CHECKED : BST_UNCHECKED)) {
+                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+
             int checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
             switch (settings_.minimizePlacement_) {
                 case MinimizePlacement::Tray: checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY; break;
@@ -180,6 +184,11 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     case IDC_START_WITH_WINDOWS: {
                         settings_.startWithWindows_ = IsDlgButtonChecked(dialogHwnd, IDC_START_WITH_WINDOWS) ==
                             BST_CHECKED;
+                        break;
+                    }
+
+                    case IDC_LOG_TO_FILE: {
+                        settings_.logToFile_ = IsDlgButtonChecked(dialogHwnd, IDC_LOG_TO_FILE) == BST_CHECKED;
                         break;
                     }
 
