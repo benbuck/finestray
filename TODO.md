@@ -8,7 +8,6 @@
 - Add option to make tray icons persistent even when window is restored
 - Use different popup menu for trayed icons
 - Find a way to properly minimize UWP app windows
-- Handle windows getting restored without Finestray being involved
 - Fix handling of elevated windows
 - Add auto-close feature
 

@@ -25,16 +25,23 @@
 namespace
 {
 
-VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
-BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
+struct WindowData
+{
+    std::string title;
+    bool visible;
+};
 
 HWND hwnd_;
 UINT pollMillis_;
 void (*addWindowCallback_)(HWND);
 void (*removeWindowCallback_)(HWND);
 void (*changeWindowTitleCallback_)(HWND, const std::string &);
+void (*changeWindowVisibilityCallback_)(HWND, bool);
 UINT_PTR timer_;
-std::map<HWND, std::string> windowList_;
+std::map<HWND, WindowData> windowList_;
+
+VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
+BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 } // anonymous namespace
 
@@ -46,13 +53,15 @@ void start(
     UINT pollMillis,
     void (*addWindowCallback)(HWND),
     void (*removeWindowCallback)(HWND),
-    void (*changeWindowTitleCallback)(HWND, const std::string &))
+    void (*changeWindowTitleCallback)(HWND, const std::string &),
+    void (*changeVisibilityCallback)(HWND, bool))
 {
     hwnd_ = hwnd;
     pollMillis_ = pollMillis;
     addWindowCallback_ = addWindowCallback;
     removeWindowCallback_ = removeWindowCallback;
     changeWindowTitleCallback_ = changeWindowTitleCallback;
+    changeWindowVisibilityCallback_ = changeVisibilityCallback;
 
     if (pollMillis_ > 0) {
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
@@ -84,14 +93,14 @@ namespace
 
 VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
-    std::map<HWND, std::string> newWindowList;
+    std::map<HWND, WindowData> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
         WARNING_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
     if (removeWindowCallback_) {
-        for (std::pair<HWND, std::string> window : windowList_) {
+        for (std::pair<HWND, WindowData> window : windowList_) {
             if (newWindowList.find(window.first) == newWindowList.end()) {
                 // removed window found
                 removeWindowCallback_(window.first);
@@ -101,7 +110,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
     // check for added windows
     if (addWindowCallback_) {
-        for (std::pair<HWND, std::string> window : newWindowList) {
+        for (std::pair<HWND, WindowData> window : newWindowList) {
             if (windowList_.find(window.first) == windowList_.end()) {
                 // added window found
                 addWindowCallback_(window.first);
@@ -109,15 +118,18 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
         }
     }
 
-    // check for changed window titles
-    if (changeWindowTitleCallback_) {
-        for (std::pair<HWND, std::string> window : newWindowList) {
+    // check for changed window titles or visibility
+    if (changeWindowTitleCallback_ || changeWindowVisibilityCallback_) {
+        for (std::pair<HWND, WindowData> window : newWindowList) {
             auto it = windowList_.find(window.first);
             if (it != windowList_.end()) {
                 // existing window found
-                if (it->second != window.second) {
+                if (it->second.title != window.second.title) {
                     // window title changed
-                    changeWindowTitleCallback_(window.first, window.second);
+                    changeWindowTitleCallback_(window.first, window.second.title);
+                } else if (it->second.visible != window.second.visible) {
+                    // window visibility changed
+                    changeWindowVisibilityCallback_(window.first, window.second.visible);
                 }
             }
         }
@@ -129,7 +141,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    if (!IsWindowVisible(hwnd) && windowList_.find(hwnd) == windowList_.end()) {
+    if (!IsWindowVisible(hwnd) && (windowList_.find(hwnd) == windowList_.end())) {
         // DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
         return TRUE;
     }
@@ -140,8 +152,9 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
         return TRUE;
     }
 
-    std::map<HWND, std::string> & windowList = *(std::map<HWND, std::string> *)lParam;
-    windowList[hwnd] = title;
+    std::map<HWND, WindowData> & windowList = *(std::map<HWND, WindowData> *)lParam;
+    windowList[hwnd].title = title;
+    windowList[hwnd].visible = IsWindowVisible(hwnd);
 
     return TRUE;
 }

@@ -99,9 +99,11 @@ void remove(HWND hwnd)
     MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
         WARNING_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
-    } else {
-        minimizedWindows_.erase(it);
+        return;
     }
+
+    DEBUG_PRINTF("removing minimized window %#x\n", hwnd);
+    minimizedWindows_.erase(it);
 }
 
 void addAll(MinimizePlacement minimizePlacement)

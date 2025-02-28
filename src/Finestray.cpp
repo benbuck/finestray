@@ -67,6 +67,7 @@ bool windowShouldAutoTray(HWND hwnd);
 void onAddWindow(HWND hwnd);
 void onRemoveWindow(HWND hwnd);
 void onChangeWindowTitle(HWND hwnd, const std::string & title);
+void onChangeVisibility(HWND hwnd, bool visible);
 void onMinimizeEvent(
     HWINEVENTHOOK hwineventhook,
     DWORD event,
@@ -451,7 +452,7 @@ int start()
         return IDS_ERROR_REGISTER_MODIFIER;
     }
 
-    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle);
+    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
 
     return 0;
 }
@@ -582,6 +583,15 @@ void onChangeWindowTitle(HWND hwnd, const std::string & title)
     if (MinimizedWindow::exists(hwnd)) {
         DEBUG_PRINTF("\tupdating title\n");
         MinimizedWindow::updateTitle(hwnd, title);
+    }
+}
+
+void onChangeVisibility(HWND hwnd, bool visible)
+{
+    DEBUG_PRINTF("changed window visibility: %#x to %s\n", hwnd, StringUtility::boolToCString(visible));
+
+    if (visible && MinimizedWindow::exists(hwnd)) {
+        MinimizedWindow::remove(hwnd);
     }
 }
 

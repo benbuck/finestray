@@ -28,7 +28,8 @@ void start(
     UINT pollMillis,
     void (*addWindowCallback)(HWND),
     void (*removeWindowCallback)(HWND),
-    void (*changeWindowTitleCallback)(HWND, const std::string &));
+    void (*changeWindowTitleCallback)(HWND, const std::string &),
+    void (*changeVisibilityCallback)(HWND, bool));
 void stop();
 
 } // namespace WindowList
