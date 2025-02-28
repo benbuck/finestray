@@ -21,6 +21,8 @@
 namespace StringUtility
 {
 
+inline char const * boolToCString(bool b) { return b ? "true" : "false"; }
+
 std::string toLower(const std::string & s);
 std::string trim(const std::string & s);
 std::vector<std::string> split(const std::string & s, const std::string & delimiters);

@@ -20,6 +20,7 @@
 #include "Hotkey.h"
 #include "Log.h"
 #include "Path.h"
+#include "StringUtility.h"
 
 // cJSON
 #include <cJSON.h>
@@ -184,8 +185,8 @@ void Settings::dump()
 {
 #if !defined(NDEBUG)
     DEBUG_PRINTF("Settings:\n");
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], startWithWindows_ ? "true" : "false");
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], logToFile_ ? "true" : "false");
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
