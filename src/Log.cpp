@@ -69,7 +69,7 @@ void start(bool enable, const std::string & fileName)
     std::string logFilePath = pathJoin(writeablePath, fileName);
 
     HandleWrapper fileHandle(
-        CreateFileA(logFilePath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
+        CreateFileA(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
 
     if (fileHandle == INVALID_HANDLE_VALUE) {
         WARNING_PRINTF(
