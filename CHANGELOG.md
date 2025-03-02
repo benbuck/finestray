@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Change history
 
-## Unreleased
+## [Unreleased]
 
 ## [0.2] - 2025-03-01
 
@@ -23,8 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public pre-release
 
-[unreleased]: <https://github.com/benbuck/finestray/compare/v0.2...HEAD
-[0.2]: <https://github.com/benbuck/finestray/compare/v0.1...v0.2>
+[unreleased]: https://github.com/benbuck/finestray/compare/v0.2...HEAD
+[0.2]: https://github.com/benbuck/finestray/compare/v0.1...v0.2
 [0.1]: https://github.com/benbuck/finestray/releases/tag/v0.1
 
 # Legal
