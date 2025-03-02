@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2]: https://github.com/benbuck/finestray/compare/v0.1...v0.2
 [0.1]: https://github.com/benbuck/finestray/releases/tag/v0.1
 
-# Legal
+## Legal
 
 Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
 
