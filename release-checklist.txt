@@ -1,3 +1,5 @@
+- Update images in README.md
+
 - Update CHANGELOG.md
 
 - Update version information:
