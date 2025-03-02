@@ -1,0 +1,22 @@
+- Update CHANGELOG.md
+
+- Update version information:
+
+    Finestray.rc
+        APP_VERSION
+        APP_VERSION_STRING
+        APP_VERSION_STRING_SIMPLE
+        APP_DATE
+
+    CMakeLists.txt
+        VERSION
+
+- Commit above changes
+
+- Build everything
+
+- Test app and installer
+
+- Add git tag
+
+- Push with tag
