@@ -18,5 +18,11 @@
 - Test app and installer
 
 - Add git tag
+    git tag v[x.y]
 
-- Push with tag
+- Push with tag, push branch
+    git push --tags
+    git push
+
+- Update release notes:
+    https://github.com/benbuck/finestray/releases
