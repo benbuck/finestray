@@ -50,6 +50,7 @@ enum SettingKeys : unsigned int
     SK_WindowTitle,
     SK_HotkeyMinimize,
     SK_HotkeyRestore,
+    SK_HotkeyMenu,
     SK_ModifiersOverride,
     SK_PollInterval,
     SK_AutoTray,
@@ -62,12 +63,14 @@ const bool logToFileDefault_ = false;
 const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
 const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
 const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
+const char hotkeyMenuDefault_[] = "alt ctrl shift home";
 const char modifiersOverrideDefault_[] = "alt ctrl shift";
 const unsigned int pollIntervalDefault_ = 500;
 const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
-const char * settingKeys_[SK_Count] = { "start-with-windows", "log-to-file",   "minimize-placement", "executable",
-                                        "window-class",       "window-title",  "hotkey-minimize",    "hotkey-restore",
-                                        "modifiers-override", "poll-interval", "auto-tray" };
+const char * settingKeys_[SK_Count] = { "start-with-windows", "log-to-file",    "minimize-placement",
+                                        "executable",         "window-class",   "window-title",
+                                        "hotkey-minimize",    "hotkey-restore", "hotkey-menu",
+                                        "modifiers-override", "poll-interval",  "auto-tray" };
 
 } // anonymous namespace
 
@@ -77,6 +80,7 @@ Settings::Settings()
     , minimizePlacement_(minimizePlacementDefault_)
     , hotkeyMinimize_(hotkeyMinimizeDefault_)
     , hotkeyRestore_(hotkeyRestoreDefault_)
+    , hotkeyMenu_(hotkeyMenuDefault_)
     , modifiersOverride_(modifiersOverrideDefault_)
     , pollInterval_(pollIntervalDefault_)
     , autoTrays_()
@@ -95,8 +99,9 @@ bool Settings::operator==(const Settings & rhs) const
 
     return (startWithWindows_ == rhs.startWithWindows_) && (logToFile_ == rhs.logToFile_) &&
         (minimizePlacement_ == rhs.minimizePlacement_) && (hotkeyMinimize_ == rhs.hotkeyMinimize_) &&
-        (hotkeyRestore_ == rhs.hotkeyRestore_) && (modifiersOverride_ == rhs.modifiersOverride_) &&
-        (pollInterval_ == rhs.pollInterval_) && (autoTrays_ == rhs.autoTrays_);
+        (hotkeyRestore_ == rhs.hotkeyRestore_) && (hotkeyMenu_ == rhs.hotkeyMenu_) &&
+        (modifiersOverride_ == rhs.modifiersOverride_) && (pollInterval_ == rhs.pollInterval_) &&
+        (autoTrays_ == rhs.autoTrays_);
 }
 
 bool Settings::readFromFile(const std::string & fileName)
@@ -168,6 +173,7 @@ void Settings::normalize()
 
     hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
     hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
+    hotkeyMenu_ = Hotkey::normalize(hotkeyMenu_);
     modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
 
     for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
@@ -190,6 +196,7 @@ void Settings::dump()
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
 
@@ -233,6 +240,7 @@ bool Settings::parseJson(const std::string & json)
 
     hotkeyMinimize_ = getString(cjson, settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     hotkeyRestore_ = getString(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    hotkeyMenu_ = getString(cjson, settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
     pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
 
@@ -286,6 +294,9 @@ std::string Settings::constructJSON()
         fail = true;
     }
     if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str())) {
         fail = true;
     }
     if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {

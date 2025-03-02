@@ -23,6 +23,8 @@ to their normal placement:
 - **Restore hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
   will be restored to its prior location.
+- **Menu hotkey**:
+  Press the configurable hotkey (typically Alt+Ctrl+Shift+Home) to show the [Context menu](#context-menu).
 - **Override modifier**:
   Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of a
   window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
@@ -35,10 +37,16 @@ to their normal placement:
 - **Auto-trays**:
   This feature allows specific windows to be minimized to the tray as soon as they appear or when they are minimized.
   Please see the [Auto-tray Settings](#auto-tray-settings) section for more information.
-- **Context menu**:
-  For any of the tray icons created by Finestray, including its own, you can right click on it to see the context menu.
+- **Icon menu**:
+  For any of the tray icons created by Finestray, including its own, you can right click on it to see the [Context menu]
+  (#context-menu).
 
-  ![Context menu](src/images/context-menu.png "Context menu")
+## Context Menu
+
+The context menu is accessible by right clicking on any of the tray icons that Finestray creates, or by activating the
+associated hotkey. When shown, the context menu looks like this:
+
+![Context menu](src/images/context-menu.png "Context menu")
 
 From the context menu, you can select one of the menu items:
 
@@ -81,6 +89,9 @@ The available settings correspond to some of the above features. The settings ar
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Restore hotkey**:
   This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+- **Menu hotkey**:
+  This lets you configure the hotkey that is used to show the [Context menu](#context-menu). Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Override modifier**:
   This lets you configure the modifier that is used to override some Finestray behavior. Please see the

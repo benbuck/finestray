@@ -57,7 +57,8 @@ namespace
 enum class HotkeyID
 {
     Minimize = 1,
-    Restore
+    Restore,
+    Menu
 };
 
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -84,10 +85,12 @@ void updateStartWithWindows();
 WindowHandleWrapper appWindow_;
 TrayIcon trayIcon_;
 WindowHandleWrapper settingsDialogWindow_;
+bool contextMenuActive_;
 Settings settings_;
 std::set<HWND> autoTrayedWindows_;
 Hotkey hotkeyMinimize_;
 Hotkey hotkeyRestore_;
+Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
 
@@ -338,6 +341,17 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
+                case HotkeyID::Menu: {
+                    if (contextMenuActive_) {
+                        WARNING_PRINTF("context menu already active, ignoring hotkey\n");
+                        break;
+                    }
+                    if (!showContextMenu(hwnd, settings_.minimizePlacement_)) {
+                        errorMessage(IDS_ERROR_CREATE_MENU);
+                    }
+                    break;
+                }
+
                 default: {
                     WARNING_PRINTF("invalid hotkey id %d\n", hkid);
                     break;
@@ -350,8 +364,12 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch ((UINT)lParam) {
                 // user activated context menu
                 case WM_CONTEXTMENU: {
+                    if (contextMenuActive_) {
+                        WARNING_PRINTF("context menu already active, ignoring\n");
+                        break;
+                    }
                     if (!showContextMenu(hwnd, settings_.minimizePlacement_)) {
-                        errorMessage(IDS_ERROR_CREATE_POPUP_MENU);
+                        errorMessage(IDS_ERROR_CREATE_MENU);
                     }
                     break;
                 }
@@ -396,6 +414,17 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
 
+        case WM_ENTERMENULOOP: {
+            DEBUG_PRINTF("Context menu active\n");
+            contextMenuActive_ = true;
+            break;
+        }
+        case WM_EXITMENULOOP: {
+            DEBUG_PRINTF("Context menu inactive\n");
+            contextMenuActive_ = false;
+            break;
+        }
+
         default: {
             if (uMsg == taskbarCreatedMessage_) {
                 MinimizedWindow::addAll(settings_.minimizePlacement_);
@@ -435,6 +464,20 @@ int start()
         INFO_PRINTF("no hotkey to restore windows\n");
     } else {
         if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+            return IDS_ERROR_REGISTER_HOTKEY;
+        }
+    }
+
+    // register a hotkey that will be used to show the context menu
+    UINT vkMenu = VK_HOME;
+    UINT modifiersMenu = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyMenu_, vkMenu, modifiersMenu)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (!vkMenu || !modifiersMenu) {
+        INFO_PRINTF("no hotkey to Menu windows\n");
+    } else {
+        if (!hotkeyMenu_.create((INT)HotkeyID::Menu, appWindow_, vkMenu, modifiersMenu | MOD_NOREPEAT)) {
             return IDS_ERROR_REGISTER_HOTKEY;
         }
     }

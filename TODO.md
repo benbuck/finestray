@@ -2,7 +2,6 @@
 
 - Support package manager (WinGet / Scoop / Chocolatey)
 - Investigate VirusTotal results for installer
-- Add hotkey to show selectable list of minimized windows
 - Add auto-tray option: when created, when minimized, both
 - Add reset button to settings dialog
 - Add option to make tray icons persistent even when window is restored
