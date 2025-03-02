@@ -506,6 +506,7 @@ void stop()
 
     hotkeyRestore_.destroy();
     hotkeyMinimize_.destroy();
+    hotkeyMenu_.destroy();
 }
 
 bool windowShouldAutoTray(HWND hwnd)
