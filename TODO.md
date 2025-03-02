@@ -1,5 +1,7 @@
 # To do list
 
+- Delete log file on uninstall
+- Specify which hotkey on registration failure
 - Support package manager (WinGet / Scoop / Chocolatey)
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
