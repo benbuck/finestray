@@ -91,7 +91,7 @@ The available settings correspond to some of the above features. The settings ar
   This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Restore hotkey**:
-  This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
+  This lets you configure the hotkey that is used to restore a window to it's original state. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Menu hotkey**:
   This lets you configure the hotkey that is used to show the [Context menu](#context-menu). Please see the
