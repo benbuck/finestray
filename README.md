@@ -47,7 +47,8 @@ to their normal placement:
 ## Context Menu
 
 The context menu is accessible by right clicking on any of the tray icons that Finestray creates, or by activating the
-associated hotkey. When shown, the context menu looks like this:
+associated hotkey. When shown, the context menu looks like this, but it could have more items depending on various
+factors:
 
 ![Context menu](src/images/context-menu.png "Context menu")
 
