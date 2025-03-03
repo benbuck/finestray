@@ -1,15 +1,14 @@
 # To do list
 
+- Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection
 - Specify which hotkey on registration failure
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
 - Add reset button to settings dialog
 - Add option to make tray icons persistent even when window is restored
-- Use different popup menu for trayed icons
 - Find a way to properly minimize UWP app windows
 - Fix handling of elevated windows
-- Add auto-close feature
 
 ## Legal
 
