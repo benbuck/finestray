@@ -2,7 +2,6 @@
 
 - Improve method for spy window selection
 - Specify which hotkey on registration failure
-- Support package manager (WinGet / Scoop / Chocolatey)
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
 - Add reset button to settings dialog

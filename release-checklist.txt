@@ -28,3 +28,5 @@
 
 - Update release notes:
     https://github.com/benbuck/finestray/releases
+
+- Deploy winget package using wingetcreate
