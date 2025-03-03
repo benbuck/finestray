@@ -24,6 +24,7 @@ constexpr WORD IDM_APP = 0x1001;
 constexpr WORD IDM_SETTINGS = 0x1002;
 constexpr WORD IDM_ABOUT = 0x1003;
 constexpr WORD IDM_EXIT = 0x1004;
-constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1005;
+constexpr WORD IDM_RESTORE_ALL = 0x1005;
+constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1006;
 
 bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement);

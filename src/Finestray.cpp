@@ -253,17 +253,22 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_COMMAND: {
             WORD id = LOWORD(wParam);
             switch (id) {
-                case IDM_SETTINGS: {
-                    if (!settingsDialogWindow_) {
-                        settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
-                    }
-                    break;
-                }
-
                 // about dialog
                 case IDM_APP:
                 case IDM_ABOUT: {
                     showAboutDialog(hwnd);
+                    break;
+                }
+
+                case IDM_RESTORE_ALL: {
+                    MinimizedWindow::restoreAll();
+                    break;
+                }
+
+                case IDM_SETTINGS: {
+                    if (!settingsDialogWindow_) {
+                        settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
+                    }
                     break;
                 }
 

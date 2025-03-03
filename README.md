@@ -52,6 +52,9 @@ From the context menu, you can select one of the menu items:
 
 - **Finestray**:
   Shows a some basic information about Finestray.
+- **Restore all**
+  Restores all minimized windows to their original states. This menu item won't be available if there are no minimized
+  windows.
 - **Settings**:
   Shows the [Settings](#settings) window.
 - **Exit**:

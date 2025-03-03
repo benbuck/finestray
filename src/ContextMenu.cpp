@@ -47,9 +47,10 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
         return false;
     }
 
+    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
         unsigned int count = 0;
-        std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
         for (HWND minimizedWindow : minimizedWindows) {
             std::string title = getWindowText(minimizedWindow);
             constexpr size_t maxTitleLength = 30;
@@ -92,6 +93,15 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
         }
     }
 
+    if (!minimizedWindows.empty()) {
+        if (!AppendMenuA(menu, MF_STRING, IDM_RESTORE_ALL, getResourceString(IDS_MENU_RESTORE_ALL).c_str())) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+    }
+
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
@@ -103,10 +113,11 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
     }
 
     BitmapHandleWrapper appBitmap(getResourceBitmap(IDB_APP));
+    BitmapHandleWrapper restoreBitmap(getResourceBitmap(IDB_RESTORE));
     BitmapHandleWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
     BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
-    if (!appBitmap || !settingsBitmap || !exitBitmap) {
+    if (!appBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         COLORREF oldColor = RGB(0xFF, 0xFF, 0xFF);
@@ -130,6 +141,15 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
             WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
+        }
+
+        if (!minimizedWindows.empty()) {
+            menuItemInfo.hbmpItem = restoreBitmap;
+            if (!SetMenuItemInfoA(menu, IDM_RESTORE_ALL, FALSE, &menuItemInfo)) {
+                WARNING_PRINTF(
+                    "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+            }
         }
 
         menuItemInfo.hbmpItem = settingsBitmap;

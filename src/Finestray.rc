@@ -29,11 +29,13 @@ IDI_FINESTRAY ICON "Finestray.ico"
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDB_APP BITMAP app.bmp
-IDB_EXIT BITMAP exit.bmp
+IDB_RESTORE BITMAP restore.bmp
 IDB_SETTINGS BITMAP settings.bmp
+IDB_EXIT BITMAP exit.bmp
 
 STRINGTABLE
 BEGIN
+    IDS_MENU_RESTORE_ALL            "Restore All"
     IDS_MENU_SETTINGS               "Settings"
     IDS_MENU_EXIT                   "Exit"
     IDS_ABOUT_CAPTION               "About " APP_NAME
