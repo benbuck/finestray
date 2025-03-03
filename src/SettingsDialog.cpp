@@ -156,6 +156,9 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
                 WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE_ALL, settings_.hotkeyRestoreAll_.c_str())) {
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MENU, settings_.hotkeyMenu_.c_str())) {
                 WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
@@ -252,6 +255,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
 
                         settings_.hotkeyMinimize_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MINIMIZE);
                         settings_.hotkeyRestore_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE);
+                        settings_.hotkeyRestoreAll_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE_ALL);
                         settings_.hotkeyMenu_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MENU);
                         settings_.modifiersOverride_ = getDialogItemText(dialogHwnd, IDC_MODIFIER_OVERRIDE);
                         settings_.pollInterval_ = std::stoul(getDialogItemText(dialogHwnd, IDC_POLL_INTERVAL));

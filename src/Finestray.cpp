@@ -58,6 +58,7 @@ enum class HotkeyID
 {
     Minimize = 1,
     Restore,
+    RestoreAll,
     Menu
 };
 
@@ -90,6 +91,7 @@ Settings settings_;
 std::set<HWND> autoTrayedWindows_;
 Hotkey hotkeyMinimize_;
 Hotkey hotkeyRestore_;
+Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
@@ -346,6 +348,12 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
+                case HotkeyID::RestoreAll: {
+                    INFO_PRINTF("hotkey restore all\n");
+                    MinimizedWindow::restoreAll();
+                    break;
+                }
+
                 case HotkeyID::Menu: {
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
@@ -473,6 +481,21 @@ int start()
         }
     }
 
+    // register a hotkey that will be used to restore all windows
+    UINT vkRestoreAll = VK_LEFT;
+    UINT modifiersRestoreAll = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyRestoreAll_, vkRestoreAll, modifiersRestoreAll)) {
+        return IDS_ERROR_REGISTER_HOTKEY;
+    }
+    if (!vkRestoreAll || !modifiersRestoreAll) {
+        INFO_PRINTF("no hotkey to restore all windows\n");
+    } else {
+        if (!hotkeyRestoreAll_
+                 .create((INT)HotkeyID::RestoreAll, appWindow_, vkRestoreAll, modifiersRestoreAll | MOD_NOREPEAT)) {
+            return IDS_ERROR_REGISTER_HOTKEY;
+        }
+    }
+
     // register a hotkey that will be used to show the context menu
     UINT vkMenu = VK_HOME;
     UINT modifiersMenu = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
@@ -510,6 +533,7 @@ void stop()
     WindowList::stop();
 
     hotkeyRestore_.destroy();
+    hotkeyRestoreAll_.destroy();
     hotkeyMinimize_.destroy();
     hotkeyMenu_.destroy();
 }

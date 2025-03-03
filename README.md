@@ -23,6 +23,9 @@ to their normal placement:
 - **Restore hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
   will be restored to its prior location.
+- **Restore all hotkey**:
+  Press the configurable hotkey (typically Alt+Ctrl+Shift+Left), and all of the minimized windows will be restored to
+  their prior locations.
 - **Menu hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Home) to show the [Context menu](#context-menu).
 - **Override modifier**:
