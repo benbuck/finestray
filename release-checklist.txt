@@ -13,6 +13,9 @@
     CMakeLists.txt
         VERSION
 
+    README.md
+        Installer file name
+
 - Commit above changes
 
 - Build everything

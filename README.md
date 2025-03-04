@@ -9,9 +9,24 @@ reduce visual clutter.
 > This is a pre-release version, so it will likely have problems. Please report any
 > [issues](https://github.com/benbuck/finestray/issues) that you find.
 
+## Installation
+
+There are three ways to get Finestray:
+
+1) Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). The installer
+   is named Finestray-0.2-Win64.exe. Once you have downloaded the file, you will need to run it and go through the
+   prompts to complete the installation. After installation completes, Finestray should launch automatically.
+2) Using the portable executable from [Finestray release page](https://github.com/benbuck/finestray/releases). The
+   portable executable is named Finestray.exe. Place it wherever you prefer on your system, and run it from there.
+3) Using winget. From a Windows shell: ```winget install finestray```. After installation completes, Finestray should
+   launch automatically.
+
 ## Basic Operation
 
-After launching the Finestray application, it will add an icon for itself to your tray. The icon looks like this:
+The first time Finestray starts (whenever you don't have any saved settings), it should display the
+[Settings](#settings) window.
+
+Whenever you run Finestray, it will add an icon for itself to your tray. The icon looks like this:
 ![Finestray icon](src/images/icon.png "Finestray icon")
 
 Finestray supports a number of features to help you control when to minimize windows to the tray and restore them back
@@ -176,11 +191,12 @@ window will minimize the standard way instead of to the tray.
 ### Spy feature
 
 If you don't know the executable, class, or title of a window, or just would like help filling those values, you can use
-the Spy feature. To use it, first open the Settings window, then press the "Spy" button. This will close the Settings
-window, then show you a message explaining that Spy mode is active, and that you can click on any window to select it.
-Press the "OK" button of that message, and then click on the window you want to obtain the executable, class, and title
-of. Once you have done that, the Settings window should re-appear, and those values should be filled in. You can modify
-them if you like, or leave them alone, and then press the Add button to create a new Auto-tray item for that window.
+the Spy feature. To use it, first open the [Settings](#settings) window, then press the "Spy" button. This will close
+the Settings window, then show you a message explaining that Spy mode is active, and that you can click on any window to
+select it. Press the "OK" button of that message, and then click on the window you want to obtain the executable, class,
+and title of. Once you have done that, the Settings window should re-appear, and those values should be filled in. You
+can modify them if you like, or leave them alone, and then press the Add button to create a new Auto-tray item for that
+window.
 
 If the Spy feature doesn't work for you, alternatively you can use another tool like
 [Window Spy](https://amourspirit.github.io/AutoHotkey-Snippit/WindowSpy.html) or
