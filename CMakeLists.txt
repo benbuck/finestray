@@ -16,6 +16,8 @@ cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     cmake_policy(SET CMP0117 NEW) # /GR (RTTI) is not added to CMAKE_CXX_FLAGS by default
 endif()
