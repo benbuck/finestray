@@ -1,5 +1,6 @@
 # To do list
 
+- Don't limit paths to MAX_PATH
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection
 - Specify which hotkey on registration failure
