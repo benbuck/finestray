@@ -114,9 +114,9 @@ bool Settings::readFromFile(const std::string & fileName)
     std::string json;
     json = fileRead(fileName);
     if (json.empty()) {
-        std::string appDataPath = pathJoin(getAppDataPath(), APP_NAME);
-        std::string appDataFileName = pathJoin(appDataPath, fileName);
-        json = fileRead(appDataFileName);
+        std::string appDataDir = pathJoin(getAppDataDir(), APP_NAME);
+        std::string appDataFullPath = pathJoin(appDataDir, fileName);
+        json = fileRead(appDataFullPath);
         if (json.empty()) {
             return false;
         }
@@ -137,18 +137,18 @@ bool Settings::writeToFile(const std::string & fileName)
     }
 
     if (!fileWrite(fileName, json)) {
-        std::string appDataPath = pathJoin(getAppDataPath(), APP_NAME);
-        if (!directoryExists(appDataPath)) {
-            if (!CreateDirectoryA(appDataPath.c_str(), nullptr)) {
+        std::string appDataDir = pathJoin(getAppDataDir(), APP_NAME);
+        if (!directoryExists(appDataDir)) {
+            if (!CreateDirectoryA(appDataDir.c_str(), nullptr)) {
                 WARNING_PRINTF(
                     "could not create directory '%s', CreateDirectoryA() failed: %s\n",
-                    appDataPath.c_str(),
+                    appDataDir.c_str(),
                     GetLastError());
                 return false;
             }
         }
-        std::string appDataFileName = pathJoin(appDataPath, fileName);
-        if (!fileWrite(appDataFileName, json)) {
+        std::string appDataFullPath = pathJoin(appDataDir, fileName);
+        if (!fileWrite(appDataFullPath, json)) {
             return false;
         }
     }
@@ -262,12 +262,12 @@ bool Settings::parseJson(const std::string & json)
 
 bool Settings::fileExists(const std::string & fileName)
 {
-    std::string path = getWriteablePath();
-    if (path.empty()) {
+    std::string writeableDir = getWriteableDir();
+    if (writeableDir.empty()) {
         return false;
     }
 
-    std::string fullPath = pathJoin(path, fileName);
+    std::string fullPath = pathJoin(writeableDir, fileName);
     return ::fileExists(fullPath);
 }
 

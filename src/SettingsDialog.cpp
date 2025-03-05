@@ -29,6 +29,7 @@
 #include <shellapi.h>
 
 // Standard library
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -763,8 +764,7 @@ void spySelectWindowAtPoint(const POINT & point)
             rootHwnd = hwnd;
         }
 
-        CHAR exePath[MAX_PATH];
-        exePath[0] = '\0';
+        CHAR executableFullPath[MAX_PATH] = {};
         DWORD processID;
         if (!GetWindowThreadProcessId(rootHwnd, &processID)) {
             WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -773,13 +773,13 @@ void spySelectWindowAtPoint(const POINT & point)
             if (!hproc) {
                 WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
-                if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, exePath, MAX_PATH)) {
+                if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, executableFullPath, MAX_PATH)) {
                     WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
                 }
                 CloseHandle(hproc);
             }
         }
-        DEBUG_PRINTF("Exe path: '%s'\n", exePath);
+        DEBUG_PRINTF("Executable full path: '%s'\n", executableFullPath);
 
         std::string className = getWindowClassName(rootHwnd);
         DEBUG_PRINTF("Class name: '%s'\n", className.c_str());
@@ -787,7 +787,7 @@ void spySelectWindowAtPoint(const POINT & point)
         std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
-        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), exePath);
+        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), executableFullPath);
         SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className.c_str());
         SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), title.c_str());
 
@@ -839,7 +839,7 @@ std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
 
     LRESULT res;
     do {
-        text.resize(max(256, text.size() * 2));
+        text.resize(std::max<size_t>(256, text.size() * 2));
         listViewItem.pszText = &text[0];
         listViewItem.cchTextMax = (int)text.size();
         res = SendMessageA(listViewHwnd, LVM_GETITEMTEXTA, item, (LPARAM)&listViewItem);

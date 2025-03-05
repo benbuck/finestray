@@ -17,9 +17,16 @@
 // Standard library
 #include <string>
 
-std::string getAppDataPath();
-std::string getExecutablePath();
-std::string getStartupPath();
-std::string getWriteablePath();
+// Naming convention
+// Dir: directory (C:\Windows)
+// FileName: filename (notepad.exe)
+// FullPath: Dir + FileName (C:\Windows\notepad.exe)
+
+std::string getAppDataDir();
+std::string getExecutableFullPath();
+std::string getExecutableFileName();
+std::string getExecutableDir();
+std::string getStartupDir();
+std::string getWriteableDir();
 std::string pathJoin(const std::string & path1, const std::string & path2);
-bool createShortcut(const std::string & shortcutPath, const std::string & executablePath);
+bool createShortcut(const std::string & shortcutFullPath, const std::string & executableFullPath);

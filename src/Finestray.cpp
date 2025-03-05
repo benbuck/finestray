@@ -80,7 +80,7 @@ void onMinimizeEvent(
     DWORD dwmsEventTime);
 void onSettingsDialogComplete(bool success, const Settings & settings);
 std::string getSettingsFileName();
-std::string getStartupShortcutPath();
+std::string getStartupShortcutFullPath();
 void updateStartWithWindows();
 
 WindowHandleWrapper appWindow_;
@@ -139,8 +139,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         }
 
         // update start with windows setting to match reality
-        std::string startupShortcutPath = getStartupShortcutPath();
-        settings_.startWithWindows_ = fileExists(startupShortcutPath);
+        std::string startupShortcutFullPath = getStartupShortcutFullPath();
+        settings_.startWithWindows_ = fileExists(startupShortcutFullPath);
     }
 
     DEBUG_PRINTF("final settings:\n");
@@ -743,31 +743,30 @@ std::string getSettingsFileName()
     return std::string(APP_NAME) + ".json";
 }
 
-std::string getStartupShortcutPath()
+std::string getStartupShortcutFullPath()
 {
-    std::string startupPath = getStartupPath();
-    return pathJoin(startupPath, APP_NAME ".lnk");
+    std::string startupDir = getStartupDir();
+    return pathJoin(startupDir, APP_NAME ".lnk");
 }
 
 void updateStartWithWindows()
 {
-    std::string startupShortcutPath = getStartupShortcutPath();
+    std::string startupShortcutFullPath = getStartupShortcutFullPath();
     if (settings_.startWithWindows_) {
-        if (fileExists(startupShortcutPath)) {
-            DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutPath.c_str());
+        if (fileExists(startupShortcutFullPath)) {
+            DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutFullPath.c_str());
         } else {
-            std::string exePath = getExecutablePath();
-            std::string exeFileName = pathJoin(exePath, APP_NAME ".exe");
-            if (!createShortcut(startupShortcutPath, exeFileName)) {
-                WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutPath.c_str());
+            std::string exeFullPath = getExecutableFullPath();
+            if (!createShortcut(startupShortcutFullPath, exeFullPath)) {
+                WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutFullPath.c_str());
             }
         }
     } else {
-        if (!fileExists(startupShortcutPath)) {
-            DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutPath.c_str());
+        if (!fileExists(startupShortcutFullPath)) {
+            DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutFullPath.c_str());
         } else {
-            if (!fileDelete(startupShortcutPath)) {
-                WARNING_PRINTF("failed to delete startup link: %s\n", startupShortcutPath.c_str());
+            if (!fileDelete(startupShortcutFullPath)) {
+                WARNING_PRINTF("failed to delete startup link: %s\n", startupShortcutFullPath.c_str());
             }
         }
     }

@@ -19,6 +19,10 @@
 #include "Log.h"
 #include "StringUtility.h"
 
+// Standard library
+#include <algorithm>
+#include <cassert>
+
 // Windows
 #include <ShlObj.h>
 #include <Shlwapi.h>
@@ -29,70 +33,77 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
 
-std::string writeablePath_;
+std::string writeableDir_;
+std::string executableFullPath_;
+std::string executableFileName_;
+std::string executableDir_;
 
-bool checkWriteablePath(const std::string path);
+bool getExecutablePathComponents();
+bool checkWriteableDir(const std::string dir);
 
 } // anonymous namespace
 
-std::string getAppDataPath()
+std::string getAppDataDir()
 {
-    CHAR path[MAX_PATH];
+    CHAR dir[MAX_PATH] = {};
 
-    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path);
+    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, dir);
     if (FAILED(hresult)) {
         WARNING_PRINTF(
-            "could not get app data path, SHGetFolderPath() failed: %s\n",
+            "could not get app data dir, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
         return std::string();
     }
 
-    return path;
+    return dir;
 }
 
-std::string getExecutablePath()
+std::string getExecutableFullPath()
 {
-    CHAR path[MAX_PATH];
-    if (GetModuleFileNameA(nullptr, path, MAX_PATH) <= 0) {
-        WARNING_PRINTF(
-            "could not get executable path, GetModuleFileNameA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
+    if (executableFullPath_.empty() && !getExecutablePathComponents()) {
         return std::string();
     }
 
-    char * sep = strrchr(path, '\\');
-    if (!sep) {
-        WARNING_PRINTF("path '%s' has no separator\n", path);
+    return executableFullPath_;
+}
+
+std::string getExecutableFileName()
+{
+    if (executableFileName_.empty() && !getExecutablePathComponents()) {
         return std::string();
     }
 
-    size_t pathChars = sep - path;
-    std::string exePath;
-    exePath.reserve(pathChars + 1);
-    exePath.resize(pathChars);
-    strncpy_s(&exePath[0], pathChars + 1, path, pathChars);
-    return exePath;
+    return executableFileName_;
 }
 
-std::string getStartupPath()
+std::string getExecutableDir()
 {
-    CHAR path[MAX_PATH];
+    if (executableDir_.empty() && !getExecutablePathComponents()) {
+        return std::string();
+    }
 
-    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, path);
+    return executableDir_;
+}
+
+std::string getStartupDir()
+{
+    CHAR dir[MAX_PATH];
+
+    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, dir);
     if (FAILED(hresult)) {
         WARNING_PRINTF(
-            "could not get startup path, SHGetFolderPath() failed: %s\n",
+            "could not get startup dir, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
         return std::string();
     }
 
-    return path;
+    return dir;
 }
 
 std::string pathJoin(const std::string & path1, const std::string & path2)
 {
     std::string path;
-    path.resize(max(MAX_PATH, path1.size() + path2.size() + 2));
+    path.resize(std::min<size_t>(MAX_PATH, path1.size() + path2.size() + 2));
 
     LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
     if (!result) {
@@ -107,33 +118,33 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
     return path;
 }
 
-std::string getWriteablePath()
+std::string getWriteableDir()
 {
-    if (!writeablePath_.empty()) {
-        return writeablePath_;
+    if (!writeableDir_.empty()) {
+        return writeableDir_;
     }
 
-    std::string path;
+    std::string dir;
 
-    path = getExecutablePath();
-    if (!path.empty() && checkWriteablePath(path)) {
-        DEBUG_PRINTF("using executable path '%s' as writeable path\n", path.c_str());
-        writeablePath_ = path;
-        return path;
+    dir = getExecutableDir();
+    if (!dir.empty() && checkWriteableDir(dir)) {
+        DEBUG_PRINTF("using executable dir '%s' as writeable dir\n", dir.c_str());
+        writeableDir_ = dir;
+        return dir;
     }
 
-    path = getAppDataPath();
-    if (!path.empty() && checkWriteablePath(path)) {
-        DEBUG_PRINTF("using app data path '%s' as writeable path\n", path.c_str());
-        writeablePath_ = path;
-        return path;
+    dir = getAppDataDir();
+    if (!dir.empty() && checkWriteableDir(dir)) {
+        DEBUG_PRINTF("using app data dir '%s' as writeable dir\n", dir.c_str());
+        writeableDir_ = dir;
+        return dir;
     }
 
-    WARNING_PRINTF("no writeable path found\n");
+    WARNING_PRINTF("no writeable dir found\n");
     return std::string();
 }
 
-bool createShortcut(const std::string & shortcutPath, const std::string & executablePath)
+bool createShortcut(const std::string & shortcutFullPath, const std::string & executableFullPath)
 {
     ComPtr<IShellLinkA> shellLink;
     HRESULT hresult = CoCreateInstance(
@@ -147,7 +158,7 @@ bool createShortcut(const std::string & shortcutPath, const std::string & execut
         return false;
     }
 
-    hresult = shellLink->SetPath(executablePath.c_str());
+    hresult = shellLink->SetPath(executableFullPath.c_str());
     if (FAILED(hresult)) {
         WARNING_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
@@ -160,7 +171,7 @@ bool createShortcut(const std::string & shortcutPath, const std::string & execut
         return false;
     }
 
-    std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutPath);
+    std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutFullPath);
     hresult = persistFile->Save(shortcutPathW.c_str(), TRUE);
     if (FAILED(hresult)) {
         WARNING_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
@@ -173,11 +184,64 @@ bool createShortcut(const std::string & shortcutPath, const std::string & execut
 namespace
 {
 
-bool checkWriteablePath(const std::string path)
+bool getExecutablePathComponents()
 {
-    std::string fileName = pathJoin(path, "test.tmp");
+    CHAR moduleFullPath[256];
+
+    size_t length = GetModuleFileNameA(nullptr, moduleFullPath, sizeof(moduleFullPath));
+    if (length == 0) {
+        WARNING_PRINTF(
+            "could not get executable full path, GetModuleFileNameA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    if (length >= sizeof(moduleFullPath)) {
+        WARNING_PRINTF("executable full path too long\n");
+        assert(GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+        return false;
+    }
+
+    assert(length == strlen(moduleFullPath));
+    executableFullPath_.reserve(length + 1);
+    executableFullPath_.resize(length);
+    strncpy_s(&executableFullPath_[0], length + 1, moduleFullPath, length);
+    DEBUG_PRINTF("executable full path: %s\n", executableFullPath_.c_str());
+
+    CHAR * fileName = PathFindFileNameA(moduleFullPath);
+    if (fileName == moduleFullPath) {
+        WARNING_PRINTF(
+            "could not find file name in module full path '%s', PathFindFileNameA() failed: %s\n",
+            moduleFullPath,
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    executableFileName_ = fileName;
+    DEBUG_PRINTF("executable file name: %s\n", executableFileName_.c_str());
+
+    if (!PathRemoveFileSpecA(moduleFullPath)) {
+        WARNING_PRINTF(
+            "could not remove file spec from module full path '%s', PathRemoveFileSpecA() failed: %s\n",
+            moduleFullPath,
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    length = strlen(moduleFullPath);
+    executableDir_.reserve(length + 1);
+    executableDir_.resize(length);
+    strncpy_s(&executableDir_[0], length + 1, moduleFullPath, length);
+    DEBUG_PRINTF("executable dir: %s\n", executableDir_.c_str());
+
+    return true;
+}
+
+bool checkWriteableDir(const std::string dir)
+{
+    std::string fullPath = pathJoin(dir, "test.tmp");
     HandleWrapper file(CreateFileA(
-        fileName.c_str(),
+        fullPath.c_str(),
         GENERIC_WRITE,
         0,
         nullptr,
@@ -185,7 +249,7 @@ bool checkWriteablePath(const std::string path)
         FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
         nullptr));
     bool writeable = file != INVALID_HANDLE_VALUE;
-    DEBUG_PRINTF("path '%s' is %swriteable\n", path.c_str(), writeable ? "" : "not ");
+    DEBUG_PRINTF("dir '%s' %s writeable\n", dir.c_str(), writeable ? "is" : "is not");
     return writeable;
 }
 

@@ -17,6 +17,8 @@
 // Standard library
 #include <string>
 
+// The file and directory paths here may be relative or absolute
+
 std::string fileRead(const std::string & fileName);
 bool fileWrite(const std::string & fileName, const std::string & contents);
 bool fileExists(const std::string & fileName);

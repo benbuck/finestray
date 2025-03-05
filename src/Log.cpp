@@ -58,30 +58,36 @@ void start(bool enable, const std::string & fileName)
         return;
     }
 
-    std::string writeablePath = getWriteablePath();
-    if (writeablePath.empty()) {
-        WARNING_PRINTF("no writeable path found, logging to file disabled\n");
+    std::string writeableDir = getWriteableDir();
+    if (writeableDir.empty()) {
+        WARNING_PRINTF("no writeable dir found, logging to file disabled\n");
         enableLogging_ = false;
         pendingLogs_.clear();
         return;
     }
 
-    std::string logFilePath = pathJoin(writeablePath, fileName);
+    std::string logFileFullPath = pathJoin(writeableDir, fileName);
 
-    HandleWrapper fileHandle(
-        CreateFileA(logFilePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
+    HandleWrapper fileHandle(CreateFileA(
+        logFileFullPath.c_str(),
+        GENERIC_WRITE,
+        FILE_SHARE_READ,
+        nullptr,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr));
 
     if (fileHandle == INVALID_HANDLE_VALUE) {
         WARNING_PRINTF(
             "could not open log file '%s' for writing, CreateFileA() failed: %s\n",
-            logFilePath.c_str(),
+            logFileFullPath.c_str(),
             StringUtility::lastErrorString().c_str());
         enableLogging_ = false;
         pendingLogs_.clear();
         return;
     }
 
-    DEBUG_PRINTF("logging to file '%s'\n", logFilePath.c_str());
+    DEBUG_PRINTF("logging to file '%s'\n", logFileFullPath.c_str());
     fileHandle_ = std::move(fileHandle);
     assert(fileHandle_ != INVALID_HANDLE_VALUE);
     enableLogging_ = true;
