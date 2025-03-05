@@ -11,11 +11,12 @@ reduce visual clutter.
 
 ## Installation
 
-There are three ways to get Finestray:
+There are three standard ways to get Finestray:
 
-1) Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). The installer
-   is named Finestray-0.2-Win64.exe. Once you have downloaded the file, you will need to run it and go through the
-   prompts to complete the installation. After installation completes, Finestray should launch automatically.
+1) Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). It's named
+   [Finestray-0.2-Win64.exe](https://github.com/benbuck/finestray/releases/download/latest/Finestray-0.2-win64.exe).
+   Once you have downloaded the file, you will need to run it and go through the prompts to complete the installation.
+   After installation completes, Finestray should launch automatically.
 2) Using the portable executable from [Finestray release page](https://github.com/benbuck/finestray/releases). The
    portable executable is named Finestray.exe. Place it wherever you prefer on your system, and run it from there.
 3) Using winget. From a Windows shell: ```winget install finestray```. After installation completes, Finestray should
@@ -46,16 +47,17 @@ to their normal placement:
 - **Override modifier**:
   Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of a
   window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
-  functionality.
+  functionality of the override modifier.
 - **Tray Icons**:
   If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
   click it again it will hide the Settings window.
 
-  For any window that has been minimized to an icon in the tray, simply click it to restore it to its original location.
+  For any window that has been minimized to an icon in the tray, simply click the icon to restore it to its original
+  location.
 - **Auto-trays**:
   This feature allows specific windows to be minimized to the tray as soon as they appear or when they are minimized.
   Please see the [Auto-tray Settings](#auto-tray-settings) section for more information.
-- **Icon menu**:
+- **Context menu**:
   For any of the tray icons created by Finestray, including its own, you can right click on it to see the [Context menu]
   (#context-menu).
 
@@ -121,24 +123,28 @@ The available settings correspond to some of the above features. The settings ar
 - **Poll interval**:
   Finestray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
   how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
-  one second, and Finestray will scan the windows once every second. You can increase the value if you think Finestray
-  is checking too often and slowing down your system. You can decrease the value if want the auto-tray behavior to
-  happen more rapidly. You can also set this to zero to disable scanning, but that will disable the auto-tray behavior
-  when a window first opens.
+  one second, and with that setting Finestray would scan the windows once every second. You can increase the value if
+  you think Finestray is checking too often and slowing down your system. You can decrease the value if want the
+  auto-tray behavior to happen more rapidly. You can also set this to zero to disable scanning, but that will disable
+  the auto-tray behavior when a window first opens.
 - **Auto-trays**:
   This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
   windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing the
   Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update button.
   Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
 
-At the bottom of the Settings dialog are four buttons: About, Exit, Cancel, and OK:
+At the bottom of the Settings dialog are six buttons: Help, About, Reset, Exit, Cancel, and OK:
 
+- **Help**:
+  Opens the [Finestray](https://github.com/benbuck/finestray) project web page to display this document.
 - **About**:
   Shows a some basic information about Finestray.
+- **Reset**:
+  Resets all the settings to their default values.
 - **Exit**:
   Exits the Finestray application after saving settings.
 - **Cancel**:
-  Closes the Settings window but does not save settings (settings are restored to their unmodified values).
+  Closes the Settings window but does not save settings (settings are restored to their previous values).
 - **OK**:
   Closes the Settings window and saves settings.
 
@@ -157,9 +163,9 @@ Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`
 For the override modifier, you can provide one or more modifiers using spaces in between. For example you could provide
 a modifier `alt`, or a modifier `ctrl shift`.
 
-Similarly, for the minimize and restore hotkeys, you can combine a set of modifiers together with a single key. So for
-example, you could combine the modifier `alt win` with the key `esc` to make a hotkey `alt win esc`. Or you could
-combine a modifier `ctrl win` with the key `-` to make a hotkey `ctrl win -`.
+Similarly, for the minimize, restore, restore all, and menu hotkeys, you can combine a set of modifiers together with a
+single key. So for example, you could combine the modifier `alt win` with the key `esc` to make a hotkey `alt win esc`.
+Or you could combine a modifier `ctrl win` with the key `-` to make a hotkey `ctrl win -`.
 
 You can also leave a hotkey or modifier empty or specify `none` to disable it.
 
@@ -176,12 +182,12 @@ window. Because of this, Finestray provides three possible ways, which can be us
 - **Window class**:
   This value corresponds to the "class" of the window. The class is an internal value, which you can find using the
   [Spy feature](#spy-feature). The class you provide must exactly match the internal value, or you can leave this empty
-  if you don't care what the class name is.
+  if you don't care what the window class is.
 - **Window title**:
   This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
   is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
   expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window which
-  has a title like "My Document - Notepad", you could use a regular expression like: `.*Notepad$`.
+  has a title like "Untitled - Notepad", you could use a regular expression like: `.*Notepad$`.
 
 Note that the Override modifier also has an effect on auto-trays. It overrides the normal auto-tray behavior. For
 example, if you are holding down the override modifier keys when a window is created, it will prevent the normal
