@@ -45,6 +45,7 @@
 #include <Windows.h>
 
 // Standard library
+#include <cassert>
 #include <regex>
 #include <set>
 #include <string>
@@ -703,6 +704,23 @@ void onMinimizeEvent(
 void onSettingsDialogComplete(bool success, const Settings & settings)
 {
     if (success) {
+        if (!settings.valid()) {
+            WARNING_PRINTF("invalid settings\n");
+            settings_ = settings;
+            settings_.dump();
+
+            // restart to trigger error message
+            stop();
+            ErrorContext err = start();
+            assert(err);
+            if (err) {
+                errorMessage(err);
+                settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+            }
+
+            return;
+        }
+
         bool settingsChanged = (settings != settings_);
         std::string settingsFile = getSettingsFileName();
         if (settingsChanged || !Settings::fileExists(settingsFile)) {

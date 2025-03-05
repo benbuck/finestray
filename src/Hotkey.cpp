@@ -89,6 +89,47 @@ void Hotkey::destroy()
     }
 }
 
+bool Hotkey::valid(const std::string & hotkeyStr)
+{
+    std::string tmp = StringUtility::toLower(hotkeyStr);
+
+    std::vector<std::string> modifiers;
+    std::string key;
+
+    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
+    for (std::string token : tokens) {
+        token = StringUtility::trim(token);
+        token = StringUtility::toLower(token);
+
+        if (token != "none") {
+            const auto & mit = modifierMap_.find(token);
+            if (mit == modifierMap_.end()) {
+                if (!key.empty()) {
+                    return false;
+                }
+
+                const auto & vkit = vkeyMap_.find(token);
+                if (vkit != vkeyMap_.end()) {
+                    key = token;
+                } else {
+                    if (token.length() != 1) {
+                        return false;
+                    }
+
+                    SHORT scan = VkKeyScanA(token[0]);
+                    if ((unsigned int)scan == 0xFFFF) {
+                        return false;
+                    }
+
+                    key = token;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 std::string Hotkey::normalize(const std::string & hotkeyStr)
 {
     std::string tmp = StringUtility::toLower(hotkeyStr);

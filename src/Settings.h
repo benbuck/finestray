@@ -35,6 +35,8 @@ public:
     bool readFromFile(const std::string & fileName);
     bool writeToFile(const std::string & fileName);
 
+    bool valid() const;
+
     void normalize();
     void dump();
 

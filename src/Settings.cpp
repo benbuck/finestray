@@ -30,6 +30,7 @@
 #include <shellapi.h>
 
 // Standard library
+#include <cassert>
 #include <cstdlib>
 
 namespace
@@ -129,6 +130,8 @@ bool Settings::writeToFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
 
+    assert(valid());
+
     normalize();
 
     std::string json = constructJSON();
@@ -152,6 +155,47 @@ bool Settings::writeToFile(const std::string & fileName)
             return false;
         }
     }
+
+    return true;
+}
+
+bool Settings::valid() const
+{
+    switch (minimizePlacement_) {
+        case MinimizePlacement::Tray:
+        case MinimizePlacement::Menu:
+        case MinimizePlacement::TrayAndMenu: {
+            break;
+        }
+
+        case MinimizePlacement::None:
+        default: {
+            return false;
+            break;
+        }
+    }
+
+    if (!Hotkey::valid(hotkeyMinimize_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyRestore_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyRestoreAll_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyMenu_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(modifiersOverride_)) {
+        return false;
+    }
+
+    // nothing to validate for poll interval or auto-tray items
 
     return true;
 }

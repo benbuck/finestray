@@ -19,14 +19,14 @@
 #include "Log.h"
 #include "StringUtility.h"
 
-// Standard library
-#include <algorithm>
-#include <cassert>
-
 // Windows
 #include <ShlObj.h>
 #include <Shlwapi.h>
 #include <wrl/client.h>
+
+// Standard library
+#include <algorithm>
+#include <cassert>
 
 using Microsoft::WRL::ComPtr;
 
