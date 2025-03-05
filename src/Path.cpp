@@ -102,8 +102,10 @@ std::string getStartupDir()
 
 std::string pathJoin(const std::string & path1, const std::string & path2)
 {
+    size_t pathSize = std::min<size_t>(MAX_PATH, path1.size() + path2.size() + 2);
+
     std::string path;
-    path.resize(std::min<size_t>(MAX_PATH, path1.size() + path2.size() + 2));
+    path.resize(pathSize);
 
     LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
     if (!result) {
@@ -114,6 +116,8 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
             StringUtility::lastErrorString().c_str());
         return std::string();
     }
+
+    path.resize(pathSize - 1); // remove nul terminator
 
     return path;
 }

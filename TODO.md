@@ -2,7 +2,6 @@
 
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection
-- Specify which hotkey on registration failure
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
 - Add reset button to settings dialog

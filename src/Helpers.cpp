@@ -78,11 +78,29 @@ std::string getWindowClassName(HWND hwnd)
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
+
     ERROR_PRINTF("%s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         WARNING_PRINTF(
-            "failed to display error message %u, MessageBoxA() failed\n",
+            "failed to display error message %u, MessageBoxA() failed: %s\n",
             id,
+            StringUtility::lastErrorString().c_str());
+    }
+}
+
+void errorMessage(const ErrorContext & errorContext)
+{
+    std::string err = getResourceString(errorContext.errorId());
+
+    if (!errorContext.errorString().empty()) {
+        err += ": " + errorContext.errorString();
+    }
+
+    ERROR_PRINTF("%s\n", err.c_str());
+    if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
+        WARNING_PRINTF(
+            "failed to display error message %u, MessageBoxA() failed: %s\n",
+            errorContext.errorId(),
             StringUtility::lastErrorString().c_str());
     }
 }

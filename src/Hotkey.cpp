@@ -114,7 +114,8 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
                 }
             } else {
                 if (!key.empty()) {
-                    WARNING_PRINTF("more than one key in hotkey, ignoring '%s'\n", token.c_str());
+                    ERROR_PRINTF("more than one key in hotkey, can't normalize '%s'\n", token.c_str());
+                    return StringUtility::join(tokens, " ");
                 } else {
                     // look for vkey string
                     const auto & vkit = vkeyMap_.find(token);
@@ -123,11 +124,13 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
                     } else {
                         // look for key character
                         if (token.length() != 1) {
-                            WARNING_PRINTF("unknown value in hotkey, ignoring '%s'\n", token.c_str());
+                            ERROR_PRINTF("unknown value in hotkey, can't normalize '%s'\n", token.c_str());
+                            return StringUtility::join(tokens, " ");
                         } else {
                             SHORT scan = VkKeyScanA(token[0]);
                             if ((unsigned int)scan == 0xFFFF) {
-                                WARNING_PRINTF("unknown key in hotkey, ignoring '%s'\n", token.c_str());
+                                ERROR_PRINTF("unknown key in hotkey, can't normalize '%s'\n", token.c_str());
+                                return StringUtility::join(tokens, " ");
                             } else {
                                 key = token;
                             }

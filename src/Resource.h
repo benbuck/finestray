@@ -37,15 +37,17 @@
 #define IDS_ERROR_INIT_COMMON_CONTROLS            302
 #define IDS_ERROR_REGISTER_WINDOW_CLASS           303
 #define IDS_ERROR_CREATE_WINDOW                   304
-#define IDS_ERROR_REGISTER_HOTKEY                 305
-#define IDS_ERROR_REGISTER_MODIFIER               306
-#define IDS_ERROR_REGISTER_EVENTHOOK              307
-#define IDS_ERROR_CREATE_TRAY_ICON                308
-#define IDS_ERROR_CREATE_MENU                     309
-#define IDS_ERROR_COMMAND_LINE                    310
-#define IDS_ERROR_CREATE_DIALOG                   311
-#define IDS_ERROR_LOAD_SETTINGS                   312
-#define IDS_ERROR_SAVE_SETTINGS                   313
+#define IDS_ERROR_PARSE_HOTKEY                    305
+#define IDS_ERROR_REGISTER_HOTKEY                 306
+#define IDS_ERROR_PARSE_MODIFIER                  307
+#define IDS_ERROR_REGISTER_MODIFIER               308
+#define IDS_ERROR_REGISTER_EVENTHOOK              309
+#define IDS_ERROR_CREATE_TRAY_ICON                310
+#define IDS_ERROR_CREATE_MENU                     311
+#define IDS_ERROR_COMMAND_LINE                    312
+#define IDS_ERROR_CREATE_DIALOG                   313
+#define IDS_ERROR_LOAD_SETTINGS                   314
+#define IDS_ERROR_SAVE_SETTINGS                   315
 
 // bitmaps
 #define IDB_APP                                   401

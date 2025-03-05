@@ -63,7 +63,7 @@ enum class HotkeyID
 };
 
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-int start();
+ErrorContext start();
 void stop();
 bool windowShouldAutoTray(HWND hwnd);
 void onAddWindow(HWND hwnd);
@@ -134,7 +134,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
     } else {
         if (Settings::fileExists(settingsFile)) {
-            errorMessage(IDS_ERROR_LOAD_SETTINGS);
+            errorMessage(ErrorContext(IDS_ERROR_LOAD_SETTINGS, settingsFile));
             return IDS_ERROR_LOAD_SETTINGS;
         }
 
@@ -161,10 +161,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     wc.hIconSm = hicon;
     ATOM atom = RegisterClassExA(&wc);
     if (!atom) {
-        ERROR_PRINTF(
-            "could not create window class, RegisterClassExA() failed: %s",
-            StringUtility::lastErrorString().c_str());
-        errorMessage(IDS_ERROR_REGISTER_WINDOW_CLASS);
+        std::string lastErrorString = StringUtility::lastErrorString();
+        ERROR_PRINTF("could not create window class, RegisterClassExA() failed: %s", lastErrorString.c_str());
+        errorMessage(ErrorContext(IDS_ERROR_REGISTER_WINDOW_CLASS, lastErrorString));
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
 
@@ -183,8 +182,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         nullptr // application data
     );
     if (!appWindow_) {
-        ERROR_PRINTF("could not create window, CreateWindowA() failed: %s", StringUtility::lastErrorString().c_str());
-        errorMessage(IDS_ERROR_CREATE_WINDOW);
+        std::string lastErrorString = StringUtility::lastErrorString();
+        ERROR_PRINTF("could not create window, CreateWindowA() failed: %s", lastErrorString.c_str());
+        errorMessage(ErrorContext(IDS_ERROR_CREATE_WINDOW, lastErrorString));
         return IDS_ERROR_CREATE_WINDOW;
     }
 
@@ -208,15 +208,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         0,
         WINEVENT_OUTOFCONTEXT));
     if (!minimizeEventHook) {
+        std::string lastErrorString = StringUtility::lastErrorString();
         ERROR_PRINTF(
             "failed to hook minimize win event %#x, SetWinEventHook() failed: %s\n",
             (HWND)appWindow_,
-            StringUtility::lastErrorString().c_str());
-        errorMessage(IDS_ERROR_REGISTER_EVENTHOOK);
+            lastErrorString.c_str());
+        errorMessage(ErrorContext(IDS_ERROR_REGISTER_EVENTHOOK, lastErrorString));
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
-    int err = start();
+    ErrorContext err = start();
     if (err) {
         errorMessage(err);
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
@@ -449,7 +450,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-int start()
+ErrorContext start()
 {
     Log::start(settings_.logToFile_, APP_NAME ".log");
 
@@ -457,13 +458,13 @@ int start()
     UINT vkMinimize = VK_DOWN;
     UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
+        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "minimize");
     }
     if (!vkMinimize || !modifiersMinimize) {
         INFO_PRINTF("no hotkey to minimize windows\n");
     } else {
         if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
-            return IDS_ERROR_REGISTER_HOTKEY;
+            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize");
         }
     }
 
@@ -471,13 +472,13 @@ int start()
     UINT vkRestore = VK_UP;
     UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
+        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "restore");
     }
     if (!vkRestore || !modifiersRestore) {
         INFO_PRINTF("no hotkey to restore windows\n");
     } else {
         if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
-            return IDS_ERROR_REGISTER_HOTKEY;
+            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore");
         }
     }
 
@@ -485,14 +486,14 @@ int start()
     UINT vkRestoreAll = VK_LEFT;
     UINT modifiersRestoreAll = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyRestoreAll_, vkRestoreAll, modifiersRestoreAll)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
+        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "restore all");
     }
     if (!vkRestoreAll || !modifiersRestoreAll) {
         INFO_PRINTF("no hotkey to restore all windows\n");
     } else {
         if (!hotkeyRestoreAll_
                  .create((INT)HotkeyID::RestoreAll, appWindow_, vkRestoreAll, modifiersRestoreAll | MOD_NOREPEAT)) {
-            return IDS_ERROR_REGISTER_HOTKEY;
+            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore all");
         }
     }
 
@@ -500,13 +501,13 @@ int start()
     UINT vkMenu = VK_HOME;
     UINT modifiersMenu = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMenu_, vkMenu, modifiersMenu)) {
-        return IDS_ERROR_REGISTER_HOTKEY;
+        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "menu");
     }
     if (!vkMenu || !modifiersMenu) {
         INFO_PRINTF("no hotkey to Menu windows\n");
     } else {
         if (!hotkeyMenu_.create((INT)HotkeyID::Menu, appWindow_, vkMenu, modifiersMenu | MOD_NOREPEAT)) {
-            return IDS_ERROR_REGISTER_HOTKEY;
+            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "menu");
         }
     }
 
@@ -514,18 +515,18 @@ int start()
     UINT vkOverride = 0;
     modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
-        return IDS_ERROR_REGISTER_MODIFIER;
+        return ErrorContext(IDS_ERROR_PARSE_MODIFIER, "override");
     }
     if (!modifiersOverride_) {
         INFO_PRINTF("no override modifiers\n");
     } else if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
         WARNING_PRINTF("invalid override modifiers\n");
-        return IDS_ERROR_REGISTER_MODIFIER;
+        return ErrorContext(IDS_ERROR_REGISTER_MODIFIER, "override");
     }
 
     WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
 
-    return 0;
+    return ErrorContext(0);
 }
 
 void stop()
@@ -713,7 +714,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 
                 // restart to apply new settings
                 stop();
-                int err = start();
+                ErrorContext err = start();
                 if (err) {
                     errorMessage(err);
                     settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
@@ -722,7 +723,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             }
 
             if (!settings_.writeToFile(settingsFile)) {
-                errorMessage(IDS_ERROR_SAVE_SETTINGS);
+                errorMessage(ErrorContext(IDS_ERROR_SAVE_SETTINGS, settingsFile));
             } else {
                 DEBUG_PRINTF("wrote settings to %s\n", settingsFile.c_str());
             }

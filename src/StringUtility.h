@@ -21,11 +21,15 @@
 namespace StringUtility
 {
 
-inline char const * boolToCString(bool b) { return b ? "true" : "false"; }
+inline const char * boolToCString(bool b)
+{
+    return b ? "true" : "false";
+}
 
 std::string toLower(const std::string & s);
 std::string trim(const std::string & s);
 std::vector<std::string> split(const std::string & s, const std::string & delimiters);
+std::string join(const std::vector<std::string> & vs, const std::string & delimiter);
 std::string wideStringToString(const std::wstring & ws);
 std::wstring stringToWideString(const std::string & s);
 std::string errorToString(unsigned long error);

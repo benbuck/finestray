@@ -14,17 +14,32 @@
 
 #pragma once
 
-// App
-#include "ErrorContext.h"
-
-// Windows
-#include <Windows.h>
-
 // Standard library
 #include <string>
 
-std::string getResourceString(unsigned int id);
-std::string getWindowText(HWND hwnd);
-std::string getWindowClassName(HWND hwnd);
-void errorMessage(unsigned int id);
-void errorMessage(const ErrorContext & errorContext);
+class ErrorContext
+{
+public:
+    inline explicit ErrorContext(unsigned int errorId)
+        : errorId_(errorId)
+    {
+    }
+
+    inline ErrorContext(unsigned int errorId, const std::string & errorString)
+        : errorId_(errorId)
+        , errorString_(errorString)
+    {
+    }
+
+    inline operator bool() const { return (errorId_ != 0) || !errorString_.empty(); }
+
+    inline unsigned int errorId() const { return errorId_; }
+
+    inline const std::string & errorString() const { return errorString_; }
+
+private:
+    ErrorContext() = delete;
+
+    unsigned int errorId_;
+    std::string errorString_;
+};

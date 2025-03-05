@@ -60,6 +60,18 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
     return strings;
 }
 
+std::string join(const std::vector<std::string> & vs, const std::string & delimiter)
+{
+    std::string s;
+    for (size_t i = 0; i < vs.size(); ++i) {
+        if (i > 0) {
+            s += delimiter;
+        }
+        s += vs[i];
+    }
+    return s;
+}
+
 std::string wideStringToString(const std::wstring & ws)
 {
     int ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
@@ -69,13 +81,15 @@ std::string wideStringToString(const std::wstring & ws)
     }
 
     std::string s;
-    s.resize(ret + 1);
+    s.resize(ret);
 
     ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, &s[0], (int)s.size(), nullptr, nullptr);
     if (ret <= 0) {
         WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return std::string();
     }
+
+    s.resize(ret - 1); // remove nul terminator
 
     return s;
 }
@@ -89,13 +103,15 @@ std::wstring stringToWideString(const std::string & s)
     }
 
     std::wstring ws;
-    ws.resize(ret + 1);
+    ws.resize(ret);
 
     ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, &ws[0], (int)ws.size());
     if (ret <= 0) {
         WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
         return std::wstring();
     }
+
+    ws.resize(ret - 1); // remove nul terminator
 
     return ws;
 }
@@ -124,20 +140,5 @@ std::string lastErrorString()
     DWORD lastError = GetLastError();
     return std::to_string(lastError) + " - " + errorToString(lastError);
 }
-
-// bool stringToBool(const std::string s, bool & b)
-// {
-//     if ((s == "1") || (toLower(s) == "true")) {
-//         b = true;
-//         return true;
-//     }
-//
-//     if ((s == "0") || (toLower(s) == "false")) {
-//         b = false;
-//         return true;
-//     }
-//
-//     return false;
-// }
 
 } // namespace StringUtility
