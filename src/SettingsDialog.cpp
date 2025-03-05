@@ -26,6 +26,7 @@
 #include <CommCtrl.h>
 #include <Psapi.h>
 #include <Windows.h>
+#include <shellapi.h>
 
 // Standard library
 #include <string>

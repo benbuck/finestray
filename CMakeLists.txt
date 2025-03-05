@@ -147,6 +147,8 @@ target_compile_options(Finestray
 target_compile_definitions(Finestray
     PRIVATE
         UNICODE # Windows headers use wide character by default
+        NOMINMAX # Windows headers define min and max macros
+        WIN32_LEAN_AND_MEAN # Exclude rarely-used stuff from Windows headers
 )
 
 target_compile_features(Finestray

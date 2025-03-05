@@ -16,6 +16,7 @@
 
 // Windows
 #include <Windows.h>
+#include <combaseapi.h>
 
 class COMLibraryWrapper
 {
