@@ -170,6 +170,15 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
                 WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
+                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
+                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
+                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
 
             autoTrayListViewInit(dialogHwnd);
 
@@ -251,6 +260,12 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         break;
                     }
 
+                    case IDC_RESET: {
+                        settings_ = Settings();
+                        SendMessageA(dialogHwnd, WM_INITDIALOG, 0, 0);
+                        break;
+                    }
+
                     case IDC_EXIT:
                     case IDOK: {
                         INFO_PRINTF("Settings dialog done, updating settings\n");
@@ -310,55 +325,66 @@ void autoTrayListViewInit(HWND dialogHwnd)
 {
     autoTrayListViewHwnd_ = GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_LIST);
 
-    unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+    HWND hWndHdr = (HWND)::SendMessage(autoTrayListViewHwnd_, LVM_GETHEADER, 0, 0);
+    int count = (int)::SendMessage(hWndHdr, HDM_GETITEMCOUNT, 0, 0L);
+    if (count < 3) {
+        unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
+
+        RECT rect;
+        GetWindowRect(autoTrayListViewHwnd_, &rect);
+        int width = rect.right - rect.left;
+        int columnWidth = (width - 18) / (int)AutoTrayListViewColumn::Count;
+
+        LVCOLUMNA listViewColumn;
+        memset(&listViewColumn, 0, sizeof(listViewColumn));
+        listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+        listViewColumn.fmt = LVCFMT_LEFT;
+        listViewColumn.cx = columnWidth;
+
+        std::string str;
+
+        listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
+        str = getResourceString(IDS_COLUMN_EXECUTABLE);
+        listViewColumn.pszText = (LPSTR)str.c_str();
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
+            -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
+
+        ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
+        str = getResourceString(IDS_COLUMN_WINDOW_CLASS);
+        listViewColumn.pszText = (LPSTR)str.c_str();
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
+            -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
+
+        listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
+        str = getResourceString(IDS_COLUMN_WINDOW_TITLE);
+        listViewColumn.pszText = (LPSTR)str.c_str();
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
+            -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
     }
 
-    RECT rect;
-    GetWindowRect(autoTrayListViewHwnd_, &rect);
-    int width = rect.right - rect.left;
-    int columnWidth = (width - 18) / (int)AutoTrayListViewColumn::Count;
-
-    LVCOLUMNA listViewColumn;
-    memset(&listViewColumn, 0, sizeof(listViewColumn));
-    listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-    listViewColumn.fmt = LVCFMT_LEFT;
-    listViewColumn.cx = columnWidth;
-
-    std::string str;
-
-    listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
-    str = getResourceString(IDS_COLUMN_EXECUTABLE);
-    listViewColumn.pszText = (LPSTR)str.c_str();
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
-    }
-
-    ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
-    str = getResourceString(IDS_COLUMN_WINDOW_CLASS);
-    listViewColumn.pszText = (LPSTR)str.c_str();
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
-    }
-
-    listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
-    str = getResourceString(IDS_COLUMN_WINDOW_TITLE);
-    listViewColumn.pszText = (LPSTR)str.c_str();
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+    if (!SendMessageA(autoTrayListViewHwnd_, LVM_DELETEALLITEMS, 0, 0)) {
+        WARNING_PRINTF("SendMessage LVM_DELETEALLITEMS failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMCOUNT, (WPARAM)settings_.autoTrays_.size(), 0) == -1) {
@@ -655,21 +681,21 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
 
     if ((item < 0) || (item >= itemCount)) {
         WARNING_PRINTF("Item %d out of range\n", item);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), "");
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), "");
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), "");
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
         autoTrayListViewActiveItem_ = -1;
     } else {
         std::string executable = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::Executable);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE), executable.c_str());
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executable.c_str());
 
         std::string windowClass =
             getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowClass);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), windowClass.c_str());
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowClass.c_str());
 
         std::string windowTitle =
             getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
-        SetWindowTextA(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), windowTitle.c_str());
+        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowTitle.c_str());
 
         autoTrayListViewActiveItem_ = item;
     }
@@ -801,9 +827,9 @@ void spySelectWindowAtPoint(const POINT & point)
         std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
-        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE), executableFullPath);
-        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS), className.c_str());
-        SetWindowTextA(GetDlgItem(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE), title.c_str());
+        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath);
+        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str());
+        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str());
 
         ShowWindow(spuModeHwnd_, SW_SHOW);
         SetForegroundWindow(spuModeHwnd_);

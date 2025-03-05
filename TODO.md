@@ -4,7 +4,6 @@
 - Improve method for spy window selection
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
-- Add reset button to settings dialog
 - Add option to make tray icons persistent even when window is restored
 - Find a way to properly minimize UWP app windows
 - Fix handling of elevated windows

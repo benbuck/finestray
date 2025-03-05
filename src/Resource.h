@@ -80,6 +80,7 @@
 #define IDC_AUTO_TRAY_ITEM_SPY                   1019
 #define IDC_HELP_PAGE                            1020
 #define IDC_ABOUT                                1021
-#define IDC_EXIT                                 1022
+#define IDC_RESET                                1022
+#define IDC_EXIT                                 1023
 
 // clang-format on
