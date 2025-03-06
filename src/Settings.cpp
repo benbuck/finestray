@@ -112,15 +112,10 @@ bool Settings::readFromFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
 
-    std::string json;
-    json = fileRead(fileName);
+    std::string writeableDir = getWriteableDir();
+    std::string json = fileRead(pathJoin(writeableDir, fileName));
     if (json.empty()) {
-        std::string appDataDir = pathJoin(getAppDataDir(), APP_NAME);
-        std::string appDataFullPath = pathJoin(appDataDir, fileName);
-        json = fileRead(appDataFullPath);
-        if (json.empty()) {
-            return false;
-        }
+        return false;
     }
 
     return parseJson(json);
@@ -139,21 +134,9 @@ bool Settings::writeToFile(const std::string & fileName)
         return false;
     }
 
-    if (!fileWrite(fileName, json)) {
-        std::string appDataDir = pathJoin(getAppDataDir(), APP_NAME);
-        if (!directoryExists(appDataDir)) {
-            if (!CreateDirectoryA(appDataDir.c_str(), nullptr)) {
-                WARNING_PRINTF(
-                    "could not create directory '%s', CreateDirectoryA() failed: %s\n",
-                    appDataDir.c_str(),
-                    GetLastError());
-                return false;
-            }
-        }
-        std::string appDataFullPath = pathJoin(appDataDir, fileName);
-        if (!fileWrite(appDataFullPath, json)) {
-            return false;
-        }
+    std::string writeableDir = getWriteableDir();
+    if (!fileWrite(pathJoin(writeableDir, fileName), json)) {
+        return false;
     }
 
     return true;

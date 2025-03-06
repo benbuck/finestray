@@ -15,6 +15,8 @@
 #include "Path.h"
 
 // App
+#include "AppName.h"
+#include "File.h"
 #include "HandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"
@@ -47,7 +49,7 @@ std::string getAppDataDir()
 {
     CHAR dir[MAX_PATH] = {};
 
-    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, dir);
+    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, dir);
     if (FAILED(hresult)) {
         WARNING_PRINTF(
             "could not get app data dir, SHGetFolderPath() failed: %s\n",
@@ -102,6 +104,13 @@ std::string getStartupDir()
 
 std::string pathJoin(const std::string & path1, const std::string & path2)
 {
+    if (path1.empty()) {
+        return path2;
+    }
+    if (path2.empty()) {
+        return path1;
+    }
+
     size_t pathSize = std::min<size_t>(MAX_PATH, path1.size() + path2.size() + 2);
 
     std::string path;
@@ -117,7 +126,8 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
         return std::string();
     }
 
-    path.resize(pathSize - 1); // remove nul terminator
+    pathSize = strlen(result);
+    path.resize(pathSize);
 
     return path;
 }
@@ -138,10 +148,23 @@ std::string getWriteableDir()
     }
 
     dir = getAppDataDir();
-    if (!dir.empty() && checkWriteableDir(dir)) {
-        DEBUG_PRINTF("using app data dir '%s' as writeable dir\n", dir.c_str());
-        writeableDir_ = dir;
-        return dir;
+    if (!dir.empty()) {
+        dir = pathJoin(dir, APP_NAME);
+        if (!directoryExists(dir)) {
+            if (CreateDirectoryA(dir.c_str(), nullptr)) {
+                DEBUG_PRINTF("created app data dir '%s'\n", dir.c_str());
+            } else {
+                WARNING_PRINTF(
+                    "could not create directory '%s', CreateDirectoryA() failed: %s\n",
+                    dir.c_str(),
+                    StringUtility::lastErrorString().c_str());
+            }
+        }
+        if (directoryExists(dir) && checkWriteableDir(dir)) {
+            DEBUG_PRINTF("using app data dir '%s' as writeable dir\n", dir.c_str());
+            writeableDir_ = dir;
+            return dir;
+        }
     }
 
     WARNING_PRINTF("no writeable dir found\n");
