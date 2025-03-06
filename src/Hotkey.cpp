@@ -246,7 +246,7 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
                     }
                     key = VkKeyScanA(token[0]);
                     if (key == 0xFFFF) {
-                        WARNING_PRINTF("unknown key %s in hotkey\n", token.c_str());
+                        WARNING_PRINTF("unknown key '%s' in hotkey\n", token.c_str());
                         return false;
                     }
                 } else {

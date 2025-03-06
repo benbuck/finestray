@@ -577,7 +577,7 @@ bool windowShouldAutoTray(HWND hwnd)
             executableMatch = true;
         } else {
             if (StringUtility::toLower(autoTray.executable_) == StringUtility::toLower(executable)) {
-                // DEBUG_PRINTF("\texecutable %s match\n", autoTray.executable_.c_str());
+                // DEBUG_PRINTF("\texecutable '%s' match\n", autoTray.executable_.c_str());
                 executableMatch = true;
             }
         }
@@ -588,7 +588,7 @@ bool windowShouldAutoTray(HWND hwnd)
             classMatch = true;
         } else {
             if (autoTray.windowClass_ == className) {
-                // DEBUG_PRINTF("\twindow class %s match\n", autoTray.windowClass_.c_str());
+                // DEBUG_PRINTF("\twindow class '%s' match\n", autoTray.windowClass_.c_str());
                 classMatch = true;
             }
         }
@@ -600,7 +600,7 @@ bool windowShouldAutoTray(HWND hwnd)
         } else {
             std::regex re(autoTray.windowTitle_);
             if (std::regex_match(windowText, re)) {
-                // DEBUG_PRINTF("\twindow title %s match\n", autoTray.windowTitle_.c_str());
+                // DEBUG_PRINTF("\twindow title '%s' match\n", autoTray.windowTitle_.c_str());
                 titleMatch = true;
             }
         }
