@@ -25,7 +25,7 @@
 class TrayIcon
 {
 public:
-    TrayIcon();
+    TrayIcon() = default;
     ~TrayIcon();
 
     bool create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
@@ -41,7 +41,7 @@ private:
     TrayIcon(const TrayIcon &) = delete;
     TrayIcon & operator=(const TrayIcon &) = delete;
 
-    NOTIFYICONDATAA nid_;
+    NOTIFYICONDATAA nid_ {};
 
     static volatile LONG gid_;
 };

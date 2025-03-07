@@ -20,6 +20,8 @@
 class ErrorContext
 {
 public:
+    ErrorContext() = default;
+
     inline explicit ErrorContext(unsigned int errorId)
         : errorId_(errorId)
     {
@@ -38,8 +40,6 @@ public:
     inline const std::string & errorString() const { return errorString_; }
 
 private:
-    ErrorContext() = delete;
-
-    unsigned int errorId_;
+    unsigned int errorId_ {};
     std::string errorString_;
 };

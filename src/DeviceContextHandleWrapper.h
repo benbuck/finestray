@@ -93,7 +93,7 @@ public:
     }
 
 private:
-    HDC hdc_ = nullptr;
-    Mode mode_;
+    HDC hdc_ {};
+    Mode mode_ {};
     std::vector<HGDIOBJ> objects_;
 };

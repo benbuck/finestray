@@ -42,5 +42,5 @@ public:
     operator bool() const { return hbitmap_ != nullptr; }
 
 private:
-    HBITMAP hbitmap_ = nullptr;
+    HBITMAP hbitmap_ {};
 };

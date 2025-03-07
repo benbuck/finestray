@@ -42,5 +42,5 @@ public:
     operator bool() const { return hmenu_ != nullptr; }
 
 private:
-    HMENU hmenu_ = nullptr;
+    HMENU hmenu_ {};
 };

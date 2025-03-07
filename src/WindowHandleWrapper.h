@@ -24,10 +24,7 @@
 class WindowHandleWrapper
 {
 public:
-    WindowHandleWrapper()
-        : hwnd_(nullptr)
-    {
-    }
+    WindowHandleWrapper() = default;
 
     explicit WindowHandleWrapper(HWND hwnd)
         : hwnd_(hwnd)
@@ -58,5 +55,5 @@ public:
     operator HWND() const { return hwnd_; }
 
 private:
-    HWND hwnd_;
+    HWND hwnd_ {};
 };

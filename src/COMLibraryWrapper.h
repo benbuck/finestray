@@ -33,5 +33,5 @@ public:
     bool initialized() const { return initialized_; }
 
 private:
-    bool initialized_;
+    bool initialized_ {};
 };

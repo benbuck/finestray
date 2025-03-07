@@ -54,15 +54,15 @@ public:
 
     static bool fileExists(const std::string & fileName);
 
-    bool startWithWindows_;
-    bool logToFile_;
-    MinimizePlacement minimizePlacement_;
+    bool startWithWindows_ {};
+    bool logToFile_ {};
+    MinimizePlacement minimizePlacement_ {};
     std::string hotkeyMinimize_;
     std::string hotkeyRestore_;
     std::string hotkeyRestoreAll_;
     std::string hotkeyMenu_;
     std::string modifiersOverride_;
-    unsigned int pollInterval_; // zero to disable
+    unsigned int pollInterval_ {}; // zero to disable
     std::vector<AutoTray> autoTrays_;
 
 private:

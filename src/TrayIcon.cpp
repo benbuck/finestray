@@ -20,11 +20,6 @@
 
 volatile LONG TrayIcon::gid_ = 0;
 
-TrayIcon::TrayIcon()
-{
-    ZeroMemory(&nid_, sizeof(nid_));
-}
-
 TrayIcon::~TrayIcon()
 {
     destroy();

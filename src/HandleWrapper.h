@@ -59,5 +59,5 @@ public:
     operator bool() const { return handle_ != INVALID_HANDLE_VALUE; }
 
 private:
-    HANDLE handle_ = INVALID_HANDLE_VALUE;
+    HANDLE handle_ { INVALID_HANDLE_VALUE };
 };

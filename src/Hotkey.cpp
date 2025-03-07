@@ -47,12 +47,6 @@ const std::map<std::string, UINT> vkeyMap_ = {
 
 } // anonymous namespace
 
-Hotkey::Hotkey()
-    : hwnd_(nullptr)
-    , id_(-1)
-{
-}
-
 Hotkey::~Hotkey()
 {
     destroy();

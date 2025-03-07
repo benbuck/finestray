@@ -23,7 +23,7 @@
 class Hotkey
 {
 public:
-    Hotkey();
+    Hotkey() = default;
     ~Hotkey();
 
     bool create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers);
@@ -34,6 +34,6 @@ public:
     static bool parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers);
 
 private:
-    HWND hwnd_;
-    int id_;
+    HWND hwnd_ {};
+    int id_ { -1 };
 };

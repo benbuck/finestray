@@ -527,7 +527,7 @@ ErrorContext start()
 
     WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
 
-    return ErrorContext(0);
+    return ErrorContext();
 }
 
 void stop()

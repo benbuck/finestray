@@ -49,5 +49,5 @@ public:
     operator HWINEVENTHOOK() const { return hwineventhook_; }
 
 private:
-    HWINEVENTHOOK hwineventhook_;
+    HWINEVENTHOOK hwineventhook_ {};
 };
