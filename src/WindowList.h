@@ -18,10 +18,17 @@
 #include <Windows.h>
 
 // Standard library
+#include <map>
 #include <string>
 
 namespace WindowList
 {
+
+struct WindowData
+{
+    std::string title;
+    bool visible;
+};
 
 void start(
     HWND hwnd,
@@ -31,5 +38,7 @@ void start(
     void (*changeWindowTitleCallback)(HWND, const std::string &),
     void (*changeVisibilityCallback)(HWND, bool));
 void stop();
+
+std::map<HWND, WindowData> getAll();
 
 } // namespace WindowList

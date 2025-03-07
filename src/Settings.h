@@ -55,6 +55,7 @@ public:
     static bool fileExists(const std::string & fileName);
 
     bool startWithWindows_ {};
+    bool showWindowsInMenu_ {};
     bool logToFile_ {};
     MinimizePlacement minimizePlacement_ {};
     std::string hotkeyMinimize_;

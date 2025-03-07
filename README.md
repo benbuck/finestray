@@ -81,8 +81,11 @@ From the context menu, you can select one of the menu items:
 - **Exit**:
   Exits the Finestray application.
 
-Additionally, if your `Minimize placement` is set to `Menu` or `Tray and Menu`, then minimized windows will be listed in
-the context menu. You can click on these to restore a window to its original location.
+If your `Minimize placement` is set to `Menu` or `Tray and Menu`, then minimized windows will be listed in the context
+menu. You can click on these to restore a window to its original location.
+
+If `Show windows in menu` is enabled, then non-minimized windows will be listed in the context menu, and you can click
+them to minimize them to the tray.
 
 ## Settings
 
@@ -99,6 +102,9 @@ The available settings correspond to some of the above features. The settings ar
   startup folder (`shell:Startup`, typically
   `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which which launches the Finestray
   executable.
+- **Show windows in menu**:
+  This toggles whether Finestray will add entries in the [Context menu](#context-menu) for windows that are not
+  minimized.
 - **Enable log file**:
   This toggles whether Finestray saves logging information to a file or not. If enabled, Finestray first tries to save
   the log file in the same location as the Finestray application, and if that's not possible it saves to

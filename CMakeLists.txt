@@ -166,7 +166,8 @@ target_link_libraries(Finestray
         cJSON
 
         Comctl32.lib
-        Shlwapi.lib
+        ShLwApi.lib
+        dwmapi.lib
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

@@ -25,8 +25,16 @@
 #include "Resource.h"
 #include "StringUtility.h"
 #include "WindowIcon.h"
+#include "WindowList.h"
 
-bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
+namespace
+{
+
+bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id);
+
+} // anonymous namespace
+
+bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWindows)
 {
     // create popup menu
     MenuHandleWrapper menu(CreatePopupMenu());
@@ -47,43 +55,41 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
         return false;
     }
 
-    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+    if (showWindows) {
+        std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+        unsigned int visibleCount = 0;
+        for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+            if (window.second.visible && !IsIconic(window.first)) {
+                if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount)) {
+                    return false;
+                }
 
-    if (minimizePlacementIncludesMenu(minimizePlacement)) {
-        unsigned int count = 0;
-        for (HWND minimizedWindow : minimizedWindows) {
-            std::string title = getWindowText(minimizedWindow);
-            constexpr size_t maxTitleLength = 30;
-            if (title.length() > maxTitleLength) {
-                std::string_view ellipsis = "...";
-                title.resize(maxTitleLength - ellipsis.length());
-                title += ellipsis; // FIX - localize this?
+                ++visibleCount;
             }
-            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZEDWINDOW_BASE + count, title.c_str())) {
+        }
+
+        if (visibleCount) {
+            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
                 WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
                 return false;
             }
+        }
+    }
 
-            HBITMAP hbmp = WindowIcon::bitmap(minimizedWindow);
-            if (hbmp) {
-                MENUITEMINFOA menuItemInfo;
-                memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
-                menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
-                menuItemInfo.fMask = MIIM_BITMAP;
-                menuItemInfo.hbmpItem = hbmp;
-                if (!SetMenuItemInfoA(menu, IDM_MINIMIZEDWINDOW_BASE + count, FALSE, &menuItemInfo)) {
-                    WARNING_PRINTF(
-                        "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
-                        StringUtility::lastErrorString().c_str());
-                    return false;
-                }
+    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+
+    if (minimizePlacementIncludesMenu(minimizePlacement)) {
+        unsigned int minimizedCount = 0;
+        for (HWND minimizedWindow : minimizedWindows) {
+            if (!addMenuItemForWindow(menu, minimizedWindow, IDM_MINIMIZEDWINDOW_BASE + minimizedCount)) {
+                return false;
             }
 
-            ++count;
+            ++minimizedCount;
         }
-        if (count) {
+        if (minimizedCount) {
             if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
                 WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
@@ -200,3 +206,40 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement)
 
     return true;
 }
+
+namespace
+{
+
+bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id)
+{
+    std::string title = getWindowText(hwnd);
+    constexpr size_t maxTitleLength = 30;
+    if (title.length() > maxTitleLength) {
+        std::string_view ellipsis = "...";
+        title.resize(maxTitleLength - ellipsis.length());
+        title += ellipsis; // FIX - localize this?
+    }
+    if (!AppendMenuA(menu, MF_STRING, id, title.c_str())) {
+        WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    HBITMAP hbmp = WindowIcon::bitmap(hwnd);
+    if (hbmp) {
+        MENUITEMINFOA menuItemInfo;
+        memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
+        menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
+        menuItemInfo.fMask = MIIM_BITMAP;
+        menuItemInfo.hbmpItem = hbmp;
+        if (!SetMenuItemInfoA(menu, id, FALSE, &menuItemInfo)) {
+            WARNING_PRINTF(
+                "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+} // anonymous namespace

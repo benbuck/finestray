@@ -297,6 +297,21 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             }
                             ++count;
                         }
+                    } else {
+                        std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+                        if ((id >= IDM_VISIBLEWINDOW_BASE) && (id < (IDM_VISIBLEWINDOW_BASE + windowList.size()))) {
+                            unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
+                            unsigned int count = 0;
+                            for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+                                if (window.second.visible) {
+                                    if (count == index) {
+                                        MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
+                                        break;
+                                    }
+                                    ++count;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -364,7 +379,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
                         break;
                     }
-                    if (!showContextMenu(hwnd, settings_.minimizePlacement_)) {
+                    if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
                         errorMessage(IDS_ERROR_CREATE_MENU);
                     }
                     break;
@@ -386,7 +401,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         WARNING_PRINTF("context menu already active, ignoring\n");
                         break;
                     }
-                    if (!showContextMenu(hwnd, settings_.minimizePlacement_)) {
+                    if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
                         errorMessage(IDS_ERROR_CREATE_MENU);
                     }
                     break;

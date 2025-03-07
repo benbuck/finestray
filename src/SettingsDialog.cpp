@@ -128,6 +128,13 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
+            if (!CheckDlgButton(
+                    dialogHwnd,
+                    IDC_SHOW_WINDOWS_IN_MENU,
+                    settings_.showWindowsInMenu_ ? BST_CHECKED : BST_UNCHECKED)) {
+                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+
             if (!CheckDlgButton(dialogHwnd, IDC_LOG_TO_FILE, settings_.logToFile_ ? BST_CHECKED : BST_UNCHECKED)) {
                 WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
@@ -200,6 +207,12 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 switch (LOWORD(wParam)) {
                     case IDC_START_WITH_WINDOWS: {
                         settings_.startWithWindows_ = IsDlgButtonChecked(dialogHwnd, IDC_START_WITH_WINDOWS) ==
+                            BST_CHECKED;
+                        break;
+                    }
+
+                    case IDC_SHOW_WINDOWS_IN_MENU: {
+                        settings_.showWindowsInMenu_ = IsDlgButtonChecked(dialogHwnd, IDC_SHOW_WINDOWS_IN_MENU) ==
                             BST_CHECKED;
                         break;
                     }

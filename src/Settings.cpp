@@ -44,6 +44,7 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
 enum SettingKeys : unsigned int
 {
     SK_StartWithWindows,
+    SK_ShowWindowsInMenu,
     SK_LogToFile,
     SK_MinimizePlacement,
     SK_Executable,
@@ -61,6 +62,7 @@ enum SettingKeys : unsigned int
 };
 
 const bool startWithWindowsDefault_ = false;
+const bool showWindowsInMenu_ = false;
 const bool logToFileDefault_ = false;
 const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
 const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
@@ -70,10 +72,11 @@ const char hotkeyMenuDefault_[] = "alt ctrl shift home";
 const char modifiersOverrideDefault_[] = "alt ctrl shift";
 const unsigned int pollIntervalDefault_ = 500;
 const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
-const char * settingKeys_[SK_Count] = { "start-with-windows", "log-to-file",  "minimize-placement", "executable",
-                                        "window-class",       "window-title", "hotkey-minimize",    "hotkey-restore",
-                                        "hotkey-restore-all", "hotkey-menu",  "modifiers-override", "poll-interval",
-                                        "auto-tray" };
+const char * settingKeys_[SK_Count] = {
+    "start-with-windows", "show-windows-in-menu", "log-to-file",     "minimize-placement", "executable",
+    "window-class",       "window-title",         "hotkey-minimize", "hotkey-restore",     "hotkey-restore-all",
+    "hotkey-menu",        "modifiers-override",   "poll-interval",   "auto-tray"
+};
 
 } // anonymous namespace
 
@@ -101,11 +104,12 @@ bool Settings::operator==(const Settings & rhs) const
         return true;
     }
 
-    return (startWithWindows_ == rhs.startWithWindows_) && (logToFile_ == rhs.logToFile_) &&
-        (minimizePlacement_ == rhs.minimizePlacement_) && (hotkeyMinimize_ == rhs.hotkeyMinimize_) &&
-        (hotkeyRestore_ == rhs.hotkeyRestore_) && (hotkeyRestoreAll_ == rhs.hotkeyRestoreAll_) &&
-        (hotkeyMenu_ == rhs.hotkeyMenu_) && (modifiersOverride_ == rhs.modifiersOverride_) &&
-        (pollInterval_ == rhs.pollInterval_) && (autoTrays_ == rhs.autoTrays_);
+    return (startWithWindows_ == rhs.startWithWindows_) && (showWindowsInMenu_ == rhs.showWindowsInMenu_) &&
+        (logToFile_ == rhs.logToFile_) && (minimizePlacement_ == rhs.minimizePlacement_) &&
+        (hotkeyMinimize_ == rhs.hotkeyMinimize_) && (hotkeyRestore_ == rhs.hotkeyRestore_) &&
+        (hotkeyRestoreAll_ == rhs.hotkeyRestoreAll_) && (hotkeyMenu_ == rhs.hotkeyMenu_) &&
+        (modifiersOverride_ == rhs.modifiersOverride_) && (pollInterval_ == rhs.pollInterval_) &&
+        (autoTrays_ == rhs.autoTrays_);
 }
 
 bool Settings::readFromFile(const std::string & fileName)
@@ -223,6 +227,7 @@ void Settings::dump()
 #if !defined(NDEBUG)
     DEBUG_PRINTF("Settings:\n");
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ShowWindowsInMenu], StringUtility::boolToCString(showWindowsInMenu_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
@@ -261,6 +266,7 @@ bool Settings::parseJson(const std::string & json)
     DEBUG_PRINTF("parsed settings JSON:\n%s\n", cJSON_Print(cjson));
 
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
+    showWindowsInMenu_ = getBool(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_);
     logToFile_ = getBool(cjson, settingKeys_[SK_LogToFile], logToFile_);
 
     const std::string & minimizePlacementString =
@@ -309,6 +315,10 @@ std::string Settings::constructJSON()
     bool fail = false;
 
     if (!cJSON_AddBoolToObject(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_)) {
+        fail = true;
+    }
+
+    if (!cJSON_AddBoolToObject(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_)) {
         fail = true;
     }
 

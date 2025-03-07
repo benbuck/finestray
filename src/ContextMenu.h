@@ -25,6 +25,7 @@ constexpr WORD IDM_SETTINGS = 0x1002;
 constexpr WORD IDM_ABOUT = 0x1003;
 constexpr WORD IDM_EXIT = 0x1004;
 constexpr WORD IDM_RESTORE_ALL = 0x1005;
-constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x1006;
+constexpr WORD IDM_VISIBLEWINDOW_BASE = 0x2000;
+constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x3000;
 
-bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement);
+bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWindows);

@@ -18,18 +18,15 @@
 #include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
+#include "WindowIcon.h"
 
-// Standard library
-#include <map>
+// Windows
+#include <dwmapi.h>
+
+using WindowList::WindowData;
 
 namespace
 {
-
-struct WindowData
-{
-    std::string title;
-    bool visible;
-};
 
 HWND hwnd_;
 UINT pollMillis_;
@@ -84,6 +81,11 @@ void stop()
     addWindowCallback_ = nullptr;
     pollMillis_ = 0;
     hwnd_ = nullptr;
+}
+
+std::map<HWND, WindowData> getAll()
+{
+    return windowList_;
 }
 
 } // namespace WindowList
@@ -152,9 +154,24 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
         return TRUE;
     }
 
+    bool visible = IsWindowVisible(hwnd);
+    if (visible) {
+        HICON icon = WindowIcon::get(hwnd);
+        if (!icon) {
+            // DEBUG_PRINTF("no icon for window: %s\n", title.c_str());
+            visible = false;
+        } else {
+            BOOL isCloaked = FALSE;
+            if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked))) && isCloaked) {
+                // DEBUG_PRINTF("cloaked window: %s\n", title.c_str());
+                visible = false;
+            }
+        }
+    }
+
     std::map<HWND, WindowData> & windowList = *(std::map<HWND, WindowData> *)lParam;
     windowList[hwnd].title = title;
-    windowList[hwnd].visible = IsWindowVisible(hwnd);
+    windowList[hwnd].visible = visible;
 
     return TRUE;
 }
