@@ -15,6 +15,7 @@
 #include "MinimizedWindow.h"
 
 // App
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
@@ -47,7 +48,6 @@ typedef std::vector<MinimizedWindowData> MinimizedWindows;
 MinimizedWindows minimizedWindows_;
 
 MinimizedWindows::iterator findMinimizedWindow(HWND hwnd);
-TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd);
 
 } // anonymous namespace
 
@@ -70,7 +70,13 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
-        trayIcon.reset(createTrayIcon(hwnd, messageHwnd));
+        trayIcon.reset(new TrayIcon());
+        ErrorContext err = trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, WindowIcon::get(hwnd));
+        if (err) {
+            WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
+            trayIcon.reset();
+            errorMessage(err);
+        }
     }
 
     minimizedWindows_.emplace_back(hwnd, messageHwnd, std::move(trayIcon));
@@ -112,7 +118,17 @@ void addAll(MinimizePlacement minimizePlacement)
         MinimizedWindowData & minimizedWindow = *it;
         if (minimizePlacementIncludesTray(minimizePlacement)) {
             if (!minimizedWindow.trayIcon_) {
-                minimizedWindow.trayIcon_.reset(createTrayIcon(minimizedWindow.hwnd_, minimizedWindow.messageHwnd_));
+                minimizedWindow.trayIcon_.reset(new TrayIcon());
+                ErrorContext err = minimizedWindow.trayIcon_->create(
+                    minimizedWindow.hwnd_,
+                    minimizedWindow.messageHwnd_,
+                    WM_TRAYWINDOW,
+                    WindowIcon::get(minimizedWindow.hwnd_));
+                if (err) {
+                    WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", minimizedWindow.hwnd_);
+                    minimizedWindow.trayIcon_.reset();
+                    errorMessage(err);
+                }
             }
         } else {
             if (minimizedWindow.trayIcon_) {
@@ -202,20 +218,6 @@ MinimizedWindows::iterator findMinimizedWindow(HWND hwnd)
         [hwnd](const MinimizedWindowData & minimizedWindow) {
             return minimizedWindow.hwnd_ == hwnd;
         });
-}
-
-TrayIcon * createTrayIcon(HWND hwnd, HWND messageHwnd)
-{
-    TrayIcon * trayIcon = new TrayIcon();
-
-    HICON hicon = WindowIcon::get(hwnd);
-    if (!hicon) {
-        hicon = LoadIcon(nullptr, IDI_APPLICATION);
-    }
-
-    trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, hicon);
-
-    return trayIcon;
 }
 
 } // anonymous namespace

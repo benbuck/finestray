@@ -193,9 +193,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     // ShowWindow(appWindow_, nCmdShow);
     (void)nCmdShow;
 
+    ErrorContext err;
+
     // create a tray icon for the app
-    if (!trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon)) {
-        errorMessage(IDS_ERROR_CREATE_TRAY_ICON);
+    err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
+    if (err) {
+        errorMessage(err);
         return IDS_ERROR_CREATE_TRAY_ICON;
     }
 
@@ -218,7 +221,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
-    ErrorContext err = start();
+    err = start();
     if (err) {
         errorMessage(err);
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);

@@ -16,6 +16,7 @@
 
 // App
 #include "Log.h"
+#include "Resource.h"
 #include "StringUtility.h"
 
 volatile LONG TrayIcon::gid_ = 0;
@@ -25,11 +26,11 @@ TrayIcon::~TrayIcon()
     destroy();
 }
 
-bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
+ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
     if (nid_.uID) {
         WARNING_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
-        return false;
+        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, "tray icon already exists");
     }
 
     LONG id = InterlockedIncrement(&gid_);
@@ -40,7 +41,7 @@ bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
     nid_.uID = (UINT)id;
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid_.uCallbackMessage = msg;
-    nid_.hIcon = hicon;
+    nid_.hIcon = hicon ? hicon : LoadIcon(nullptr, IDI_APPLICATION);
     nid_.uVersion = NOTIFYICON_VERSION;
 
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0])) &&
@@ -49,22 +50,20 @@ bool TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
     }
 
     if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
-        WARNING_PRINTF(
-            "could not add tray icon, Shell_NotifyIcon() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
+        std::string lastErrorString = StringUtility::lastErrorString();
+        WARNING_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %s\n", lastErrorString.c_str());
         ZeroMemory(&nid_, sizeof(nid_));
-        return false;
+        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + "(NIM_ADD)");
     }
 
     if (!Shell_NotifyIconA(NIM_SETVERSION, &nid_)) {
-        WARNING_PRINTF(
-            "could not set tray icon version, Shell_NotifyIcon() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
+        std::string lastErrorString = StringUtility::lastErrorString();
+        WARNING_PRINTF("could not set tray icon version, Shell_NotifyIcon() failed: %s\n", lastErrorString.c_str());
         destroy();
-        return false;
+        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + "(NIM_SETVERSION)");
     }
 
-    return true;
+    return ErrorContext();
 }
 
 void TrayIcon::destroy()

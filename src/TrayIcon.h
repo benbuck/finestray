@@ -14,6 +14,9 @@
 
 #pragma once
 
+// App
+#include "ErrorContext.h"
+
 // Windows
 #include <Windows.h>
 #include <shellapi.h>
@@ -28,7 +31,7 @@ public:
     TrayIcon() = default;
     ~TrayIcon();
 
-    bool create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
+    ErrorContext create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
     void destroy();
 
     void updateTip(const std::string & tip);
