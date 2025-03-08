@@ -20,9 +20,6 @@
 #include "StringUtility.h"
 #include "WindowIcon.h"
 
-// Windows
-#include <dwmapi.h>
-
 using WindowList::WindowData;
 
 namespace
@@ -143,49 +140,9 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    if (!IsWindowVisible(hwnd) && (windowList_.find(hwnd) == windowList_.end())) {
-        // DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
-        return TRUE;
-    }
-
-    std::string title = getWindowText(hwnd);
-    if (title.empty()) {
-        // DEBUG_PRINTF("ignoring window with empty title: %#x\n", hwnd);
-        return TRUE;
-    }
-
-    bool visible = IsWindowVisible(hwnd);
-    if (visible) {
-        // from https://devblogs.microsoft.com/oldnewthing/20071008-00/?p=24863
-        HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
-        HWND hwndTry;
-        while ((hwndTry = GetLastActivePopup(hwndWalk)) != hwndTry) {
-            if (IsWindowVisible(hwndTry)) {
-                break;
-            }
-            hwndWalk = hwndTry;
-        }
-        if (hwndWalk != hwnd) {
-            // DEBUG_PRINTF("owned window: %s\n", title.c_str());
-            visible = false;
-        } else {
-            LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-            if (exStyle & WS_EX_TOOLWINDOW) {
-                // DEBUG_PRINTF("tool window: %s\n", title.c_str());
-                visible = false;
-            } else {
-                BOOL isCloaked = FALSE;
-                if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked))) && isCloaked) {
-                    // DEBUG_PRINTF("cloaked window: %s\n", title.c_str());
-                    visible = false;
-                }
-            }
-        }
-    }
-
     std::map<HWND, WindowData> & windowList = *(std::map<HWND, WindowData> *)lParam;
-    windowList[hwnd].title = title;
-    windowList[hwnd].visible = visible;
+    windowList[hwnd].title = getWindowText(hwnd);
+    windowList[hwnd].visible = isWindowUserVisible(hwnd);
 
     return TRUE;
 }

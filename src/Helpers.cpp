@@ -18,6 +18,18 @@
 #include "Log.h"
 #include "StringUtility.h"
 
+// Windows
+#include <dwmapi.h>
+
+namespace
+{
+
+bool isAltTabWindow(HWND hwnd);
+bool isToolWindow(HWND hwnd);
+bool isCloakedWindow(HWND hwnd);
+
+} // anonymous namespace
+
 std::string getResourceString(unsigned int id)
 {
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
@@ -75,6 +87,11 @@ std::string getWindowClassName(HWND hwnd)
     return className;
 }
 
+bool isWindowUserVisible(HWND hwnd)
+{
+    return IsWindowVisible(hwnd) && isAltTabWindow(hwnd) && !isToolWindow(hwnd) && !isCloakedWindow(hwnd);
+}
+
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);
@@ -104,3 +121,40 @@ void errorMessage(const ErrorContext & errorContext)
             StringUtility::lastErrorString().c_str());
     }
 }
+
+namespace
+{
+
+// from https://devblogs.microsoft.com/oldnewthing/20071008-00/?p=24863
+bool isAltTabWindow(HWND hwnd)
+{
+    // Start at the root owner
+    HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
+
+    // See if we are the last active visible popup
+    HWND hwndTry;
+    while ((hwndTry = GetLastActivePopup(hwndWalk)) != hwndTry) {
+        if (IsWindowVisible(hwndTry)) {
+            break;
+        }
+        hwndWalk = hwndTry;
+    }
+
+    return hwndWalk == hwnd;
+}
+
+bool isToolWindow(HWND hwnd)
+{
+    LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+    return (exStyle & WS_EX_TOOLWINDOW) != 0;
+}
+
+// from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
+bool isCloakedWindow(HWND hwnd)
+{
+    BOOL isCloaked = FALSE;
+    HRESULT hr = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked));
+    return SUCCEEDED(hr) && isCloaked;
+}
+
+} // anonymous namespace

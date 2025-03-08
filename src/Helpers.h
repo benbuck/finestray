@@ -26,5 +26,6 @@
 std::string getResourceString(unsigned int id);
 std::string getWindowText(HWND hwnd);
 std::string getWindowClassName(HWND hwnd);
+bool isWindowUserVisible(HWND hwnd);
 void errorMessage(unsigned int id);
 void errorMessage(const ErrorContext & errorContext);
