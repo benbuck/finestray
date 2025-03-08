@@ -82,7 +82,7 @@ void errorMessage(unsigned int id)
     ERROR_PRINTF("%s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         WARNING_PRINTF(
-            "failed to display error message %u, MessageBoxA() failed: %s\n",
+            "failed to display error message %#x, MessageBoxA() failed: %s\n",
             id,
             StringUtility::lastErrorString().c_str());
     }
@@ -99,7 +99,7 @@ void errorMessage(const ErrorContext & errorContext)
     ERROR_PRINTF("%s\n", err.c_str());
     if (!MessageBoxA(nullptr, err.c_str(), APP_NAME, MB_OK | MB_ICONERROR)) {
         WARNING_PRINTF(
-            "failed to display error message %u, MessageBoxA() failed: %s\n",
+            "failed to display error message %#x, MessageBoxA() failed: %s\n",
             errorContext.errorId(),
             StringUtility::lastErrorString().c_str());
     }
