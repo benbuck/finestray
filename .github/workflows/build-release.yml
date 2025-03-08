@@ -33,7 +33,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build
-        run: .\vstudio_build.bat Release
+        run: .\vstudio-build.bat Release
 
       - name: Create portable artifact
         uses: actions/upload-artifact@v4

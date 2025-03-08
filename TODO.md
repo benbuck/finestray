@@ -1,6 +1,6 @@
 # To do list
 
-- Rename build scripts (dashes instead of underscores)
+- Fix command prompt minimize
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection
 - Investigate VirusTotal results for installer
