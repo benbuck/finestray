@@ -156,15 +156,29 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 
     bool visible = IsWindowVisible(hwnd);
     if (visible) {
-        HICON icon = WindowIcon::get(hwnd);
-        if (!icon) {
-            // DEBUG_PRINTF("no icon for window: %s\n", title.c_str());
+        // from https://devblogs.microsoft.com/oldnewthing/20071008-00/?p=24863
+        HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
+        HWND hwndTry;
+        while ((hwndTry = GetLastActivePopup(hwndWalk)) != hwndTry) {
+            if (IsWindowVisible(hwndTry)) {
+                break;
+            }
+            hwndWalk = hwndTry;
+        }
+        if (hwndWalk != hwnd) {
+            // DEBUG_PRINTF("owned window: %s\n", title.c_str());
             visible = false;
         } else {
-            BOOL isCloaked = FALSE;
-            if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked))) && isCloaked) {
-                // DEBUG_PRINTF("cloaked window: %s\n", title.c_str());
+            LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+            if (exStyle & WS_EX_TOOLWINDOW) {
+                // DEBUG_PRINTF("tool window: %s\n", title.c_str());
                 visible = false;
+            } else {
+                BOOL isCloaked = FALSE;
+                if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked))) && isCloaked) {
+                    // DEBUG_PRINTF("cloaked window: %s\n", title.c_str());
+                    visible = false;
+                }
             }
         }
     }
