@@ -16,6 +16,7 @@
 
 // App
 #include "AboutDialog.h"
+#include "HandleWrapper.h"
 #include "Helpers.h"
 #include "Hotkey.h"
 #include "Log.h"
@@ -826,14 +827,13 @@ void spySelectWindowAtPoint(const POINT & point)
         if (!GetWindowThreadProcessId(rootHwnd, &processID)) {
             WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-            if (!hproc) {
+            HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
+            if (!process) {
                 WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
-                if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, executableFullPath, MAX_PATH)) {
+                if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executableFullPath, MAX_PATH)) {
                     WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
                 }
-                CloseHandle(hproc);
             }
         }
         DEBUG_PRINTF("Executable full path: '%s'\n", executableFullPath);

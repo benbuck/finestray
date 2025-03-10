@@ -20,6 +20,7 @@
 #include "COMLibraryWrapper.h"
 #include "ContextMenu.h"
 #include "File.h"
+#include "HandleWrapper.h"
 #include "Helpers.h"
 #include "Hotkey.h"
 #include "Log.h"
@@ -602,17 +603,16 @@ bool windowShouldAutoTray(HWND hwnd)
     if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
         WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        HANDLE hproc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
-        if (!hproc) {
+        HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId));
+        if (!process) {
             WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            if (!GetModuleFileNameExA((HMODULE)hproc, nullptr, executable, sizeof(executable))) {
+            if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executable, sizeof(executable))) {
                 WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 DEBUG_PRINTF("\texecutable: %s\n", executable);
             }
         }
-        CloseHandle(hproc);
     }
 
     std::string windowText = getWindowText(hwnd);
