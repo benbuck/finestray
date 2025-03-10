@@ -200,8 +200,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     // create a tray icon for the app
     err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
     if (err) {
-        errorMessage(err);
-        return IDS_ERROR_CREATE_TRAY_ICON;
+        // this error can happen legitimately if the taskbar hasn't been created
+        // log an error, and assume we will create the icon when we get the TaskbarCreated message
+        ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
     }
 
     // monitor minimize events
@@ -482,6 +483,12 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         default: {
             if (uMsg == taskbarCreatedMessage_) {
+                HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+                HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
+                ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
+                if (err) {
+                    ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
+                }
                 MinimizedWindow::addAll(settings_.minimizePlacement_);
             }
             break;

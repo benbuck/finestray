@@ -28,10 +28,7 @@ TrayIcon::~TrayIcon()
 
 ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
-    if (nid_.uID) {
-        WARNING_PRINTF("attempt to re-create tray icon %u\n", nid_.uID);
-        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, "tray icon already exists");
-    }
+    destroy();
 
     LONG id = InterlockedIncrement(&gid_);
 
