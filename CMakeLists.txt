@@ -19,7 +19,7 @@ set(CMAKE_CONFIGURATION_TYPES Debug Release)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    cmake_policy(SET CMP0117 NEW) # /GR (RTTI) is not added to CMAKE_CXX_FLAGS by default
+    cmake_policy(set CMP0117 NEW) # /GR (RTTI) is not added to CMAKE_CXX_FLAGS by default
 endif()
 
 project(Finestray
@@ -278,8 +278,14 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finestray")
 set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_EXECUTABLES "Finestray" "Finestray" )
+
+# NSIS options
 set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMSTARTUP\\\\Finestray.lnk' '$INSTDIR\\\\Finestray.exe'")
-set(CPACK_NSIS_DEFINES "RequestExecutionLevel user")
+set(CPACK_NSIS_DEFINES_LIST
+    "RequestExecutionLevel user"
+    "InstallDir \\\"$LOCALAPPDATA\\\\${CPACK_PACKAGE_INSTALL_DIRECTORY}\\\""
+)
+string (REPLACE ";" " \n" CPACK_NSIS_DEFINES "${CPACK_NSIS_DEFINES_LIST}")
 set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMSTARTUP\\\\Finestray.lnk'")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
@@ -290,6 +296,7 @@ set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_header.
 set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/finestray/")
 set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
 set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
+
 include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")
