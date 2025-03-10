@@ -84,7 +84,8 @@ bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         trayIcon.reset(new TrayIcon());
-        ErrorContext err = trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, WindowIcon::get(hwnd));
+        HICON hicon = WindowIcon::get(hwnd);
+        ErrorContext err = trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, hicon);
         if (err) {
             WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
             trayIcon.reset();
@@ -134,11 +135,12 @@ void addAll(MinimizePlacement minimizePlacement)
         if (minimizePlacementIncludesTray(minimizePlacement)) {
             if (!minimizedWindow.trayIcon_) {
                 minimizedWindow.trayIcon_.reset(new TrayIcon());
+                HICON hicon = WindowIcon::get(minimizedWindow.hwnd_);
                 ErrorContext err = minimizedWindow.trayIcon_->create(
                     minimizedWindow.hwnd_,
                     minimizedWindow.messageHwnd_,
                     WM_TRAYWINDOW,
-                    WindowIcon::get(minimizedWindow.hwnd_));
+                    hicon);
                 if (err) {
                     WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", minimizedWindow.hwnd_);
                     minimizedWindow.trayIcon_.reset();

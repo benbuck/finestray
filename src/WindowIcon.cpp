@@ -58,6 +58,11 @@ HICON get(HWND hwnd)
         return hicon;
     }
 
+    hicon = LoadIcon(nullptr, IDI_APPLICATION);
+    if (hicon) {
+        return hicon;
+    }
+
     return nullptr;
 }
 
