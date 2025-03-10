@@ -45,7 +45,6 @@
 #include <Windows.h>
 
 // Standard library
-#include <cassert>
 #include <regex>
 #include <set>
 #include <string>
@@ -735,8 +734,9 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             // restart to trigger error message
             stop();
             ErrorContext err = start();
-            assert(err);
-            if (err) {
+            if (!err) {
+                ERROR_PRINTF("expected error after restart with invalid settings\n");
+            } else {
                 errorMessage(err);
                 settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
             }

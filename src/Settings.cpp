@@ -30,7 +30,6 @@
 #include <shellapi.h>
 
 // Standard library
-#include <cassert>
 #include <cstdlib>
 
 namespace
@@ -129,7 +128,10 @@ bool Settings::writeToFile(const std::string & fileName)
 {
     DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
 
-    assert(valid());
+    if (!valid()) {
+        ERROR_PRINTF("writing invalid settings\n");
+        dump();
+    }
 
     normalize();
 

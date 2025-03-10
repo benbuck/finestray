@@ -111,7 +111,7 @@ void printf(Level level, const char * fmt, ...)
     va_end(ap);
 
     if (len >= (int)sizeof(buf)) {
-        __debugbreak();
+        assert(false);
     }
 
     print(level, buf);
@@ -140,7 +140,7 @@ void print(Level level, const char * str)
         case Level::Error: levelString = "ERROR  "; break;
         default: {
             levelString = "UNKNOWN";
-            __debugbreak();
+            assert(false);
             break;
         }
     }
@@ -160,6 +160,12 @@ void print(Level level, const char * str)
         WriteFile(fileHandle_, line.c_str(), (DWORD)line.size(), &bytesWritten, nullptr);
         assert(bytesWritten == line.size());
     }
+
+#if defined(_DEBUG)
+    if ((level == Level::Error) && IsDebuggerPresent()) {
+        __debugbreak();
+    }
+#endif
 }
 
 } // namespace Log

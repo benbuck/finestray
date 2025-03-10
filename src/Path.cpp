@@ -28,7 +28,6 @@
 
 // Standard library
 #include <algorithm>
-#include <cassert>
 
 using Microsoft::WRL::ComPtr;
 
@@ -225,11 +224,16 @@ bool getExecutablePathComponents()
 
     if (length >= sizeof(moduleFullPath)) {
         WARNING_PRINTF("executable full path too long\n");
-        assert(GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+            ERROR_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
         return false;
     }
 
-    assert(length == strlen(moduleFullPath));
+    if (length != strlen(moduleFullPath)) {
+        WARNING_PRINTF("unexpected length mismatch, GetModuleFileNameA %zu, strlen %zu\n", length, strlen(moduleFullPath));
+    }
+
     executableFullPath_.reserve(length + 1);
     executableFullPath_.resize(length);
     strncpy_s(&executableFullPath_[0], length + 1, moduleFullPath, length);
