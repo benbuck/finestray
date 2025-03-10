@@ -173,6 +173,7 @@ target_link_libraries(Finestray
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
 set(EXIT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u274c.svg)
 set(SETTINGS_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2699.svg)
+set(MINIMIZE_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2198.svg)
 set(RESTORE_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2196.svg)
 
 # the following commands require ImageMagick to be installed: https://www.imagemagick.org/
@@ -191,6 +192,14 @@ add_custom_command(
     DEPENDS ${APP_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
     COMMAND magick -background none -filter point -size 16x16 ${APP_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+)
+
+# create minimize bitmap
+add_custom_command(
+    COMMENT "Converting ${MINIMIZE_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp"
+    DEPENDS ${MINIMIZE_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
+    COMMAND magick -background none -filter point -size 16x16 ${MINIMIZE_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
 )
 
 # create restore bitmap
@@ -249,6 +258,7 @@ add_custom_target(
     DEPENDS
         ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
         ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+        ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp

@@ -162,6 +162,9 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str())) {
                 WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
+            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE_ALL, settings_.hotkeyMinimizeAll_.c_str())) {
+                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
                 WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             }
@@ -284,6 +287,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         INFO_PRINTF("Settings dialog done, updating settings\n");
 
                         settings_.hotkeyMinimize_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MINIMIZE);
+                        settings_.hotkeyMinimizeAll_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MINIMIZE_ALL);
                         settings_.hotkeyRestore_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE);
                         settings_.hotkeyRestoreAll_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE_ALL);
                         settings_.hotkeyMenu_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MENU);

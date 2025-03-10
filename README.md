@@ -75,8 +75,10 @@ From the context menu, you can select one of the menu items:
 
 - **Finestray**:
   Shows a some basic information about Finestray.
+- **Minimize all**
+  Minimizes all windows to the tray. This menu item will only be available if there are un-minimized windows.
 - **Restore all**
-  Restores all minimized windows to their original states. This menu item won't be available if there are no minimized
+  Restores all minimized windows to their original states. This menu item will only be available if there are minimized
   windows.
 - **Settings**:
   Shows the [Settings](#settings) window.
@@ -119,8 +121,14 @@ The available settings correspond to some of the above features. The settings ar
 - **Minimize hotkey**:
   This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+- **Minimize all hotkey**:
+  This lets you configure the hotkey that is used to minimize all window to the tray. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Restore hotkey**:
   This lets you configure the hotkey that is used to restore a window to it's original state. Please see the
+  [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
+- **Restore all hotkey**:
+  This lets you configure the hotkey that is used to restore all windows to their original state. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Menu hotkey**:
   This lets you configure the hotkey that is used to show the [Context menu](#context-menu). Please see the
@@ -171,9 +179,9 @@ Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`
 For the override modifier, you can provide one or more modifiers using spaces in between. For example you could provide
 a modifier `alt`, or a modifier `ctrl shift`.
 
-Similarly, for the minimize, restore, restore all, and menu hotkeys, you can combine a set of modifiers together with a
-single key. So for example, you could combine the modifier `alt win` with the key `esc` to make a hotkey `alt win esc`.
-Or you could combine a modifier `ctrl win` with the key `-` to make a hotkey `ctrl win -`.
+Similarly, for the minimize, minimize all, restore, restore all, and menu hotkeys, you can combine a set of modifiers
+together with a single key. So for example, you could combine the modifier `alt win` with the key `esc` to make a hotkey
+`alt win esc`. Or you could combine a modifier `ctrl win` with the key `-` to make a hotkey `ctrl win -`.
 
 You can also leave a hotkey or modifier empty or specify `none` to disable it.
 

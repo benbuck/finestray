@@ -20,9 +20,10 @@
 #define IDI_FINESTRAY                             101
 
 // strings
-#define IDS_MENU_RESTORE_ALL                      201
-#define IDS_MENU_SETTINGS                         202
-#define IDS_MENU_EXIT                             203
+#define IDS_MENU_MINIMIZE_ALL                     201
+#define IDS_MENU_RESTORE_ALL                      202
+#define IDS_MENU_SETTINGS                         203
+#define IDS_MENU_EXIT                             204
 #define IDS_ABOUT_CAPTION                         211
 #define IDS_ABOUT_TEXT                            212
 #define IDS_COLUMN_INDEX                          221
@@ -51,9 +52,10 @@
 
 // bitmaps
 #define IDB_APP                                   401
-#define IDB_RESTORE                               402
-#define IDB_SETTINGS                              403
-#define IDB_EXIT                                  404
+#define IDB_MINIMIZE                              402
+#define IDB_RESTORE                               403
+#define IDB_SETTINGS                              404
+#define IDB_EXIT                                  405
 
 // dialogs
 #define IDD_DIALOG_SETTINGS                       501
@@ -66,22 +68,23 @@
 #define IDC_SHOW_WINDOWS_IN_MENU                 1005
 #define IDC_LOG_TO_FILE                          1006
 #define IDC_HOTKEY_MINIMIZE                      1007
-#define IDC_HOTKEY_RESTORE                       1008
-#define IDC_HOTKEY_RESTORE_ALL                   1009
-#define IDC_HOTKEY_MENU                          1010
-#define IDC_MODIFIER_OVERRIDE                    1011
-#define IDC_POLL_INTERVAL                        1012
-#define IDC_AUTO_TRAY_LIST                       1013
-#define IDC_AUTO_TRAY_EDIT_EXECUTABLE            1014
-#define IDC_AUTO_TRAY_EDIT_WINDOWCLASS           1015
-#define IDC_AUTO_TRAY_EDIT_WINDOWTITLE           1016
-#define IDC_AUTO_TRAY_ITEM_UPDATE                1017
-#define IDC_AUTO_TRAY_ITEM_ADD                   1018
-#define IDC_AUTO_TRAY_ITEM_DELETE                1019
-#define IDC_AUTO_TRAY_ITEM_SPY                   1020
-#define IDC_HELP_PAGE                            1021
-#define IDC_ABOUT                                1022
-#define IDC_RESET                                1023
-#define IDC_EXIT                                 1024
+#define IDC_HOTKEY_MINIMIZE_ALL                  1008
+#define IDC_HOTKEY_RESTORE                       1009
+#define IDC_HOTKEY_RESTORE_ALL                   1010
+#define IDC_HOTKEY_MENU                          1011
+#define IDC_MODIFIER_OVERRIDE                    1012
+#define IDC_POLL_INTERVAL                        1013
+#define IDC_AUTO_TRAY_LIST                       1014
+#define IDC_AUTO_TRAY_EDIT_EXECUTABLE            1015
+#define IDC_AUTO_TRAY_EDIT_WINDOWCLASS           1016
+#define IDC_AUTO_TRAY_EDIT_WINDOWTITLE           1017
+#define IDC_AUTO_TRAY_ITEM_UPDATE                1018
+#define IDC_AUTO_TRAY_ITEM_ADD                   1019
+#define IDC_AUTO_TRAY_ITEM_DELETE                1020
+#define IDC_AUTO_TRAY_ITEM_SPY                   1021
+#define IDC_HELP_PAGE                            1022
+#define IDC_ABOUT                                1023
+#define IDC_RESET                                1024
+#define IDC_EXIT                                 1025
 
 // clang-format on

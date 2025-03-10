@@ -57,6 +57,7 @@ namespace
 enum class HotkeyID
 {
     Minimize = 1,
+    MinimizeAll,
     Restore,
     RestoreAll,
     Menu
@@ -90,6 +91,7 @@ bool contextMenuActive_;
 Settings settings_;
 std::set<HWND> autoTrayedWindows_;
 Hotkey hotkeyMinimize_;
+Hotkey hotkeyMinimizeAll_;
 Hotkey hotkeyRestore_;
 Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
@@ -266,6 +268,16 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
+                case IDM_MINIMIZE_ALL: {
+                    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+                    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+                        if (window.second.visible) {
+                            MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
+                        }
+                    }
+                    break;
+                }
+
                 case IDM_RESTORE_ALL: {
                     MinimizedWindow::restoreAll();
                     break;
@@ -353,6 +365,16 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #endif
 
                             MinimizedWindow::minimize(foregroundHwnd, hwnd, settings_.minimizePlacement_);
+                        }
+                    }
+                    break;
+                }
+
+                case HotkeyID::MinimizeAll: {
+                    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+                    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+                        if (window.second.visible) {
+                            MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
                         }
                     }
                     break;
@@ -486,6 +508,21 @@ ErrorContext start()
         }
     }
 
+    // register a hotkey that will be used to minimize all windows
+    UINT vkMinimizeAll = VK_RIGHT;
+    UINT modifiersMinimizeAll = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
+    if (!Hotkey::parse(settings_.hotkeyMinimizeAll_, vkMinimizeAll, modifiersMinimizeAll)) {
+        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "minimize all");
+    }
+    if (!vkMinimizeAll || !modifiersMinimizeAll) {
+        INFO_PRINTF("no hotkey to minimize all windows\n");
+    } else {
+        if (!hotkeyMinimizeAll_
+                 .create((INT)HotkeyID::MinimizeAll, appWindow_, vkMinimizeAll, modifiersMinimizeAll | MOD_NOREPEAT)) {
+            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize all");
+        }
+    }
+
     // register a hotkey that will be used to restore windows
     UINT vkRestore = VK_UP;
     UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
@@ -554,6 +591,7 @@ void stop()
     hotkeyRestore_.destroy();
     hotkeyRestoreAll_.destroy();
     hotkeyMinimize_.destroy();
+    hotkeyMinimizeAll_.destroy();
     hotkeyMenu_.destroy();
 }
 

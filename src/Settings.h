@@ -27,9 +27,9 @@ class Settings
 {
 public:
     Settings();
-    ~Settings();
+    ~Settings() = default;
 
-    bool operator==(const Settings & rhs) const;
+    bool operator==(const Settings & rhs) const = default;
     bool operator!=(const Settings & rhs) const = default;
 
     bool readFromFile(const std::string & fileName);
@@ -59,6 +59,7 @@ public:
     bool logToFile_ {};
     MinimizePlacement minimizePlacement_ {};
     std::string hotkeyMinimize_;
+    std::string hotkeyMinimizeAll_;
     std::string hotkeyRestore_;
     std::string hotkeyRestoreAll_;
     std::string hotkeyMenu_;

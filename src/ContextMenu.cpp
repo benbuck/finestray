@@ -55,16 +55,31 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         return false;
     }
 
+    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
     if (showWindows) {
-        std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
         unsigned int visibleCount = 0;
         for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
-            if (window.second.visible && !IsIconic(window.first)) {
+            if (window.second.visible) {
                 if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount)) {
                     return false;
                 }
 
                 ++visibleCount;
+            }
+        }
+
+        if (visibleCount) {
+            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+                WARNING_PRINTF(
+                    "failed to create menu entry, AppendMenuA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+                return false;
+            }
+            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZE_ALL, getResourceString(IDS_MENU_MINIMIZE_ALL).c_str())) {
+                WARNING_PRINTF(
+                    "failed to create menu entry, AppendMenuA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+                return false;
             }
         }
 
@@ -106,6 +121,12 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
                 StringUtility::lastErrorString().c_str());
             return false;
         }
+        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
     }
 
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
@@ -119,11 +140,12 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
     }
 
     BitmapHandleWrapper appBitmap(getResourceBitmap(IDB_APP));
+    BitmapHandleWrapper minimizeBitmap(getResourceBitmap(IDB_MINIMIZE));
     BitmapHandleWrapper restoreBitmap(getResourceBitmap(IDB_RESTORE));
     BitmapHandleWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
     BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
 
-    if (!appBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
+    if (!appBitmap || !minimizeBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
         COLORREF oldColor = RGB(0xFF, 0xFF, 0xFF);
@@ -147,6 +169,15 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
             WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
+        }
+
+        if (!windowList.empty()) {
+            menuItemInfo.hbmpItem = minimizeBitmap;
+            if (!SetMenuItemInfoA(menu, IDM_MINIMIZE_ALL, FALSE, &menuItemInfo)) {
+                WARNING_PRINTF(
+                    "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",
+                    StringUtility::lastErrorString().c_str());
+            }
         }
 
         if (!minimizedWindows.empty()) {
