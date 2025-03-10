@@ -119,19 +119,30 @@ std::wstring stringToWideString(const std::string & s)
 std::string errorToString(unsigned long error)
 {
     LPSTR str;
-    if (!FormatMessageA(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            nullptr,
-            error,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPSTR)&str,
-            0,
-            nullptr)) {
+    size_t size = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr,
+        error,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPSTR)&str,
+        0,
+        nullptr);
+    if (!size) {
         return std::to_string(error);
     }
 
-    std::string ret(str);
+    std::string ret(str, size);
     LocalFree(str);
+
+    // remove trailing newline
+    if ((ret.size() > 1) && (ret[ret.size() - 1] == '\n')) {
+        if ((ret.size() > 2) && (ret[ret.size() - 2] == '\r')) {
+            ret.resize(ret.size() - 2);
+        } else {
+            ret.resize(ret.size() - 1);
+        }
+    }
+
     return ret;
 }
 

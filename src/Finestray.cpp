@@ -454,7 +454,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    WARNING_PRINTF("unhandled MinimizedWindow message %ld\n", lParam);
+                    WARNING_PRINTF("unhandled MinimizedWindow message %x\n", lParam);
                     break;
                 }
             }
@@ -709,7 +709,7 @@ void onRemoveWindow(HWND hwnd)
 
 void onChangeWindowTitle(HWND hwnd, const std::string & title)
 {
-    DEBUG_PRINTF("changed window title: %#x\n", hwnd);
+    DEBUG_PRINTF("changed window title: %#x, to '%s'\n", hwnd, title.c_str());
 
     if (MinimizedWindow::exists(hwnd)) {
         DEBUG_PRINTF("\tupdating title\n");

@@ -53,14 +53,14 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
         std::string lastErrorString = StringUtility::lastErrorString();
         WARNING_PRINTF("could not add tray icon, Shell_NotifyIcon() failed: %s\n", lastErrorString.c_str());
         ZeroMemory(&nid_, sizeof(nid_));
-        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + "(NIM_ADD)");
+        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + " (NIM_ADD)");
     }
 
     if (!Shell_NotifyIconA(NIM_SETVERSION, &nid_)) {
         std::string lastErrorString = StringUtility::lastErrorString();
         WARNING_PRINTF("could not set tray icon version, Shell_NotifyIcon() failed: %s\n", lastErrorString.c_str());
         destroy();
-        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + "(NIM_SETVERSION)");
+        return ErrorContext(IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + " (NIM_SETVERSION)");
     }
 
     return ErrorContext();
