@@ -74,7 +74,7 @@ bool autoTrayListViewSortAscending_;
 int autoTrayListViewSortColumn_;
 #endif
 bool spyMode_;
-HWND spuModeHwnd_;
+HWND spyModeHwnd_;
 HHOOK mouseHhook_;
 
 } // anonymous namespace
@@ -682,7 +682,7 @@ void autoTrayListViewItemSpy(HWND dialogHwnd)
         DEBUG_PRINTF("Mouse hook installed.\n");
     }
 
-    spuModeHwnd_ = dialogHwnd;
+    spyModeHwnd_ = dialogHwnd;
     spyMode_ = true;
 }
 
@@ -840,14 +840,14 @@ void spySelectWindowAtPoint(const POINT & point)
         std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
-        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath);
-        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str());
-        SetDlgItemTextA(spuModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str());
+        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath);
+        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str());
+        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str());
 
-        ShowWindow(spuModeHwnd_, SW_SHOW);
-        SetForegroundWindow(spuModeHwnd_);
+        ShowWindow(spyModeHwnd_, SW_SHOW);
+        SetForegroundWindow(spyModeHwnd_);
 
-        spuModeHwnd_ = nullptr;
+        spyModeHwnd_ = nullptr;
         spyMode_ = false;
     }
 }
