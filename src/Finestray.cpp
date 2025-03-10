@@ -683,8 +683,9 @@ void onAddWindow(HWND hwnd)
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
-            autoTrayedWindows_.insert(hwnd);
+            if (MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_)) {
+                autoTrayedWindows_.insert(hwnd);
+            }
         }
     }
 }
@@ -755,8 +756,9 @@ void onMinimizeEvent(
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
-            autoTrayedWindows_.insert(hwnd);
+            if (MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_)) {
+                autoTrayedWindows_.insert(hwnd);
+            }
         }
     }
 }

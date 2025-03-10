@@ -54,19 +54,32 @@ MinimizedWindows::iterator findMinimizedWindow(HWND hwnd);
 namespace MinimizedWindow
 {
 
-void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
+bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
 
     MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it != minimizedWindows_.end()) {
         DEBUG_PRINTF("not minimizing already minimized window %#x\n", hwnd);
-        return;
+        return false;
     }
 
     // minimize and hide window
-    ShowWindow(hwnd, SW_MINIMIZE);
-    ShowWindow(hwnd, SW_HIDE);
+    if (!ShowWindow(hwnd, SW_MINIMIZE)) {
+        WARNING_PRINTF(
+            "failed to minimize window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
+        return false;
+    } else {
+        if (!ShowWindow(hwnd, SW_HIDE)) {
+            WARNING_PRINTF(
+                "failed to hide window %#x, ShowWindow() failed: %s\n",
+                hwnd,
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+    }
 
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
@@ -76,10 +89,12 @@ void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
             WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
             trayIcon.reset();
             errorMessage(err);
+            return false;
         }
     }
 
     minimizedWindows_.emplace_back(hwnd, messageHwnd, std::move(trayIcon));
+    return true;
 }
 
 void restore(HWND hwnd)

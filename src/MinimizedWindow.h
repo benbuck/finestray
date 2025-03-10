@@ -26,7 +26,7 @@
 namespace MinimizedWindow
 {
 
-void minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement);
+bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement);
 void restore(HWND hwnd);
 void remove(HWND hwnd);
 void addAll(MinimizePlacement minimizePlacement);

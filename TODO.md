@@ -7,7 +7,6 @@
 - Add auto-tray option: when created, when minimized, both
 - Add option to make tray icons persistent even when window is restored
 - Find a way to properly minimize UWP app windows
-- Fix handling of elevated windows
 
 ## Legal
 
