@@ -103,7 +103,12 @@ void restore(HWND hwnd)
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
     // show and restore window
-    ShowWindow(hwnd, SW_SHOWNORMAL);
+    if (!ShowWindow(hwnd, SW_SHOWNORMAL)) {
+        WARNING_PRINTF(
+            "failed to show window %#x, ShowWindow() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
+    }
 
     // make window foreground
     if (!SetForegroundWindow(hwnd)) {

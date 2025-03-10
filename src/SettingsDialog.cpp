@@ -90,7 +90,9 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
     HWND dialogHwnd = CreateDialogA(hinstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
 
-    ShowWindow(dialogHwnd, SW_SHOW);
+    if (!ShowWindow(dialogHwnd, SW_SHOW)) {
+        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
     if (!SetForegroundWindow(dialogHwnd)) {
         WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
     }
@@ -161,34 +163,34 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             }
 
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE_ALL, settings_.hotkeyMinimizeAll_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE_ALL, settings_.hotkeyRestoreAll_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MENU, settings_.hotkeyMenu_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
-                WARNING_PRINTF("SetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
-                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
-                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
             if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
-                WARNING_PRINTF("SetWindowTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
             autoTrayListViewInit(dialogHwnd);
@@ -672,7 +674,9 @@ void autoTrayListViewItemSpy(HWND dialogHwnd)
 {
     DEBUG_PRINTF("Spying auto tray\n");
 
-    ShowWindow(dialogHwnd, SW_HIDE);
+    if (!ShowWindow(dialogHwnd, SW_HIDE)) {
+        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
 
     MessageBoxA(
         dialogHwnd,
@@ -699,21 +703,33 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
 
     if ((item < 0) || (item >= itemCount)) {
         WARNING_PRINTF("Item %d out of range\n", item);
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
         autoTrayListViewActiveItem_ = -1;
     } else {
         std::string executable = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::Executable);
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executable.c_str());
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executable.c_str())) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
 
         std::string windowClass =
             getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowClass);
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowClass.c_str());
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowClass.c_str())) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
 
         std::string windowTitle =
             getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
-        SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowTitle.c_str());
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowTitle.c_str())) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
 
         autoTrayListViewActiveItem_ = item;
     }
@@ -844,12 +860,22 @@ void spySelectWindowAtPoint(const POINT & point)
         std::string title = getWindowText(rootHwnd);
         DEBUG_PRINTF("Title: '%s'\n", title.c_str());
 
-        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath);
-        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str());
-        SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str());
+        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath)) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str())) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str())) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
 
-        ShowWindow(spyModeHwnd_, SW_SHOW);
-        SetForegroundWindow(spyModeHwnd_);
+        if (!ShowWindow(spyModeHwnd_, SW_SHOW)) {
+            WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetForegroundWindow(spyModeHwnd_)) {
+            WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
 
         spyModeHwnd_ = nullptr;
         spyMode_ = false;
