@@ -35,13 +35,13 @@ const std::map<std::string, UINT> modifierMap_ = { { "alt", MOD_ALT },
                                                    { "win", MOD_WIN } };
 
 const std::map<std::string, UINT> vkeyMap_ = {
-    { "back", VK_BACK }, { "esc", VK_ESCAPE },  { "f1", VK_F1 },     { "f2", VK_F2 },    { "f3", VK_F3 },
-    { "f4", VK_F4 },     { "f5", VK_F5 },       { "f6", VK_F6 },     { "f7", VK_F7 },    { "f8", VK_F8 },
-    { "f9", VK_F9 },     { "f10", VK_F10 },     { "f11", VK_F11 },   { "f12", VK_F12 },  { "f13", VK_F13 },
-    { "f14", VK_F14 },   { "f15", VK_F15 },     { "f16", VK_F16 },   { "f17", VK_F17 },  { "f18", VK_F18 },
-    { "f19", VK_F19 },   { "f20", VK_F20 },     { "f21", VK_F21 },   { "f22", VK_F22 },  { "f23", VK_F23 },
-    { "f24", VK_F24 },   { "tab", VK_TAB },     { "left", VK_LEFT }, { "right", VK_UP }, { "up", VK_UP },
-    { "down", VK_DOWN }, { "space", VK_SPACE }, { "home", VK_HOME }, { "end", VK_END },  { "ins", VK_INSERT },
+    { "back", VK_BACK }, { "esc", VK_ESCAPE },  { "f1", VK_F1 },     { "f2", VK_F2 },       { "f3", VK_F3 },
+    { "f4", VK_F4 },     { "f5", VK_F5 },       { "f6", VK_F6 },     { "f7", VK_F7 },       { "f8", VK_F8 },
+    { "f9", VK_F9 },     { "f10", VK_F10 },     { "f11", VK_F11 },   { "f12", VK_F12 },     { "f13", VK_F13 },
+    { "f14", VK_F14 },   { "f15", VK_F15 },     { "f16", VK_F16 },   { "f17", VK_F17 },     { "f18", VK_F18 },
+    { "f19", VK_F19 },   { "f20", VK_F20 },     { "f21", VK_F21 },   { "f22", VK_F22 },     { "f23", VK_F23 },
+    { "f24", VK_F24 },   { "tab", VK_TAB },     { "left", VK_LEFT }, { "right", VK_RIGHT }, { "up", VK_UP },
+    { "down", VK_DOWN }, { "space", VK_SPACE }, { "home", VK_HOME }, { "end", VK_END },     { "ins", VK_INSERT },
     { "del", VK_DELETE }
 };
 
