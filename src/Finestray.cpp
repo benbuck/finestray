@@ -702,6 +702,11 @@ void onMinimizeEvent(
         return;
     }
 
+    if (!isWindowUserVisible(hwnd)) {
+        DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
+        return;
+    }
+
     DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
     if (!windowShouldAutoTray(hwnd)) {
         if (modifiersActive(modifiersOverride_)) {
