@@ -237,6 +237,8 @@ Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 
 Finestray is distributed under the [Apache License, Version 2.0](LICENSE).
 
+Please see the (privacy policy)[PRIVACY.md] for information about privacy concerns.
+
 Uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
 Uses some [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for image artwork.

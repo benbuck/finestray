@@ -7,6 +7,8 @@ https://github.com/benbuck
 Finestray is distributed under the Apache License, Version 2.0.
 https://www.apache.org/licenses/LICENSE-2.0
 
+Please see the [privacy policy](PRIVACY.md) for information about privacy concerns.
+
 Finestray uses the cJSON library for JSON parsing, which is available under an "MIT" license.
 https://github.com/DaveGamble/cJSON
 
