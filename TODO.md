@@ -1,6 +1,6 @@
 # To do list
 
-- Fix command prompt minimize
+- Get windows error reporting (WER) working
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection
 - Investigate VirusTotal results for installer
