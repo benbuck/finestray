@@ -19,6 +19,9 @@
 #include "Resource.h"
 #include "StringUtility.h"
 
+// Windows
+#include <combaseapi.h>
+
 volatile LONG TrayIcon::gid_ = 0;
 
 TrayIcon::~TrayIcon()
@@ -36,7 +39,7 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
     nid_.hWnd = messageHwnd;
     nid_.uID = (UINT)id;
-    nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_GUID;
     nid_.uCallbackMessage = msg;
     nid_.hIcon = hicon ? hicon : LoadIcon(nullptr, IDI_APPLICATION);
     nid_.uVersion = NOTIFYICON_VERSION;
@@ -44,6 +47,14 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0])) &&
         (GetLastError() != ERROR_SUCCESS)) {
         WARNING_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
+        nid_.uFlags &= ~NIF_TIP;
+    }
+
+    if (FAILED(CoCreateGuid(&nid_.guidItem))) {
+        WARNING_PRINTF(
+            "could not create tray icon guid, CoCreateGuid() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        nid_.uFlags &= ~NIF_GUID;
     }
 
     if (!Shell_NotifyIconA(NIM_ADD, &nid_)) {
