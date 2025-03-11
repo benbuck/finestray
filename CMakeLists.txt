@@ -171,6 +171,7 @@ target_link_libraries(Finestray
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
+set(SCREENSHOT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/settings-window.png)
 set(EXIT_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u274c.svg)
 set(SETTINGS_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2699.svg)
 set(MINIMIZE_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/emoji_u2198.svg)
@@ -184,6 +185,26 @@ add_custom_command(
     DEPENDS ${APP_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
     COMMAND magick -background none -define icon:auto-resize="16,24,32,48,64,72,96,128,256" ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+)
+
+# create app store images
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/logo-1440x2160.png"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/logo-1440x2160.png
+    COMMAND magick -background none ${APP_IMAGE_SOURCE} -resize 1440x1440 -gravity center -extent 1440x2160 ${CMAKE_CURRENT_BINARY_DIR}/logo-1440x2160.png
+)
+add_custom_command(
+    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/logo-2160x2160.png"
+    DEPENDS ${APP_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/logo-2160x2160.png
+    COMMAND magick -background none ${APP_IMAGE_SOURCE} -resize 2160x2160 ${CMAKE_CURRENT_BINARY_DIR}/logo-2160x2160.png
+)
+add_custom_command(
+    COMMENT "Converting ${SCREENSHOT_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/screenshot-3840x2160.png"
+    DEPENDS ${SCREENSHOT_IMAGE_SOURCE}
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/screenshot-3840x2160.png
+    COMMAND magick -background none ${SCREENSHOT_IMAGE_SOURCE} -resize 3840x2160 -gravity center -extent 3840x2160 ${CMAKE_CURRENT_BINARY_DIR}/screenshot-3840x2160.png
 )
 
 # create app bitmap
@@ -257,6 +278,9 @@ add_custom_target(
     ALL
     DEPENDS
         ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+        ${CMAKE_CURRENT_BINARY_DIR}/logo-1440x2160.png
+        ${CMAKE_CURRENT_BINARY_DIR}/logo-2160x2160.png
+        ${CMAKE_CURRENT_BINARY_DIR}/screenshot-3840x2160.png
         ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
