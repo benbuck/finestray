@@ -451,6 +451,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         } else {
                             settingsDialogWindow_ = nullptr;
                         }
+                    } else {
+                        WARNING_PRINTF("unknown tray icon id %#x\n", wParam);
                     }
                     break;
                 }
