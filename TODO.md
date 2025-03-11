@@ -11,3 +11,5 @@
 ## Legal
 
 Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
+
+Finestray is distributed under the Apache License, Version 2.0, please see the [license](LICENSE) for more information..
