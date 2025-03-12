@@ -3,6 +3,8 @@
 - Update images in README.md
 
 - Update CHANGELOG.md
+    Add section near top for high level changes
+    Add sections at bottom for detailed change logging
 
 - Update version information:
 
