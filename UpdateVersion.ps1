@@ -21,11 +21,15 @@ Write-Output "Updating version from $oldVersion to $newVersion"
 
 $oldVersionComponents = $oldVersion -split '\.'
 $newVersionComponents = $newVersion -split '\.'
-
 if ($oldVersionComponents.Length -ne 2 -or $newVersionComponents.Length -ne 2) {
     Write-Error "Version must be in the format major.minor"
     exit 1
 }
+
+$oldVersion4 = "$oldVersion.0.0"
+$newVersion4 = "$newVersion.0.0"
+$oldVersion4Commas = "$($oldVersionComponents[0]),$($oldVersionComponents[1]),0,0"
+$newVersion4Commas = "$($newVersionComponents[0]),$($newVersionComponents[1]),0,0"
 
 $dateString = Get-Date -Format "yyyy-MM-dd"
 
@@ -54,8 +58,8 @@ Set-Content -Path README.md -Value $content
 
 Write-Output "Updating Finestray.rc"
 $content = (Get-Content src/Finestray.rc)
-$content = $content -replace "#define APP_VERSION $($oldVersionComponents[0]),$($oldVersionComponents[1]),0,0", "#define APP_VERSION $($newVersionComponents[0]),$($newVersionComponents[1]),0,0"
-$content = $content -replace "#define APP_VERSION_STRING ""$oldVersion.0.0""", "#define APP_VERSION_STRING ""$newVersion.0.0"""
+$content = $content -replace "#define APP_VERSION $oldVersion4Commas", "#define APP_VERSION $newVersion4Commas"
+$content = $content -replace "#define APP_VERSION_STRING ""$oldVersion4""", "#define APP_VERSION_STRING ""$newVersion4"""
 $content = $content -replace "#define APP_VERSION_STRING_SIMPLE ""$oldVersion""", "#define APP_VERSION_STRING_SIMPLE ""$newVersion"""
 $content = $content -replace "#define APP_DATE "".*""", "#define APP_DATE ""$dateString"""
 Set-Content -Path src/Finestray.rc -Value $content
