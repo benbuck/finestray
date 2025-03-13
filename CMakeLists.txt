@@ -23,7 +23,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 project(Finestray
-    VERSION 0.2
+    VERSION 0.3
 )
 
 set(COMPILE_CONFIG_OPTIONS

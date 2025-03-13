@@ -14,14 +14,14 @@ reduce visual clutter.
 There are three standard ways to get Finestray:
 
 1) Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). It's named
-   [Finestray-0.2-Win64.exe](https://github.com/benbuck/finestray/releases/download/v0.2/Finestray-0.2-win64.exe).
+   [Finestray-0.3-Win64.exe](https://github.com/benbuck/finestray/releases/download/v0.3/Finestray-0.3-win64.exe).
    Once you have downloaded the file, you will need to run it and go through the prompts to complete the installation.
    After installation completes, Finestray should launch automatically.
 2) Using the portable executable from [Finestray release page](https://github.com/benbuck/finestray/releases). The
    portable executable is named
-   [Finestray.exe](https://github.com/benbuck/finestray/releases/download/v0.2/Finestray.exe). Place it wherever you
+   [Finestray.exe](https://github.com/benbuck/finestray/releases/download/v0.3/Finestray.exe). Place it wherever you
    prefer on your system, and run it from there.
-4) Using winget. From a Windows shell (e.g. Command Prompt or Powershell): ```winget install finestray```. After
+3) Using winget. From a Windows shell (e.g. Command Prompt or Powershell): ```winget install finestray```. After
    installation completes, Finestray should launch automatically.
 
 ## Basic Operation

@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3] - 2025-03-13
+
+- Fix bug in menu hotkey handling that caused an error message
+- Add feature to list windows in menu so they can be minimized to the tray
+- Add hotkey and menu item to minimize all windows
+- Add hotkey and menu item to restore all tray icons
+- Add winget package support
+- Avoid msvc runtime installation requirement
+- Improve error messages
+- Add settings validation to improve feedback
+- Add reset button to settings dialog
+- Use consistent location for Finestray settings and log files
+- Add installation section to README
+- Fix bug in hotkey handling for "right"
+- Handle failed attempts to minimize windows with elevated privileges
+- Improve handling of failed main tray icon creation when taskbar doesn't exist
+- Use better default path for installer
+- Various internal improvements
+
 ## [0.2] - 2025-03-01
 
 - Installer runs for current user (issue #3)
@@ -23,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public pre-release
 
-[unreleased]: https://github.com/benbuck/finestray/compare/v0.2...HEAD
+[unreleased]: https://github.com/benbuck/finestray/compare/v0.3...HEAD
+[0.3]: https://github.com/benbuck/finestray/compare/v0.2...v0.3
 [0.2]: https://github.com/benbuck/finestray/compare/v0.1...v0.2
 [0.1]: https://github.com/benbuck/finestray/releases/tag/v0.1
 
