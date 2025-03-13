@@ -31,8 +31,7 @@
   - git tag v[x.y]
 
 - Push with tag, push branch
-  - git push --tags
-  - git push
+    git push origin main:main --tags
 
 - Update release notes:
   - <https://github.com/benbuck/finestray/releases>
