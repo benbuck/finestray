@@ -7,7 +7,7 @@ InstallerType: nullsoft
 Installers:
 - Architecture: x64
   InstallerUrl: https://github.com/benbuck/finestray/releases/download/v0.3/Finestray-0.3-win64.exe
-  InstallerSha256: B26E741AF048F06F43E7814FF9648C951FAC0BBA765A288D593EB86092990483
+  InstallerSha256: 34E50CD3045CB95629B21BB8BD046F0015E3CBC7379D9EAF870C056AF4540370
 ManifestType: installer
 ManifestVersion: 1.9.0
 ReleaseDate: 2025-03-13
