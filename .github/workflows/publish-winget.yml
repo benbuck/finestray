@@ -23,6 +23,9 @@ jobs:
   winget:
     name: Publish winget package
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - name: wingetcreate
         run: |
@@ -31,9 +34,17 @@ jobs:
           $gitToken = "${{ secrets.FINESTRAY_WINGET }}"
 
           $github = Invoke-RestMethod -uri "https://api.github.com/repos/benbuck/finestray/releases"
-          $targetRelease = $github | Where-Object -Property name -match 'v\d\.\d'| Select -First 1
-          $installerUrl = $targetRelease | Select -ExpandProperty assets -First 1 | Where-Object -Property name -match ''Finestray-v\d\.\d-win64.exe' | Select -ExpandProperty browser_download_url
-          $ver = $targetRelease.tag_name -ireplace '^v'
+          $releaseVersions = $github | Where-Object -Property name -match 'v\d\.\d'
+          $latestRelease = $releaseVersions | Select -First 1
+          $firstAsset = $latestRelease | Select -ExpandProperty Assets -First 1
+          $installerAsset = $firstAsset | Where-Object -Property name -match "Finestray-\d\.\d-win64\.exe"
+          $installerUrl = $installerAsset | Select -ExpandProperty browser_download_url
+          $version = $latestRelease.tag_name -ireplace '^v'
+          $version = "$version.0.0"
+
+          Write-Output "Installer URL: $installerUrl"
+          Write-Output "Version: $version"
 
           Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          .\wingetcreate.exe update $wingetPackage -s -v $ver -u "$installerUrl" -t $gitToken
+          Write-Output ".\wingetcreate.exe update $wingetPackage --submit --version $version --urls "$installerUrl" --token ***"
+          .\wingetcreate.exe update $wingetPackage --submit --version $version --urls "$installerUrl" --token $gitToken
