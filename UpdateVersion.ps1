@@ -70,6 +70,7 @@ Start-Sleep -Seconds 2
 .\build\vstudio\Release\Finestray.exe
 Start-Sleep -Seconds 2
 
+# note that this is not the final installer, the real one will be built by github actions
 Write-Output "Starting new installer, please exit when done installing"
 $out = Invoke-Expression ".\build\vstudio\Finestray-$newVersion-win64.exe" | Out-String
 Write-Output $out

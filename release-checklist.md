@@ -28,7 +28,7 @@
 - Test app and installer
 
 - Add git tag
-  - git tag v[x.y]
+  - git tag v[VERSION]
 
 - Push with tag, push branch
     git push origin main:main --tags

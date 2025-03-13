@@ -4,13 +4,14 @@ https://github.com/benbuck/finestray
 Copyright 2020 Benbuck Nason
 https://github.com/benbuck
 
-Finestray is distributed under the Apache License, Version 2.0.
+Finestray is distributed under the Apache License, Version 2.0
 https://www.apache.org/licenses/LICENSE-2.0
 
-Please see the [privacy policy](PRIVACY.md) for information about privacy concerns.
+Please see the privacy policy for information about privacy concerns
+https://github.com/benbuck/finestray/PRIVACY.md
 
-Finestray uses the cJSON library for JSON parsing, which is available under an "MIT" license.
+Finestray uses the cJSON library for JSON parsing, which is available under an "MIT" license
 https://github.com/DaveGamble/cJSON
 
-Finestray uses some Google Noto Emoji for image artwork, which is available under an "OFL 1.1" license.
+Finestray uses some Google Noto Emoji for image artwork, which is available under an "OFL 1.1" license
 https://github.com/googlefonts/noto-emoji
