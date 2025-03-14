@@ -212,7 +212,7 @@ add_custom_command(
     COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/app.bmp"
     DEPENDS ${APP_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/app.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${APP_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/app.bmp
+    COMMAND magick -size 16x16 -background none -filter point ${APP_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/app.bmp
 )
 
 # create minimize bitmap
@@ -220,7 +220,7 @@ add_custom_command(
     COMMENT "Converting ${MINIMIZE_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp"
     DEPENDS ${MINIMIZE_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${MINIMIZE_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
+    COMMAND magick -size 16x16 -background none -filter point ${MINIMIZE_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/minimize.bmp
 )
 
 # create restore bitmap
@@ -228,7 +228,7 @@ add_custom_command(
     COMMENT "Converting ${RESTORE_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/restore.bmp"
     DEPENDS ${RESTORE_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${RESTORE_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
+    COMMAND magick -size 16x16 -background none -filter point ${RESTORE_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
 )
 
 # create settings bitmap
@@ -236,7 +236,7 @@ add_custom_command(
     COMMENT "Converting ${SETTINGS_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp"
     DEPENDS ${SETTINGS_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${SETTINGS_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
+    COMMAND magick -size 16x16 -background none -filter point ${SETTINGS_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
 )
 
 # create exit bitmap
@@ -244,7 +244,7 @@ add_custom_command(
     COMMENT "Converting ${EXIT_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp"
     DEPENDS ${EXIT_IMAGE_SOURCE}
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
-    COMMAND magick -background none -filter point -size 16x16 ${EXIT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
+    COMMAND magick -size 16x16 -background none -filter point ${EXIT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
 )
 
 # create installer header image (used at top of most installer screens)

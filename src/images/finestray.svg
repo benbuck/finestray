@@ -17,7 +17,7 @@
             -36 36 36 36 -911 30
             -36 -36 -36 -36 -7 -576
         z"
-        fill="url(#Gradient)" stroke="black" stroke-width="50" />
+        fill="url(#Gradient)" stroke="#0A0A0A" stroke-width="50" />
     <path
         d="
         M 120 765
@@ -29,5 +29,5 @@
             -36 -36 36 -36 -576 0
             0 0 0 0 -108 496
         z"
-        fill="dodgerblue" stroke="black" stroke-width="50" />
+        fill="dodgerblue" stroke="#0A0A0A" stroke-width="50" />
 </svg>

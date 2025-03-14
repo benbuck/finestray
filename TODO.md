@@ -1,6 +1,5 @@
 # To do list
 
-- Fix menu icons for winget installed version
 - Get windows error reporting (WER) working
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Improve method for spy window selection

@@ -148,12 +148,18 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
     if (!appBitmap || !minimizeBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        COLORREF oldColor = RGB(0xFF, 0xFF, 0xFF);
+        COLORREF oldColor1 = RGB(0xFF, 0xFF, 0xFF);
+        COLORREF oldColor2 = RGB(0x00, 0x00, 0x00);
         DWORD menuColor = GetSysColor(COLOR_MENU);
         COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
-        replaceBitmapColor(appBitmap, oldColor, newColor);
-        replaceBitmapColor(settingsBitmap, oldColor, newColor);
-        replaceBitmapColor(exitBitmap, oldColor, newColor);
+
+        replaceBitmapColor(appBitmap, oldColor1, newColor);
+        replaceBitmapColor(settingsBitmap, oldColor1, newColor);
+        replaceBitmapColor(exitBitmap, oldColor1, newColor);
+
+        replaceBitmapColor(appBitmap, oldColor2, newColor);
+        replaceBitmapColor(settingsBitmap, oldColor2, newColor);
+        replaceBitmapColor(exitBitmap, oldColor2, newColor);
 
         MENUITEMINFOA menuItemInfo;
         memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
