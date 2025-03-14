@@ -79,43 +79,6 @@ Write-Output "Starting new installer, please exit when done installing"
 $out = Invoke-Expression ".\build\vstudio\Finestray-$newVersion-win64.exe" | Out-String
 Write-Output $out
 
-# $installerHash = (Get-FileHash ".\build\vstudio\Finestray-$newVersion-win64.exe" -Algorithm SHA256).Hash
-#
-# Write-Output "Creating new manifest directory"
-# if (!(Test-Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\")) {
-#     New-Item "manifests\b\Benbuck\Finestray\$newVersion.0.0\"
-# }
-#
-# Write-Output "Updating installer yaml"
-# if (!(Test-Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.installer.yaml")) {
-#     Copy-Item -Path "manifests\b\Benbuck\Finestray\$oldVersion.0.0\Benbuck.Finestray.installer.yaml" -Destination "manifests\b\Benbuck\Finestray\$newVersion.0.0\"
-# }
-# $content = (Get-Content "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.installer.yaml")
-# $content = $content -replace "PackageVersion: $oldVersion.0.0", "PackageVersion: $newVersion.0.0"
-# $content = $content -replace "-$oldVersion-", "-$newVersion-"
-# $content = $content -replace "/v$oldVersion/", "/v$newVersion/"
-# $content = $content -replace "InstallerSha256: .*", "InstallerSha256: $installerHash"
-# $content = $content -replace "ReleaseDate: .*", "ReleaseDate: $dateString"
-# Set-Content -Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.installer.yaml" -Value $content
-#
-# Write-Output "Updating locale yaml"
-# if (!(Test-Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.locale.en-us.yaml")) {
-#     Copy-Item -Path "manifests\b\Benbuck\Finestray\$oldVersion.0.0\Benbuck.Finestray.locale.en-us.yaml" -Destination "manifests\b\Benbuck\Finestray\$newVersion.0.0\"
-# }
-# $content = (Get-Content "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.locale.en-US.yaml")
-# $content = $content -replace "PackageVersion: $oldVersion.0.0", "PackageVersion: $newVersion.0.0"
-# $content = $content -replace "/v$oldVersion", "/v$newVersion"
-# $content = $content -replace "InstallerSha256: .*", "InstallerSha256: $installerHash"
-# Set-Content -Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.locale.en-US.yaml" -Value $content
-#
-# Write-Output "Updating yaml"
-# if (!(Test-Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.yaml")) {
-#     Copy-Item -Path "manifests\b\Benbuck\Finestray\$oldVersion.0.0\Benbuck.Finestray.yaml" -Destination "manifests\b\Benbuck\Finestray\$newVersion.0.0\"
-# }
-# $content = (Get-Content "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.yaml")
-# $content = $content -replace "PackageVersion: $oldVersion.0.0", "PackageVersion: $newVersion.0.0"
-# Set-Content -Path "manifests\b\Benbuck\Finestray\$newVersion.0.0\Benbuck.Finestray.yaml" -Value $content
-
 Write-Output "Updating version in git"
 git add --all
 git commit --message "Update version to $newVersion"
