@@ -19,6 +19,7 @@
 
 // Standard library
 #include <string>
+#include <vector>
 
 class Hotkey
 {
@@ -34,6 +35,17 @@ public:
     static bool parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers);
 
 private:
+    struct ParseResult
+    {
+        unsigned int noneCount {};
+        std::vector<std::string> keys;
+        std::vector<std::string> modifiers;
+        std::vector<std::string> unrecognized;
+    };
+
+    static ParseResult parseInternal(const std::string & hotkeyStr);
+    static bool parseResultValid(const ParseResult & parseResult);
+
     HWND hwnd_ {};
     int id_ { -1 };
 };

@@ -23,8 +23,6 @@
 
 // Standard library
 #include <map>
-#include <string>
-#include <vector>
 
 namespace
 {
@@ -54,6 +52,8 @@ Hotkey::~Hotkey()
 
 bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
 {
+    DEBUG_PRINTF("creating hotkey %d\n", id);
+
     hwnd_ = hwnd;
     id_ = id;
 
@@ -71,6 +71,7 @@ bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
 void Hotkey::destroy()
 {
     if (id_ >= 0) {
+        DEBUG_PRINTF("destroying hotkey %d\n", id_);
         if (!UnregisterHotKey(hwnd_, id_)) {
             WARNING_PRINTF(
                 "failed to unregister hotkey %d, UnregisterHotKey failed: %s\n",
@@ -85,111 +86,30 @@ void Hotkey::destroy()
 
 bool Hotkey::valid(const std::string & hotkeyStr)
 {
-    std::string tmp = StringUtility::toLower(hotkeyStr);
-
-    std::vector<std::string> modifiers;
-    std::string key;
-
-    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
-    for (std::string token : tokens) {
-        token = StringUtility::trim(token);
-        token = StringUtility::toLower(token);
-
-        if (token != "none") {
-            const auto & mit = modifierMap_.find(token);
-            if (mit == modifierMap_.end()) {
-                if (!key.empty()) {
-                    return false;
-                }
-
-                const auto & vkit = vkeyMap_.find(token);
-                if (vkit != vkeyMap_.end()) {
-                    key = token;
-                } else {
-                    if (token.length() != 1) {
-                        return false;
-                    }
-
-                    SHORT scan = VkKeyScanA(token[0]);
-                    if ((unsigned int)scan == 0xFFFF) {
-                        return false;
-                    }
-
-                    key = token;
-                }
-            }
-        }
-    }
-
-    return true;
+    ParseResult parseResult = parseInternal(hotkeyStr);
+    return parseResultValid(parseResult);
 }
 
 std::string Hotkey::normalize(const std::string & hotkeyStr)
 {
-    std::string tmp = StringUtility::toLower(hotkeyStr);
-
-    std::vector<std::string> modifiers;
-    std::string key;
-
-    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
-    for (std::string token : tokens) {
-        token = StringUtility::trim(token);
-        token = StringUtility::toLower(token);
-
-        if (token == "none") {
-            key = token;
-        } else {
-            // look for modifier string
-            const auto & mit = modifierMap_.find(token);
-            if (mit != modifierMap_.end()) {
-                if (key == "none") {
-                    DEBUG_PRINTF("modifier for 'none' key, ignoring '%s'\n", token.c_str());
-                } else {
-                    modifiers.push_back(token);
-                }
-            } else {
-                if (!key.empty()) {
-                    ERROR_PRINTF("more than one key in hotkey, can't normalize '%s'\n", token.c_str());
-                    return StringUtility::join(tokens, " ");
-                } else {
-                    // look for vkey string
-                    const auto & vkit = vkeyMap_.find(token);
-                    if (vkit != vkeyMap_.end()) {
-                        key = token;
-                    } else {
-                        // look for key character
-                        if (token.length() != 1) {
-                            ERROR_PRINTF("unknown value in hotkey, can't normalize '%s'\n", token.c_str());
-                            return StringUtility::join(tokens, " ");
-                        } else {
-                            SHORT scan = VkKeyScanA(token[0]);
-                            if ((unsigned int)scan == 0xFFFF) {
-                                ERROR_PRINTF("unknown key in hotkey, can't normalize '%s'\n", token.c_str());
-                                return StringUtility::join(tokens, " ");
-                            } else {
-                                key = token;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     std::string normalized;
 
-    for (const auto & modifier : modifiers) {
-        if (!normalized.empty()) {
-            normalized += ' ';
-        }
-        normalized += modifier;
+    ParseResult parseResult = parseInternal(hotkeyStr);
+    if (!parseResultValid(parseResult)) {
+        return hotkeyStr;
     }
 
-    if (!key.empty()) {
-        if (!normalized.empty()) {
-            normalized += ' ';
+    if (parseResult.noneCount) {
+        normalized = "none";
+    } else {
+        normalized = StringUtility::join(parseResult.modifiers, " ");
+
+        if (!parseResult.keys.empty()) {
+            if (!normalized.empty()) {
+                normalized += ' ';
+            }
+            normalized += parseResult.keys[0];
         }
-        normalized += key;
     }
 
     if (hotkeyStr == normalized) {
@@ -202,53 +122,106 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
 
 bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
 {
-    if (hotkeyStr.empty()) {
-        return true;
-    }
-
     key = 0;
     modifiers = 0;
 
-    if (StringUtility::toLower(hotkeyStr) == "none") {
-        return true;
+    ParseResult parseResult = parseInternal(hotkeyStr);
+    if (!parseResultValid(parseResult)) {
+        return false;
     }
 
-    std::vector<std::string> tokens = StringUtility::split(hotkeyStr, " \t");
+    for (const std::string & modifier : parseResult.modifiers) {
+        const auto & mit = modifierMap_.find(modifier);
+        modifiers |= mit->second;
+    }
+
+    if (!parseResult.keys.empty()) {
+        std::string vkey = parseResult.keys[0];
+        const auto & vkit = vkeyMap_.find(vkey);
+        if (vkit != vkeyMap_.end()) {
+            key = vkit->second;
+        } else {
+            key = VkKeyScanA(vkey[0]);
+        }
+    }
+
+    DEBUG_PRINTF("parsed hotkey '%s' to key %#x and modifiers %#x\n", hotkeyStr.c_str(), key, modifiers);
+    return true;
+}
+
+Hotkey::ParseResult Hotkey::parseInternal(const std::string & hotkeyStr)
+{
+    ParseResult parseResult;
+
+    std::string tmp = StringUtility::toLower(hotkeyStr);
+
+    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
     for (std::string token : tokens) {
         token = StringUtility::trim(token);
         token = StringUtility::toLower(token);
 
+        if (token == "none") {
+            ++parseResult.noneCount;
+            continue;
+        }
+
         // look for modifier string
         const auto & mit = modifierMap_.find(token);
         if (mit != modifierMap_.end()) {
-            modifiers |= mit->second;
-        } else {
-            // look for vkey string
-            const auto & vkit = vkeyMap_.find(token);
-            if (vkit != vkeyMap_.end()) {
-                if (key) {
-                    WARNING_PRINTF("more than one key in hotkey\n");
-                    return false;
-                }
-                key = vkit->second;
-            } else {
-                // look for key character
-                if (token.length() == 1) {
-                    if (key) {
-                        WARNING_PRINTF("more than one key in hotkey\n");
-                        return false;
-                    }
-                    key = VkKeyScanA(token[0]);
-                    if (key == 0xFFFF) {
-                        WARNING_PRINTF("unknown key '%s' in hotkey\n", token.c_str());
-                        return false;
-                    }
-                } else {
-                    WARNING_PRINTF("unknown value in hotkey\n");
-                    return false;
-                }
-            }
+            parseResult.modifiers.push_back(token);
+            continue;
         }
+
+        // look for vkey string
+        const auto & vkit = vkeyMap_.find(token);
+        if (vkit != vkeyMap_.end()) {
+            parseResult.keys.push_back(token);
+            continue;
+        }
+
+        // look for key character
+        if (token.length() != 1) {
+            parseResult.unrecognized.push_back(token);
+            continue;
+        }
+
+        SHORT scan = VkKeyScanA(token[0]);
+        if ((unsigned int)scan == 0xFFFF) {
+            parseResult.unrecognized.push_back(token);
+            continue;
+        }
+
+        parseResult.keys.push_back(token);
+    }
+
+    return parseResult;
+}
+
+bool Hotkey::parseResultValid(const ParseResult & parseResult)
+{
+    if (parseResult.noneCount > 1) {
+        WARNING_PRINTF("hotkey has multiple 'none', not valid\n");
+        return false;
+    }
+
+    if (parseResult.noneCount && (parseResult.keys.size() || parseResult.modifiers.size())) {
+        WARNING_PRINTF(
+            "hotkey has 'none' with other keys ('%s') and/or modifiers ('%s'), not valid\n",
+            StringUtility::join(parseResult.keys, " ").c_str(),
+            StringUtility::join(parseResult.modifiers, " ").c_str());
+        return false;
+    }
+
+    if (parseResult.keys.size() > 1) {
+        WARNING_PRINTF("hotkey has multiple keys ('%s'), not valid\n", StringUtility::join(parseResult.keys, " ").c_str());
+        return false;
+    }
+
+    if (parseResult.unrecognized.size()) {
+        WARNING_PRINTF(
+            "hotkey has unrecognized strings ('%s'), not valid\n",
+            StringUtility::join(parseResult.unrecognized, " ").c_str());
+        return false;
     }
 
     return true;
