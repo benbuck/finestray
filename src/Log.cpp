@@ -103,18 +103,26 @@ void start(bool enable, const std::string & fileName)
 
 void printf(Level level, const char * fmt, ...)
 {
-    char buf[1024];
+    char fixedBuffer[1024];
+    char * buffer = fixedBuffer;
+    size_t bufferSize = sizeof(fixedBuffer);
 
     va_list ap;
     va_start(ap, fmt);
-    int len = vsnprintf(buf, sizeof(buf), fmt, ap);
+    int len = vsnprintf(buffer, bufferSize, fmt, ap);
+    if (len >= (int)bufferSize) {
+        bufferSize = (size_t)len + 1;
+        buffer = new char[bufferSize];
+        len = vsnprintf(buffer, bufferSize, fmt, ap);
+        assert(len < (int)bufferSize);
+    }
     va_end(ap);
 
-    if (len >= (int)sizeof(buf)) {
-        assert(false);
-    }
+    print(level, buffer);
 
-    print(level, buf);
+    if (buffer != fixedBuffer) {
+        delete[] buffer;
+    }
 }
 
 void print(Level level, const char * str)
