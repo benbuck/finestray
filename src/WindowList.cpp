@@ -50,6 +50,8 @@ void start(
     void (*changeWindowTitleCallback)(HWND, const std::string &),
     void (*changeVisibilityCallback)(HWND, bool))
 {
+    DEBUG_PRINTF("WindowList starting\n");
+
     hwnd_ = hwnd;
     pollMillis_ = pollMillis;
     addWindowCallback_ = addWindowCallback;
@@ -58,19 +60,24 @@ void start(
     changeWindowVisibilityCallback_ = changeVisibilityCallback;
 
     if (pollMillis_ > 0) {
+        DEBUG_PRINTF("WindowList setting poll timer to %u\n", pollMillis_);
         timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
         if (!timer_) {
-            WARNING_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+            ERROR_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 }
 
 void stop()
 {
+    DEBUG_PRINTF("WindowList stopping\n");
+
     windowList_.clear();
 
     if (timer_) {
-        KillTimer(hwnd_, timer_);
+        if (!KillTimer(hwnd_, timer_)) {
+            ERROR_PRINTF("KillTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
         timer_ = 0;
     }
 
@@ -94,7 +101,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
     std::map<HWND, WindowData> newWindowList;
     if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
-        WARNING_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
+        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows

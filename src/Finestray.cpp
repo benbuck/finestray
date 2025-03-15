@@ -83,7 +83,7 @@ void onMinimizeEvent(
 void onSettingsDialogComplete(bool success, const Settings & settings);
 std::string getSettingsFileName();
 std::string getStartupShortcutFullPath();
-void updateStartWithWindows();
+void updateStartWithWindowsShortcut();
 
 WindowHandleWrapper appWindow_;
 TrayIcon trayIcon_;
@@ -115,14 +115,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         return 0;
     }
 
-    // initialize COM
+    DEBUG_PRINTF("initializing COM\n");
     COMLibraryWrapper comLibrary;
     if (!comLibrary.initialized()) {
         errorMessage(IDS_ERROR_INIT_COM);
         return IDS_ERROR_INIT_COM;
     }
 
-    // initialize common controls
+    DEBUG_PRINTF("initializing common controls\n");
     INITCOMMONCONTROLSEX initCommonControlsEx;
     initCommonControlsEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
     initCommonControlsEx.dwICC = ICC_LISTVIEW_CLASSES;
@@ -135,25 +135,28 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     std::string settingsFile = getSettingsFileName();
     if (settings_.readFromFile(settingsFile)) {
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
+        updateStartWithWindowsShortcut();
     } else {
         if (Settings::fileExists(settingsFile)) {
             errorMessage(ErrorContext(IDS_ERROR_LOAD_SETTINGS, settingsFile));
             return IDS_ERROR_LOAD_SETTINGS;
         }
 
-        // update start with windows setting to match reality
+        // no settings file, update start with windows setting to match reality
         std::string startupShortcutFullPath = getStartupShortcutFullPath();
-        settings_.startWithWindows_ = fileExists(startupShortcutFullPath);
+        bool startupShortcutExists = fileExists(startupShortcutFullPath);
+        if (settings_.startWithWindows_ != startupShortcutExists) {
+            INFO_PRINTF("updating start with windows setting to %s\n", StringUtility::boolToCString(startupShortcutExists));
+            settings_.startWithWindows_ = startupShortcutExists;
+        }
     }
 
-    DEBUG_PRINTF("final settings:\n");
+    DEBUG_PRINTF("settings:\n");
     settings_.dump();
-
-    updateStartWithWindows();
 
     HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
 
-    // create the window class
+    DEBUG_PRINTF("registering window class\n");
     WNDCLASSEXA wc;
     memset(&wc, 0, sizeof(WNDCLASSEX));
     wc.cbSize = sizeof(WNDCLASSEX);
@@ -170,7 +173,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
 
-    // create the window
+    DEBUG_PRINTF("creating window\n");
     appWindow_ = CreateWindowA(
         APP_NAME, // class name
         APP_NAME, // window name
@@ -197,7 +200,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
 
     ErrorContext err;
 
-    // create a tray icon for the app
+    DEBUG_PRINTF("creating tray icon for app\n");
     err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
     if (err) {
         // this error can happen legitimately if the taskbar hasn't been created
@@ -205,7 +208,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
     }
 
-    // monitor minimize events
+    DEBUG_PRINTF("registering event hook to monitor minimize events\n");
     WinEventHookHandleWrapper minimizeEventHook(SetWinEventHook(
         EVENT_SYSTEM_MINIMIZESTART,
         EVENT_SYSTEM_MINIMIZESTART,
@@ -224,17 +227,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
+    DEBUG_PRINTF("starting\n");
     err = start();
     if (err) {
         errorMessage(err);
+        INFO_PRINTF("start error, showing settings dialog\n");
         settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
     } else {
         if (!Settings::fileExists(settingsFile)) {
+            INFO_PRINTF("no settings file, showing settings dialog\n");
             settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
         }
     }
 
-    // run the message loop
+    DEBUG_PRINTF("running message loop\n");
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
         // needed to have working tab stops in the dialog
@@ -244,6 +250,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    DEBUG_PRINTF("exiting\n");
 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
@@ -266,11 +274,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // about dialog
                 case IDM_APP:
                 case IDM_ABOUT: {
+                    INFO_PRINTF("menu about\n");
                     showAboutDialog(hwnd);
                     break;
                 }
 
                 case IDM_MINIMIZE_ALL: {
+                    INFO_PRINTF("menu minimize all\n");
                     std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
                     for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
                         if (window.second.visible) {
@@ -281,11 +291,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case IDM_RESTORE_ALL: {
+                    INFO_PRINTF("menu restore all\n");
                     MinimizedWindow::restoreAll();
                     break;
                 }
 
                 case IDM_SETTINGS: {
+                    INFO_PRINTF("menu settings\n");
                     if (!settingsDialogWindow_) {
                         settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                     }
@@ -294,6 +306,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 // exit the app
                 case IDM_EXIT: {
+                    INFO_PRINTF("menu exit\n");
                     PostQuitMessage(0);
                     break;
                 }
@@ -301,6 +314,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 default: {
                     std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
                     if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id < (IDM_MINIMIZEDWINDOW_BASE + minimizedWindows.size()))) {
+                        INFO_PRINTF("menu restore minimized window %u\n", id - IDM_MINIMIZEDWINDOW_BASE);
                         unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
                         unsigned int count = 0;
                         for (HWND minimizedWindow : minimizedWindows) {
@@ -313,6 +327,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     } else {
                         std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
                         if ((id >= IDM_VISIBLEWINDOW_BASE) && (id < (IDM_VISIBLEWINDOW_BASE + windowList.size()))) {
+                            INFO_PRINTF("menu minimize visible window %u\n", id - IDM_VISIBLEWINDOW_BASE);
                             unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
                             unsigned int count = 0;
                             for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
@@ -333,11 +348,14 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_CREATE: {
             // get the message id to be notified when taskbar is (re-)created
+            INFO_PRINTF("registering taskbar created message\n");
             taskbarCreatedMessage_ = RegisterWindowMessage(TEXT("TaskbarCreated"));
             break;
         }
 
         case WM_DESTROY: {
+            INFO_PRINTF("destroying window\n");
+
             // if there are any minimized windows, restore them
             MinimizedWindow::restoreAll();
 
@@ -354,7 +372,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     INFO_PRINTF("hotkey minimize\n");
                     // get the foreground window to minimize
                     HWND foregroundHwnd = GetForegroundWindow();
-                    if (foregroundHwnd) {
+                    if (!foregroundHwnd) {
+                        WARNING_PRINTF("no foreground window to minimize, ignoring\n");
+                    } else {
                         // only minimize windows that have a minimize button
                         LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
                         if (windowStyle & WS_MINIMIZEBOX) {
@@ -373,6 +393,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case HotkeyID::MinimizeAll: {
+                    INFO_PRINTF("hotkey minimize all\n");
                     std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
                     for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
                         if (window.second.visible) {
@@ -385,7 +406,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case HotkeyID::Restore: {
                     INFO_PRINTF("hotkey restore\n");
                     HWND lastHwnd = MinimizedWindow::getLast();
-                    if (lastHwnd) {
+                    if (!lastHwnd) {
+                        WARNING_PRINTF("no minimized windows to restore, ignoring\n");
+                    } else {
                         MinimizedWindow::restore(lastHwnd);
                     }
                     break;
@@ -398,12 +421,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 case HotkeyID::Menu: {
+                    INFO_PRINTF("hotkey menu\n");
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
-                        break;
-                    }
-                    if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
-                        errorMessage(IDS_ERROR_CREATE_MENU);
+                    } else {
+                        if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
+                            errorMessage(IDS_ERROR_CREATE_MENU);
+                        }
                     }
                     break;
                 }
@@ -420,12 +444,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch ((UINT)lParam) {
                 // user activated context menu
                 case WM_CONTEXTMENU: {
+                    INFO_PRINTF("tray context menu\n");
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring\n");
-                        break;
-                    }
-                    if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
-                        errorMessage(IDS_ERROR_CREATE_MENU);
+                    } else {
+                        if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
+                            errorMessage(IDS_ERROR_CREATE_MENU);
+                        }
                     }
                     break;
                 }
@@ -442,13 +467,17 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 // user selected and activated icon
                 case NIN_SELECT: {
+                    INFO_PRINTF("tray icon selected\n");
                     HWND hwndTray = MinimizedWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
+                        INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
                         MinimizedWindow::restore(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
                         if (!settingsDialogWindow_) {
+                            INFO_PRINTF("showing settings dialog\n");
                             settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
                         } else {
+                            INFO_PRINTF("hidinging settings dialog\n");
                             settingsDialogWindow_ = nullptr;
                         }
                     } else {
@@ -466,7 +495,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_SHOWSETTINGS: {
-            if (!settingsDialogWindow_) {
+            INFO_PRINTF("showing settings dialog\n");
+            if (settingsDialogWindow_) {
+                WARNING_PRINTF("settings dialog already open, ignoring\n");
+            } else {
                 settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
             }
             break;
@@ -485,6 +517,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         default: {
             if (uMsg == taskbarCreatedMessage_) {
+                INFO_PRINTF("taskbar created\n");
                 HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
                 HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
                 ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
@@ -504,6 +537,8 @@ ErrorContext start()
 {
     Log::start(settings_.logToFile_, APP_NAME ".log");
 
+    DEBUG_PRINTF("starting\n");
+
     // register a hotkey that will be used to minimize windows
     UINT vkMinimize = VK_DOWN;
     UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
@@ -513,6 +548,7 @@ ErrorContext start()
     if (!vkMinimize || !modifiersMinimize) {
         INFO_PRINTF("no hotkey to minimize windows\n");
     } else {
+        DEBUG_PRINTF("registering hotkey to minimize windows\n");
         if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
             return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize");
         }
@@ -527,6 +563,7 @@ ErrorContext start()
     if (!vkMinimizeAll || !modifiersMinimizeAll) {
         INFO_PRINTF("no hotkey to minimize all windows\n");
     } else {
+        DEBUG_PRINTF("registering hotkey to minimize all windows\n");
         if (!hotkeyMinimizeAll_
                  .create((INT)HotkeyID::MinimizeAll, appWindow_, vkMinimizeAll, modifiersMinimizeAll | MOD_NOREPEAT)) {
             return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize all");
@@ -542,6 +579,7 @@ ErrorContext start()
     if (!vkRestore || !modifiersRestore) {
         INFO_PRINTF("no hotkey to restore windows\n");
     } else {
+        DEBUG_PRINTF("registering hotkey to restore windows\n");
         if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
             return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore");
         }
@@ -556,6 +594,7 @@ ErrorContext start()
     if (!vkRestoreAll || !modifiersRestoreAll) {
         INFO_PRINTF("no hotkey to restore all windows\n");
     } else {
+        DEBUG_PRINTF("registering hotkey to restore all windows\n");
         if (!hotkeyRestoreAll_
                  .create((INT)HotkeyID::RestoreAll, appWindow_, vkRestoreAll, modifiersRestoreAll | MOD_NOREPEAT)) {
             return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore all");
@@ -569,8 +608,9 @@ ErrorContext start()
         return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "menu");
     }
     if (!vkMenu || !modifiersMenu) {
-        INFO_PRINTF("no hotkey to Menu windows\n");
+        INFO_PRINTF("no hotkey to show context menu\n");
     } else {
+        DEBUG_PRINTF("registering hotkey to show context menu\n");
         if (!hotkeyMenu_.create((INT)HotkeyID::Menu, appWindow_, vkMenu, modifiersMenu | MOD_NOREPEAT)) {
             return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "menu");
         }
@@ -596,6 +636,8 @@ ErrorContext start()
 
 void stop()
 {
+    DEBUG_PRINTF("stopping\n");
+
     WindowList::stop();
 
     hotkeyRestore_.destroy();
@@ -819,7 +861,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             }
 
             if (settingsChanged) {
-                updateStartWithWindows();
+                updateStartWithWindowsShortcut();
 
                 MinimizedWindow::updatePlacement(settings_.minimizePlacement_);
             }
@@ -840,7 +882,7 @@ std::string getStartupShortcutFullPath()
     return pathJoin(startupDir, APP_NAME ".lnk");
 }
 
-void updateStartWithWindows()
+void updateStartWithWindowsShortcut()
 {
     std::string startupShortcutFullPath = getStartupShortcutFullPath();
     if (settings_.startWithWindows_) {

@@ -30,7 +30,10 @@ bool aboutDialogOpen_;
 
 void showAboutDialog(HWND hwnd)
 {
+    INFO_PRINTF("showing about dialog\n");
+
     if (aboutDialogOpen_) {
+        WARNING_PRINTF("about dialog already open\n");
         return;
     }
 

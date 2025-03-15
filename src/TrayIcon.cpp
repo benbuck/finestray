@@ -31,9 +31,14 @@ TrayIcon::~TrayIcon()
 
 ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
-    destroy();
-
     LONG id = InterlockedIncrement(&gid_);
+
+    DEBUG_PRINTF("creating tray icon %u\n", id);
+
+    if (nid_.uID) {
+        WARNING_PRINTF("tray icon already created, destroying first\n");
+        destroy();
+    }
 
     ZeroMemory(&nid_, sizeof(nid_));
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
@@ -77,6 +82,8 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
 void TrayIcon::destroy()
 {
     if (nid_.uID) {
+        DEBUG_PRINTF("destroying tray icon %u\n", nid_.uID);
+
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
             WARNING_PRINTF(
                 "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
@@ -90,6 +97,7 @@ void TrayIcon::destroy()
 void TrayIcon::updateTip(const std::string & tip)
 {
     if (nid_.uID) {
+        DEBUG_PRINTF("updating tray icon %u tip to %s\n", nid_.uID, tip.c_str());
         strncpy_s(nid_.szTip, tip.c_str(), sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
         if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {
             WARNING_PRINTF(

@@ -34,6 +34,7 @@ public:
     void destroy()
     {
         if (hwineventhook_) {
+            DEBUG_PRINTF("destroying win event hook %#x\n", hwineventhook_);
             if (!UnhookWinEvent(hwineventhook_)) {
                 WARNING_PRINTF(
                     "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",

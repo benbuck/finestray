@@ -43,6 +43,7 @@ public:
     void destroy()
     {
         if (hwnd_) {
+            DEBUG_PRINTF("destroying window %#x\n", hwnd_);
             if (!DestroyWindow(hwnd_)) {
                 WARNING_PRINTF("DestroyWindow() failed: %s\n", StringUtility::lastErrorString().c_str());
                 return;
