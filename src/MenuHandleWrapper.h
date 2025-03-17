@@ -16,6 +16,7 @@
 
 // App
 #include "Log.h"
+#include "StringUtility.h"
 
 // Windows
 #include <Windows.h>
@@ -32,7 +33,7 @@ public:
     {
         if (hmenu_) {
             if (!DestroyMenu(hmenu_)) {
-                WARNING_PRINTF("failed to destroy menu: %#x\n", hmenu_);
+                WARNING_PRINTF("failed to destroy menu %#x: %s\n", hmenu_, StringUtility::lastErrorString().c_str());
             }
         }
     }

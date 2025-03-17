@@ -16,6 +16,7 @@
 
 // App
 #include "Log.h"
+#include "StringUtility.h"
 
 // Windows
 #include <Windows.h>
@@ -46,7 +47,7 @@ public:
     {
         if (handle_ != INVALID_HANDLE_VALUE) {
             if (!CloseHandle((HANDLE)handle_)) {
-                WARNING_PRINTF("failed to close handle: %#x\n", handle_);
+                WARNING_PRINTF("failed to close handle %#x: %s\n", handle_, StringUtility::lastErrorString().c_str());
                 return;
             }
 

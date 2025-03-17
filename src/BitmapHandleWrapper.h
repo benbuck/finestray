@@ -16,6 +16,7 @@
 
 // App
 #include "Log.h"
+#include "StringUtility.h"
 
 // Windows
 #include <Windows.h>
@@ -32,7 +33,7 @@ public:
     {
         if (hbitmap_) {
             if (!DeleteObject(hbitmap_)) {
-                WARNING_PRINTF("failed to destroy bitmap: %#x\n", hbitmap_);
+                WARNING_PRINTF("failed to destroy bitmap %#x: %s\n", hbitmap_, StringUtility::lastErrorString().c_str());
             }
         }
     }
