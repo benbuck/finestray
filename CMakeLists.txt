@@ -96,10 +96,12 @@ add_executable(Finestray WIN32
     src/Bitmap.cpp
     src/Bitmap.h
     src/BitmapHandleWrapper.h
+    src/BrushHandleWrapper.h
     src/COMLibraryWrapper.h
     src/ContextMenu.cpp
     src/ContextMenu.h
     src/DeviceContextHandleWrapper.h
+    src/ErrorContext.h
     src/File.cpp
     src/File.h
     src/Finestray.cpp
@@ -129,13 +131,13 @@ add_executable(Finestray WIN32
     src/StringUtility.h
     src/TrayIcon.cpp
     src/TrayIcon.h
-    src/WinEventHookHandleWrapper.h
     src/WindowHandleWrapper.h
     src/WindowIcon.cpp
     src/WindowIcon.h
     src/WindowList.cpp
     src/WindowList.h
     src/WindowMessage.h
+    src/WinEventHookHandleWrapper.h
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
 

@@ -14,10 +14,34 @@
 
 #pragma once
 
+// App
+#include "Log.h"
+#include "StringUtility.h"
+
 // Windows
 #include <Windows.h>
 
-HBITMAP getResourceBitmap(unsigned int id);
-bool replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
-bool replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor);
-HBITMAP scaleBitmap(HBITMAP hbmp, int width, int height);
+class BrushHandleWrapper
+{
+public:
+    explicit BrushHandleWrapper(HBRUSH hbrush)
+        : hbrush_(hbrush)
+    {
+    }
+
+    ~BrushHandleWrapper()
+    {
+        if (hbrush_) {
+            if (!DeleteObject(hbrush_)) {
+                WARNING_PRINTF("failed to destroy brush %#x: %s\n", hbrush_, StringUtility::lastErrorString().c_str());
+            }
+        }
+    }
+
+    operator HBRUSH() const { return hbrush_; }
+
+    operator bool() const { return hbrush_ != nullptr; }
+
+private:
+    HBRUSH hbrush_ {};
+};

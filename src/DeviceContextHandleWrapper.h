@@ -45,10 +45,8 @@ public:
     ~DeviceContextHandleWrapper()
     {
         if (hdc_) {
-            for (HGDIOBJ object : objects_) {
-                if (!DeleteObject(object)) {
-                    WARNING_PRINTF("DeleteObject() failed: %s\n", StringUtility::lastErrorString().c_str());
-                }
+            for (auto it = objects_.rbegin(); it != objects_.rend(); ++it) {
+                SelectObject(hdc_, *it);
             }
 
             switch (mode_) {

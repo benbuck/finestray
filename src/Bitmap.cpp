@@ -77,3 +77,70 @@ bool replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor)
 
     return replaced;
 }
+
+bool replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
+{
+    if (!hbmp || !hmask) {
+        return false;
+    }
+
+    BITMAP maskBitmap;
+    if (!GetObjectA(hmask, sizeof(BITMAP), &maskBitmap)) {
+        WARNING_PRINTF(
+            "failed to get mask bitmap object, GetObject() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    // BITMAP colorBitmap;
+    // if (!GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap)) {
+    //     WARNING_PRINTF(
+    //         "failed to get color bitmap object, GetObject() failed: %s\n",
+    //         StringUtility::lastErrorString().c_str());
+    //     return false;
+    // }
+
+    DeviceContextHandleWrapper desktopDC(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
+    if (!desktopDC) {
+        WARNING_PRINTF(
+            "failed to get desktop device context, GetDC() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    DeviceContextHandleWrapper maskDC(CreateCompatibleDC(desktopDC), DeviceContextHandleWrapper::Created);
+    DeviceContextHandleWrapper colorDC(CreateCompatibleDC(desktopDC), DeviceContextHandleWrapper::Created);
+    if (!maskDC || !colorDC) {
+        WARNING_PRINTF(
+            "failed to create compatible device contexts, CreateCompatibleDC() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    if (!maskDC.selectObject(hmask) || !colorDC.selectObject(hbmp)) {
+        return false;
+    }
+
+    bool replaced = false;
+    for (int y = 0; y < maskBitmap.bmHeight; ++y) {
+        for (int x = 0; x < maskBitmap.bmWidth; ++x) {
+            COLORREF maskPixel = GetPixel(maskDC, x, y);
+            if (maskPixel == RGB(255, 255, 255)) {
+                SetPixel(colorDC, x, y, newColor);
+                replaced = true;
+            }
+        }
+    }
+
+    return replaced;
+}
+
+HBITMAP scaleBitmap(HBITMAP hbmp, int width, int height)
+{
+    HBITMAP scaledBitmap = (HBITMAP)CopyImage(hbmp, IMAGE_BITMAP, width, height, LR_COPYDELETEORG);
+    if (!scaledBitmap) {
+        WARNING_PRINTF("failed to scale bitmap, CopyImage() failed: %s\n", StringUtility::lastErrorString().c_str());
+        return nullptr;
+    }
+    return scaledBitmap;
+}

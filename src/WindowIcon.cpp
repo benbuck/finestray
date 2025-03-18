@@ -15,6 +15,7 @@
 
 // App
 #include "WindowIcon.h"
+#include "BrushHandleWrapper.h"
 #include "DeviceContextHandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"
@@ -22,26 +23,9 @@
 namespace WindowIcon
 {
 
-namespace
-{
-
-bool replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor);
-
-} // anonymous namespace
-
 HICON get(HWND hwnd)
 {
     HICON hicon;
-
-    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICONSM);
-    if (hicon) {
-        return hicon;
-    }
-
-    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
-    if (hicon) {
-        return hicon;
-    }
 
     hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0);
     if (hicon) {
@@ -54,6 +38,16 @@ HICON get(HWND hwnd)
     }
 
     hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0);
+    if (hicon) {
+        return hicon;
+    }
+
+    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICONSM);
+    if (hicon) {
+        return hicon;
+    }
+
+    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
     if (hicon) {
         return hicon;
     }
@@ -73,95 +67,63 @@ HBITMAP bitmap(HWND hwnd)
         return nullptr;
     }
 
-    // return bitmapFromIcon(hicon);
-
     ICONINFOEXA iconInfo;
+    memset(&iconInfo, 0, sizeof(iconInfo));
     iconInfo.cbSize = sizeof(ICONINFOEXA);
     if (!GetIconInfoExA(hicon, &iconInfo)) {
+        WARNING_PRINTF(
+            "failed to get icon info for %#x, GetIconInfoEx() failed: %s\n",
+            hwnd,
+            StringUtility::lastErrorString().c_str());
         return nullptr;
     }
 
-    DWORD menuColor = GetSysColor(COLOR_MENU);
-    COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
-    replaceBitmapMaskColor(iconInfo.hbmColor, iconInfo.hbmMask, newColor);
-    DeleteObject(iconInfo.hbmMask);
-
-    HBITMAP scaledBitmap = (HBITMAP)CopyImage(
-        iconInfo.hbmColor,
-        IMAGE_BITMAP,
-        GetSystemMetrics(SM_CXMENUCHECK),
-        GetSystemMetrics(SM_CYMENUCHECK),
-        LR_COPYDELETEORG);
-    if (!scaledBitmap) {
-        WARNING_PRINTF("failed to scale bitmap, CopyImage() failed: %s\n", StringUtility::lastErrorString().c_str());
-    } else {
-        DeleteObject(iconInfo.hbmColor);
-        iconInfo.hbmColor = scaledBitmap;
-    }
-
-    return iconInfo.hbmColor;
-}
-
-namespace
-{
-
-bool replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor)
-{
-    if (!hbmp || !hmask) {
-        return false;
-    }
-
-    BITMAP maskBitmap;
-    if (!GetObjectA(hmask, sizeof(BITMAP), &maskBitmap)) {
-        WARNING_PRINTF(
-            "failed to get mask bitmap object, GetObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return false;
-    }
-
     BITMAP colorBitmap;
-    if (!GetObjectA(hbmp, sizeof(BITMAP), &colorBitmap)) {
+    if (!GetObjectA(iconInfo.hbmColor, sizeof(BITMAP), &colorBitmap)) {
         WARNING_PRINTF(
             "failed to get color bitmap object, GetObject() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return false;
+        return nullptr;
     }
 
-    DeviceContextHandleWrapper desktopDC(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
-    if (!desktopDC) {
+    DeviceContextHandleWrapper displayDC(
+        CreateICA("DISPLAY", nullptr, nullptr, nullptr),
+        DeviceContextHandleWrapper::Created);
+    if (!displayDC) {
         WARNING_PRINTF(
-            "failed to get desktop device context, GetDC() failed: %s\n",
+            "failed to get desktop information context, CreateICA() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return false;
+        return nullptr;
     }
 
-    DeviceContextHandleWrapper maskDC(CreateCompatibleDC(desktopDC), DeviceContextHandleWrapper::Created);
-    DeviceContextHandleWrapper colorDC(CreateCompatibleDC(desktopDC), DeviceContextHandleWrapper::Created);
-    if (!maskDC || !colorDC) {
+    int cx = GetSystemMetrics(SM_CXMENUCHECK);
+    int cy = GetSystemMetrics(SM_CYMENUCHECK);
+
+    HBITMAP hbitmap = CreateCompatibleBitmap(displayDC, cx, cy);
+
+    DeviceContextHandleWrapper bitmapDC(CreateCompatibleDC(displayDC), DeviceContextHandleWrapper::Created);
+    if (!bitmapDC) {
         WARNING_PRINTF(
-            "failed to create compatible device contexts, CreateCompatibleDC() failed: %s\n",
+            "failed to get desktop device context, CreateCompatibleDC() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return false;
+        return nullptr;
     }
 
-    if (!maskDC.selectObject(hmask) || !colorDC.selectObject(hbmp)) {
-        return false;
+    if (!bitmapDC.selectObject(hbitmap)) {
+        return nullptr;
     }
 
-    bool replaced = false;
-    for (int y = 0; y < maskBitmap.bmHeight; ++y) {
-        for (int x = 0; x < maskBitmap.bmWidth; ++x) {
-            COLORREF maskPixel = GetPixel(maskDC, x, y);
-            if (maskPixel == RGB(255, 255, 255)) {
-                SetPixel(colorDC, x, y, newColor);
-                replaced = true;
-            }
-        }
+    RECT rect = { 0, 0, cx, cy };
+    BrushHandleWrapper brush(CreateSolidBrush(GetSysColor(COLOR_MENU)));
+    if (!FillRect(bitmapDC, &rect, brush)) {
+        WARNING_PRINTF("failed to fill background, FillRect() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
-    return replaced;
+    if (!DrawIconEx(bitmapDC, 0, 0, hicon, cx, cy, 0, 0, DI_NORMAL)) {
+        WARNING_PRINTF("failed to draw icon, DrawIconEx() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    return hbitmap;
 }
-
-} // anonymous namespace
 
 } // namespace WindowIcon
