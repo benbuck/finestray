@@ -234,9 +234,7 @@ bool getExecutablePathComponents()
         WARNING_PRINTF("unexpected length mismatch, GetModuleFileNameA %zu, strlen %zu\n", length, strlen(moduleFullPath));
     }
 
-    executableFullPath_.reserve(length + 1);
-    executableFullPath_.resize(length);
-    strncpy_s(&executableFullPath_[0], length + 1, moduleFullPath, length);
+    executableFullPath_ = moduleFullPath;
     DEBUG_PRINTF("executable full path: %s\n", executableFullPath_.c_str());
 
     CHAR * fileName = PathFindFileNameA(moduleFullPath);
@@ -259,10 +257,7 @@ bool getExecutablePathComponents()
         return false;
     }
 
-    length = strlen(moduleFullPath);
-    executableDir_.reserve(length + 1);
-    executableDir_.resize(length);
-    strncpy_s(&executableDir_[0], length + 1, moduleFullPath, length);
+    executableDir_ = moduleFullPath;
     DEBUG_PRINTF("executable dir: %s\n", executableDir_.c_str());
 
     return true;

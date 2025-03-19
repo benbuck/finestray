@@ -98,7 +98,8 @@ void TrayIcon::updateTip(const std::string & tip)
 {
     if (nid_.uID) {
         DEBUG_PRINTF("updating tray icon %u tip to %s\n", nid_.uID, tip.c_str());
-        strncpy_s(nid_.szTip, tip.c_str(), sizeof(nid_.szTip) / sizeof(nid_.szTip[0]));
+        size_t tipMaxSize = sizeof(nid_.szTip) / sizeof(nid_.szTip[0]);
+        strncpy_s(nid_.szTip, tip.c_str(), tipMaxSize - 1);
         if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {
             WARNING_PRINTF(
                 "could not update tray icon tip, Shell_NotifyIcon() failed: %s\n",
