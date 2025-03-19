@@ -139,13 +139,6 @@ std::string getWriteableDir()
 
     std::string dir;
 
-    dir = getExecutableDir();
-    if (!dir.empty() && checkWriteableDir(dir)) {
-        DEBUG_PRINTF("using executable dir '%s' as writeable dir\n", dir.c_str());
-        writeableDir_ = dir;
-        return dir;
-    }
-
     dir = getAppDataDir();
     if (!dir.empty()) {
         dir = pathJoin(dir, APP_NAME);
@@ -164,6 +157,13 @@ std::string getWriteableDir()
             writeableDir_ = dir;
             return dir;
         }
+    }
+
+    dir = getExecutableDir();
+    if (!dir.empty() && checkWriteableDir(dir)) {
+        DEBUG_PRINTF("using executable dir '%s' as writeable dir\n", dir.c_str());
+        writeableDir_ = dir;
+        return dir;
     }
 
     WARNING_PRINTF("no writeable dir found\n");
