@@ -35,22 +35,28 @@ jobs:
       - name: Build
         run: .\vstudio-build.bat Release
 
+      - name: Create portable artifact digest
+        run: $files = Get-ChildItem -Path .\build\vstudio\Release -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
+
       - name: Create portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable
-          path: build/vstudio/Release/Finestray.exe
+          path: build/vstudio/Release/Finestray.exe*
+
+      - name: Create installer artifact digest
+        run: $files = Get-ChildItem -Path .\build\vstudio -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
 
       - name: Create installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: installer
-          path: build/vstudio/Finestray-*-win64.exe
+          path: build/vstudio/Finestray-*-win64.exe*
 
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1.14.0
         with:
           artifactErrorsFailBuild: true
-          artifacts: "build/vstudio/Release/Finestray.exe, build/vstudio/Finestray-*-*.exe"
+          artifacts: "build/vstudio/Release/Finestray.exe*, build/vstudio/Finestray-*-win64.exe*"
           generateReleaseNotes: true
