@@ -107,6 +107,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     (void)prevHinstance;
     (void)pCmdLine;
 
+#if defined(_DEBUG)
+    // enable memory leak checking
+    int crtDbgFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+    crtDbgFlag |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
+    crtDbgFlag &= ~_CRTDBG_CHECK_CRT_DF;
+    _CrtSetDbgFlag(crtDbgFlag);
+#endif
+
     // check if already running
     HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
     if (oldHwnd) {
