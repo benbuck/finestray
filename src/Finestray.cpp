@@ -264,6 +264,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
+    autoTrayedWindows_.clear();
+    settingsDialogWindow_.destroy();
     appWindow_.destroy();
 
     return 0;
