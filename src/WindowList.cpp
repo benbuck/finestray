@@ -142,7 +142,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
     }
 
     // update the list
-    windowList_ = newWindowList;
+    windowList_.swap(newWindowList);
 }
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
