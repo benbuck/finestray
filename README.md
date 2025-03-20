@@ -86,10 +86,10 @@ From the context menu, you can select one of the menu items:
   Exits the Finestray application.
 
 If your `Minimize placement` is set to `Menu` or `Tray and Menu`, then minimized windows will be listed in the context
-menu. You can click on these to restore a window to its original location.
+menu. You can click on these items to restore the corresponding window to its original location.
 
 If `Show windows in menu` is enabled, then non-minimized windows will be listed in the context menu, and you can click
-them to minimize them to the tray.
+on these items to minimize the corresponding window to the tray.
 
 ## Settings
 
