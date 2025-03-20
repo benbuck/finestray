@@ -33,7 +33,7 @@ public:
     {
         if (hbrush_) {
             if (!DeleteObject(hbrush_)) {
-                WARNING_PRINTF("failed to destroy brush %#x: %s\n", hbrush_, StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("failed to destroy brush %#x\n", hbrush_);
             }
         }
     }

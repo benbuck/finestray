@@ -24,23 +24,53 @@
 class BitmapHandleWrapper
 {
 public:
+    BitmapHandleWrapper() = default;
+
     explicit BitmapHandleWrapper(HBITMAP hbitmap)
         : hbitmap_(hbitmap)
     {
     }
 
-    ~BitmapHandleWrapper()
+    BitmapHandleWrapper(const BitmapHandleWrapper &) = delete;
+    BitmapHandleWrapper & operator=(const BitmapHandleWrapper &) = delete;
+
+    BitmapHandleWrapper(BitmapHandleWrapper && other) noexcept
+        : hbitmap_(other.release())
+    {
+    }
+
+    BitmapHandleWrapper & operator=(BitmapHandleWrapper && other) noexcept
+    {
+        if (this != &other) {
+            destroy();
+
+            hbitmap_ = other.release();
+        }
+        return *this;
+    }
+
+    ~BitmapHandleWrapper() { destroy(); }
+
+    void destroy()
     {
         if (hbitmap_) {
             if (!DeleteObject(hbitmap_)) {
-                WARNING_PRINTF("failed to destroy bitmap %#x: %s\n", hbitmap_, StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("failed to destroy bitmap %#x\n", hbitmap_);
             }
+            hbitmap_ = nullptr;
         }
     }
 
     operator HBITMAP() const { return hbitmap_; }
 
     operator bool() const { return hbitmap_ != nullptr; }
+
+    HBITMAP release()
+    {
+        HBITMAP hbitmap = hbitmap_;
+        hbitmap_ = nullptr;
+        return hbitmap;
+    }
 
 private:
     HBITMAP hbitmap_ {};

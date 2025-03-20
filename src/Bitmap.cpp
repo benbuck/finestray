@@ -24,10 +24,10 @@
 namespace Bitmap
 {
 
-HBITMAP getResource(unsigned int id)
+BitmapHandleWrapper getResource(unsigned int id)
 {
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
-    HBITMAP bitmap = (HBITMAP)LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0);
+    BitmapHandleWrapper bitmap((HBITMAP)LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0));
     if (!bitmap) {
         WARNING_PRINTF(
             "failed to load resources bitmap %u, LoadImage() failed: %s\n",
@@ -38,31 +38,31 @@ HBITMAP getResource(unsigned int id)
     return bitmap;
 }
 
-bool replaceColor(HBITMAP hbitmap, COLORREF oldColor, COLORREF newColor)
+bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORREF newColor)
 {
-    if (!hbitmap) {
+    if (!bitmap) {
         return false;
     }
 
-    DeviceContextHandleWrapper hdc(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
+    DeviceContextHandleWrapper desktopDC(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
 
-    BITMAP bitmap;
-    memset(&bitmap, 0, sizeof(bitmap));
-    if (!GetObject(hbitmap, sizeof(bitmap), &bitmap)) {
-        WARNING_PRINTF("failed to get bitmap object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
+    BITMAP bm;
+    memset(&bm, 0, sizeof(bm));
+    if (!GetObject(bitmap, sizeof(bm), &bm)) {
+        WARNING_PRINTF("failed to get bm object, GetObject() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
     BITMAPINFO bitmapInfo;
     memset(&bitmapInfo, 0, sizeof(bitmapInfo));
     bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bitmapInfo.bmiHeader.biWidth = bitmap.bmWidth;
-    bitmapInfo.bmiHeader.biHeight = bitmap.bmHeight;
+    bitmapInfo.bmiHeader.biWidth = bm.bmWidth;
+    bitmapInfo.bmiHeader.biHeight = bm.bmHeight;
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
 
-    std::vector<COLORREF> pixels(bitmap.bmWidth * bitmap.bmHeight);
-    if (!GetDIBits(hdc, hbitmap, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+    std::vector<COLORREF> pixels(bm.bmWidth * bm.bmHeight);
+    if (!GetDIBits(desktopDC, bitmap, 0, bm.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
@@ -74,7 +74,7 @@ bool replaceColor(HBITMAP hbitmap, COLORREF oldColor, COLORREF newColor)
         }
     }
 
-    if (!SetDIBits(hdc, hbitmap, 0, bitmap.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+    if (!SetDIBits(desktopDC, bitmap, 0, bm.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 

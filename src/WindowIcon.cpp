@@ -60,11 +60,11 @@ HICON get(HWND hwnd)
     return nullptr;
 }
 
-HBITMAP bitmap(HWND hwnd)
+BitmapHandleWrapper bitmap(HWND hwnd)
 {
     HICON hicon = get(hwnd);
     if (!hicon) {
-        return nullptr;
+        return BitmapHandleWrapper();
     }
 
     ICONINFOEXA iconInfo;
@@ -75,16 +75,11 @@ HBITMAP bitmap(HWND hwnd)
             "failed to get icon info for %#x, GetIconInfoEx() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
-        return nullptr;
+        return BitmapHandleWrapper();
     }
 
-    BITMAP colorBitmap;
-    if (!GetObjectA(iconInfo.hbmColor, sizeof(BITMAP), &colorBitmap)) {
-        WARNING_PRINTF(
-            "failed to get color bitmap object, GetObject() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return nullptr;
-    }
+    BitmapHandleWrapper iconMaskBitmap(iconInfo.hbmMask);
+    BitmapHandleWrapper iconColorBitmap(iconInfo.hbmColor);
 
     DeviceContextHandleWrapper displayDC(
         CreateICA("DISPLAY", nullptr, nullptr, nullptr),
@@ -93,24 +88,30 @@ HBITMAP bitmap(HWND hwnd)
         WARNING_PRINTF(
             "failed to get desktop information context, CreateICA() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return nullptr;
+        return BitmapHandleWrapper();
     }
-
-    int cx = GetSystemMetrics(SM_CXMENUCHECK);
-    int cy = GetSystemMetrics(SM_CYMENUCHECK);
-
-    HBITMAP hbitmap = CreateCompatibleBitmap(displayDC, cx, cy);
 
     DeviceContextHandleWrapper bitmapDC(CreateCompatibleDC(displayDC), DeviceContextHandleWrapper::Created);
     if (!bitmapDC) {
         WARNING_PRINTF(
             "failed to get desktop device context, CreateCompatibleDC() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return nullptr;
+        return BitmapHandleWrapper();
     }
 
-    if (!bitmapDC.selectObject(hbitmap)) {
-        return nullptr;
+    int cx = GetSystemMetrics(SM_CXMENUCHECK);
+    int cy = GetSystemMetrics(SM_CYMENUCHECK);
+
+    BitmapHandleWrapper bitmap(CreateCompatibleBitmap(displayDC, cx, cy));
+    if (!bitmap) {
+        WARNING_PRINTF(
+            "failed to create bitmap, CreateCompatibleBitmap() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return BitmapHandleWrapper();
+    }
+
+    if (!bitmapDC.selectObject(bitmap)) {
+        return BitmapHandleWrapper();
     }
 
     RECT rect = { 0, 0, cx, cy };
@@ -123,7 +124,7 @@ HBITMAP bitmap(HWND hwnd)
         WARNING_PRINTF("failed to draw icon, DrawIconEx() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
-    return hbitmap;
+    return bitmap;
 }
 
 } // namespace WindowIcon

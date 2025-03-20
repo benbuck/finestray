@@ -30,7 +30,7 @@
 namespace
 {
 
-bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id);
+bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHandleWrapper & bitmap);
 
 } // anonymous namespace
 
@@ -55,12 +55,15 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         return false;
     }
 
+    std::vector<BitmapHandleWrapper> bitmaps;
+
     std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
     if (showWindows) {
         unsigned int visibleCount = 0;
         for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
             if (window.second.visible) {
-                if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount)) {
+                bitmaps.emplace_back(WindowIcon::bitmap(window.first));
+                if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount, bitmaps.back())) {
                     return false;
                 }
 
@@ -98,7 +101,8 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
         unsigned int minimizedCount = 0;
         for (HWND minimizedWindow : minimizedWindows) {
-            if (!addMenuItemForWindow(menu, minimizedWindow, IDM_MINIMIZEDWINDOW_BASE + minimizedCount)) {
+            bitmaps.emplace_back(WindowIcon::bitmap(minimizedWindow));
+            if (!addMenuItemForWindow(menu, minimizedWindow, IDM_MINIMIZEDWINDOW_BASE + minimizedCount, bitmaps.back())) {
                 return false;
             }
 
@@ -247,7 +251,7 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
 namespace
 {
 
-bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id)
+bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHandleWrapper & bitmap)
 {
     std::string title = getWindowText(hwnd);
     constexpr size_t maxTitleLength = 30;
@@ -261,13 +265,12 @@ bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id)
         return false;
     }
 
-    HBITMAP hbmp = WindowIcon::bitmap(hwnd);
-    if (hbmp) {
+    if (bitmap) {
         MENUITEMINFOA menuItemInfo;
         memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
         menuItemInfo.cbSize = sizeof(MENUITEMINFOA);
         menuItemInfo.fMask = MIIM_BITMAP;
-        menuItemInfo.hbmpItem = hbmp;
+        menuItemInfo.hbmpItem = bitmap;
         if (!SetMenuItemInfoA(menu, id, FALSE, &menuItemInfo)) {
             WARNING_PRINTF(
                 "failed to create menu entry, SetMenuItemInfoA() failed: %s\n",

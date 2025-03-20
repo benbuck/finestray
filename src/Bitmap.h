@@ -14,13 +14,16 @@
 
 #pragma once
 
+// App
+#include "BitmapHandleWrapper.h"
+
 // Windows
 #include <Windows.h>
 
 namespace Bitmap
 {
 
-HBITMAP getResource(unsigned int id);
-bool replaceColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
+BitmapHandleWrapper getResource(unsigned int id);
+bool replaceColor(const BitmapHandleWrapper & hbmp, COLORREF oldColor, COLORREF newColor);
 
 } // namespace Bitmap

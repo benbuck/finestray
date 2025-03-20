@@ -14,6 +14,9 @@
 
 #pragma once
 
+// App
+#include "BitmapHandleWrapper.h"
+
 // Windows
 #include <Windows.h>
 
@@ -21,6 +24,6 @@ namespace WindowIcon
 {
 
 HICON get(HWND hwnd);
-HBITMAP bitmap(HWND hwnd);
+BitmapHandleWrapper bitmap(HWND hwnd);
 
 } // namespace WindowIcon
