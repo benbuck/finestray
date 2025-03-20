@@ -17,7 +17,10 @@
 // Windows
 #include <Windows.h>
 
-HBITMAP getResourceBitmap(unsigned int id);
-bool replaceBitmapColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
-bool replaceBitmapMaskColor(HBITMAP hbmp, HBITMAP hmask, COLORREF newColor);
-HBITMAP scaleBitmap(HBITMAP hbmp, int width, int height);
+namespace Bitmap
+{
+
+HBITMAP getResource(unsigned int id);
+bool replaceColor(HBITMAP hbmp, COLORREF oldColor, COLORREF newColor);
+
+} // namespace Bitmap

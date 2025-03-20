@@ -139,11 +139,11 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         return false;
     }
 
-    BitmapHandleWrapper appBitmap(getResourceBitmap(IDB_APP));
-    BitmapHandleWrapper minimizeBitmap(getResourceBitmap(IDB_MINIMIZE));
-    BitmapHandleWrapper restoreBitmap(getResourceBitmap(IDB_RESTORE));
-    BitmapHandleWrapper settingsBitmap(getResourceBitmap(IDB_SETTINGS));
-    BitmapHandleWrapper exitBitmap(getResourceBitmap(IDB_EXIT));
+    BitmapHandleWrapper appBitmap(Bitmap::getResource(IDB_APP));
+    BitmapHandleWrapper minimizeBitmap(Bitmap::getResource(IDB_MINIMIZE));
+    BitmapHandleWrapper restoreBitmap(Bitmap::getResource(IDB_RESTORE));
+    BitmapHandleWrapper settingsBitmap(Bitmap::getResource(IDB_SETTINGS));
+    BitmapHandleWrapper exitBitmap(Bitmap::getResource(IDB_EXIT));
 
     if (!appBitmap || !minimizeBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
@@ -153,13 +153,13 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         DWORD menuColor = GetSysColor(COLOR_MENU);
         COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
 
-        replaceBitmapColor(appBitmap, oldColor1, newColor);
-        replaceBitmapColor(settingsBitmap, oldColor1, newColor);
-        replaceBitmapColor(exitBitmap, oldColor1, newColor);
+        Bitmap::replaceColor(appBitmap, oldColor1, newColor);
+        Bitmap::replaceColor(settingsBitmap, oldColor1, newColor);
+        Bitmap::replaceColor(exitBitmap, oldColor1, newColor);
 
-        replaceBitmapColor(appBitmap, oldColor2, newColor);
-        replaceBitmapColor(settingsBitmap, oldColor2, newColor);
-        replaceBitmapColor(exitBitmap, oldColor2, newColor);
+        Bitmap::replaceColor(appBitmap, oldColor2, newColor);
+        Bitmap::replaceColor(settingsBitmap, oldColor2, newColor);
+        Bitmap::replaceColor(exitBitmap, oldColor2, newColor);
 
         MENUITEMINFOA menuItemInfo;
         memset(&menuItemInfo, 0, sizeof(MENUITEMINFOA));
