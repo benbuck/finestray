@@ -16,14 +16,12 @@
 
 // App
 #include "AppName.h"
+#include "CJsonWrapper.h"
 #include "File.h"
 #include "Hotkey.h"
 #include "Log.h"
 #include "Path.h"
 #include "StringUtility.h"
-
-// cJSON
-#include <cJSON.h>
 
 // Windows
 #include <Windows.h>
@@ -250,13 +248,13 @@ void Settings::addAutoTray(const std::string & executable, const std::string & w
 
 bool Settings::parseJson(const std::string & json)
 {
-    const cJSON * cjson = cJSON_Parse(json.c_str());
+    CJsonWrapper cjson(cJSON_Parse(json.c_str()));
     if (!cjson) {
         WARNING_PRINTF("failed to parse settings JSON:\n%s\n", cJSON_GetErrorPtr());
         return false;
     }
 
-    DEBUG_PRINTF("parsed settings JSON:\n%s\n", cJSON_Print(cjson));
+    DEBUG_PRINTF("parsed settings JSON:\n%s\n", cjson.print().c_str());
 
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
     showWindowsInMenu_ = getBool(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_);
@@ -300,7 +298,7 @@ bool Settings::fileExists(const std::string & fileName)
 
 std::string Settings::constructJSON()
 {
-    cJSON * cjson = cJSON_CreateObject();
+    CJsonWrapper cjson(cJSON_CreateObject());
     if (!cjson) {
         WARNING_PRINTF("failed to create settings JSON object\n");
         return std::string();
@@ -385,11 +383,10 @@ std::string Settings::constructJSON()
 
     if (fail) {
         WARNING_PRINTF("failed to construct json settings\n");
-        cJSON_Delete(cjson);
         return std::string();
     }
 
-    return cJSON_Print(cjson);
+    return cjson.print();
 }
 
 bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)

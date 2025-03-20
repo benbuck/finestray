@@ -97,6 +97,7 @@ add_executable(Finestray WIN32
     src/Bitmap.h
     src/BitmapHandleWrapper.h
     src/BrushHandleWrapper.h
+    src/CJsonWrapper.h
     src/COMLibraryWrapper.h
     src/ContextMenu.cpp
     src/ContextMenu.h
