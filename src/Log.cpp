@@ -162,8 +162,7 @@ void print(Level level, const char * str)
         return;
     }
 
-    if (enableLogging_) {
-        assert(fileHandle_ != INVALID_HANDLE_VALUE);
+    if (enableLogging_ && (fileHandle_ != INVALID_HANDLE_VALUE)) {
         DWORD bytesWritten = 0;
         WriteFile(fileHandle_, line.c_str(), (DWORD)line.size(), &bytesWritten, nullptr);
         assert(bytesWritten == line.size());
