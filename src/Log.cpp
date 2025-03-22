@@ -168,11 +168,11 @@ void print(Level level, const char * str)
         assert(bytesWritten == line.size());
     }
 
-#if defined(_DEBUG)
-    if ((level == Level::Error) && IsDebuggerPresent()) {
-        __debugbreak();
-    }
-#endif
+    // #if defined(_DEBUG)
+    //     if ((level == Level::Error) && IsDebuggerPresent()) {
+    //         __debugbreak();
+    //     }
+    // #endif
 }
 
 } // namespace Log
