@@ -57,12 +57,14 @@ int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 void autoTrayListViewItemAdd(HWND dialogHwnd);
 void autoTrayListViewItemUpdate(HWND dialogHwnd, int item);
 void autoTrayListViewItemDelete(HWND dialogHwnd, int item);
-void autoTrayListViewItemSpy(HWND dialogHwnd);
 void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
 void autoTrayListViewUpdateButtons(HWND dialogHwnd);
 void autoTrayListViewUpdateSelected(HWND dialogHwnd);
-void spySelectWindowAtPoint(const POINT & point);
-LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam);
+void spyBegin(HWND dialogHwnd);
+void spyEnd(HWND dialogHwnd);
+void spyEnableIcon(HWND dialogHwnd);
+void spyDisableIcon(HWND dialogHwnd);
+void spyUpdate(HWND dialogHwnd);
 std::string getDialogItemText(HWND dialogHwnd, int id);
 std::string getListViewItemText(HWND listViewHwnd, int item, int subItem);
 
@@ -75,8 +77,6 @@ bool autoTrayListViewSortAscending_;
 int autoTrayListViewSortColumn_;
 #endif
 bool spyMode_;
-HWND spyModeHwnd_;
-HHOOK mouseHhook_;
 
 } // anonymous namespace
 
@@ -110,12 +110,29 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
     // DEBUG_PRINTF("wnd %#x, message %#x, wparam %#x, lparam %#x\n", dialogHwnd, message, wParam, lParam);
 
     if (spyMode_) {
-        if (message == WM_LBUTTONDOWN) {
-            POINT point;
-            if (!GetCursorPos(&point)) {
-                WARNING_PRINTF("GetCursorPos failed: %s\n", StringUtility::lastErrorString().c_str());
-            } else {
-                spySelectWindowAtPoint(point);
+        switch (message) {
+            case WM_CAPTURECHANGED:
+            case WM_LBUTTONUP: {
+                spyUpdate(dialogHwnd);
+                spyEnd(dialogHwnd);
+                break;
+            }
+
+            case WM_MOUSEMOVE: {
+                spyUpdate(dialogHwnd);
+                break;
+            }
+
+            case WM_SETCURSOR: {
+                HCURSOR hCursor = LoadCursor(NULL, IDC_CROSS);
+                if (!hCursor) {
+                    WARNING_PRINTF("LoadCursor failed: %s\n", StringUtility::lastErrorString().c_str());
+                } else {
+                    if (!SetCursor(hCursor)) {
+                        WARNING_PRINTF("SetCursor failed: %s\n", StringUtility::lastErrorString().c_str());
+                    }
+                }
+                break;
             }
         }
 
@@ -193,6 +210,8 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
+            spyEnableIcon(dialogHwnd);
+
             autoTrayListViewInit(dialogHwnd);
 
             break;
@@ -258,7 +277,9 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         break;
                     }
                     case IDC_AUTO_TRAY_ITEM_SPY: {
-                        autoTrayListViewItemSpy(dialogHwnd);
+                        if (HIWORD(wParam) == STN_CLICKED) {
+                            spyBegin(dialogHwnd);
+                        }
                         break;
                     }
 
@@ -670,31 +691,6 @@ void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
     autoTrayListViewUpdateSelected(dialogHwnd);
 }
 
-void autoTrayListViewItemSpy(HWND dialogHwnd)
-{
-    DEBUG_PRINTF("Spying auto tray\n");
-
-    if (!ShowWindow(dialogHwnd, SW_HIDE)) {
-        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-
-    MessageBoxA(
-        dialogHwnd,
-        getResourceString(IDS_SPY_MODE_TEXT).c_str(),
-        getResourceString(IDS_SPY_MODE_TITLE).c_str(),
-        MB_OK);
-
-    mouseHhook_ = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, nullptr, 0);
-    if (!mouseHhook_) {
-        WARNING_PRINTF("Failed to install mouse hook!\n");
-    } else {
-        DEBUG_PRINTF("Mouse hook installed.\n");
-    }
-
-    spyModeHwnd_ = dialogHwnd;
-    spyMode_ = true;
-}
-
 void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
 {
     DEBUG_PRINTF("Editing auto tray item %d\n", item);
@@ -822,76 +818,126 @@ void setListViewSortIcon(HWND listView, int col, int sortOrder)
 }
 #endif
 
-void spySelectWindowAtPoint(const POINT & point)
+void spyBegin(HWND dialogHwnd)
 {
-    DEBUG_PRINTF("Mouse clicked at: %d, %d\n", point.x, point.y);
+    DEBUG_PRINTF("Spy mode: beginning\n");
+
+    spyMode_ = true;
+
+    spyDisableIcon(dialogHwnd);
+
+    SetCapture(dialogHwnd);
+}
+
+void spyEnd(HWND dialogHwnd)
+{
+    DEBUG_PRINTF("Spy mode: ended\n");
+    if (!ReleaseCapture()) {
+        WARNING_PRINTF("ReleaseCapture failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    spyEnableIcon(dialogHwnd);
+
+    spyMode_ = false;
+}
+
+void spyEnableIcon(HWND dialogHwnd)
+{
+    HCURSOR hCrossCursor = LoadCursor(NULL, IDC_CROSS);
+    if (!hCrossCursor) {
+        WARNING_PRINTF("LoadCursor failed: %s\n", StringUtility::lastErrorString().c_str());
+    } else {
+        if (!SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, (WPARAM)hCrossCursor, 0)) {
+            WARNING_PRINTF("SendDlgItemMessage failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+    }
+}
+
+void spyDisableIcon(HWND dialogHwnd)
+{
+    if (!SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, 0, 0)) {
+        WARNING_PRINTF("SendDlgItemMessage failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    HCURSOR hCursor = LoadCursor(NULL, IDC_CROSS);
+    if (!hCursor) {
+        WARNING_PRINTF("LoadCursor failed: %s\n", StringUtility::lastErrorString().c_str());
+    } else {
+        if (!SetCursor(hCursor)) {
+            WARNING_PRINTF("SetCursor failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+    }
+}
+
+void spyUpdate(HWND dialogHwnd)
+{
+    POINT point;
+    if (!GetCursorPos(&point)) {
+        WARNING_PRINTF("GetCursorPos failed: %s\n", StringUtility::lastErrorString().c_str());
+        return;
+    }
+
+    DEBUG_PRINTF("Spy mode: selecting window at: %d, %d\n", point.x, point.y);
 
     HWND hwnd = WindowFromPoint(point);
     if (!hwnd) {
         DEBUG_PRINTF("No window found\n");
-    } else {
-        DEBUG_PRINTF("Spy mode: hwnd %#x\n", hwnd);
+        return;
+    }
 
-        HWND rootHwnd = GetAncestor(hwnd, GA_ROOT);
-        if (!rootHwnd) {
-            WARNING_PRINTF("Failed to get root hwnd, falling back to original\n");
-            rootHwnd = hwnd;
+    HWND rootHwnd = GetAncestor(hwnd, GA_ROOT);
+    if (!rootHwnd) {
+        WARNING_PRINTF("Failed to get root hwnd, falling back to original\n");
+        rootHwnd = hwnd;
+    }
+
+    if (rootHwnd == dialogHwnd) {
+        DEBUG_PRINTF("Spy mode: own window, clearing\n");
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, nullptr)) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, nullptr)) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, nullptr)) {
+            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        return;
+    }
 
-        CHAR executableFullPath[MAX_PATH] = {};
-        DWORD processID;
-        if (!GetWindowThreadProcessId(rootHwnd, &processID)) {
-            WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
+    DEBUG_PRINTF("Spy mode: root hwnd %#x\n", rootHwnd);
+
+    CHAR executableFullPath[MAX_PATH] = {};
+    DWORD processID;
+    if (!GetWindowThreadProcessId(rootHwnd, &processID)) {
+        WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
+    } else {
+        HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
+        if (!process) {
+            WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
-            if (!process) {
-                WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
-            } else {
-                if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executableFullPath, MAX_PATH)) {
-                    WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
-                }
+            if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executableFullPath, MAX_PATH)) {
+                WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             }
         }
-        DEBUG_PRINTF("Executable full path: '%s'\n", executableFullPath);
-
-        std::string className = getWindowClassName(rootHwnd);
-        DEBUG_PRINTF("Class name: '%s'\n", className.c_str());
-
-        std::string title = getWindowText(rootHwnd);
-        DEBUG_PRINTF("Title: '%s'\n", title.c_str());
-
-        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath)) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str())) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(spyModeHwnd_, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str())) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-
-        if (!ShowWindow(spyModeHwnd_, SW_SHOW)) {
-            WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetForegroundWindow(spyModeHwnd_)) {
-            WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-
-        spyModeHwnd_ = nullptr;
-        spyMode_ = false;
     }
-}
+    DEBUG_PRINTF("Executable full path: '%s'\n", executableFullPath);
 
-LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    if ((nCode == HC_ACTION) && (wParam == WM_LBUTTONDOWN)) {
-        UnhookWindowsHookEx(mouseHhook_);
+    std::string className = getWindowClassName(rootHwnd);
+    DEBUG_PRINTF("Class name: '%s'\n", className.c_str());
 
-        LPMSLLHOOKSTRUCT mouseInfo = (LPMSLLHOOKSTRUCT)lParam;
-        spySelectWindowAtPoint(mouseInfo->pt);
+    std::string title = getWindowText(rootHwnd);
+    DEBUG_PRINTF("Title: '%s'\n", title.c_str());
+
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executableFullPath)) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
-
-    return CallNextHookEx(mouseHhook_, nCode, wParam, lParam);
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, className.c_str())) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, title.c_str())) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
 }
 
 std::string getDialogItemText(HWND dialogHwnd, int id)

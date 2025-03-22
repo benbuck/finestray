@@ -30,8 +30,6 @@
 #define IDS_COLUMN_EXECUTABLE                     222
 #define IDS_COLUMN_WINDOW_CLASS                   223
 #define IDS_COLUMN_WINDOW_TITLE                   224
-#define IDS_SPY_MODE_TITLE                        225
-#define IDS_SPY_MODE_TEXT                         226
 
 // error strings
 #define IDS_ERROR_INIT_COM                        301

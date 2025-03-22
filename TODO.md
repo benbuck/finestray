@@ -2,7 +2,6 @@
 
 - Get windows error reporting (WER) working
 - Add tray icon promotion (avoid moving to notification area overflow menu)
-- Improve method for spy window selection
 - Investigate VirusTotal results for installer
 - Add auto-tray option: when created, when minimized, both
 - Add option to make tray icons persistent even when window is restored

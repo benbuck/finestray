@@ -213,12 +213,13 @@ window will minimize the standard way instead of to the tray.
 ### Spy feature
 
 If you don't know the executable, class, or title of a window, or just would like help filling those values, you can use
-the Spy feature. To use it, first open the [Settings](#settings) window, then press the "Spy" button. This will close
-the Settings window, then show you a message explaining that Spy mode is active, and that you can click on any window to
-select it. Press the "OK" button of that message, and then click on the window you want to obtain the executable, class,
-and title of. Once you have done that, the Settings window should re-appear, and those values should be filled in. You
-can modify them if you like, or leave them alone, and then press the Add button to create a new Auto-tray item for that
-window.
+the Spy feature. To use it, first open the [Settings](#settings) window, find the crosshair icon next to the text that
+says "Spy (drag this):", and use your mouse to drag that icon onto the window that you want to obtain the executable,
+class, and title of. As you drag the crosshair around, the settings window should be updated with information about each
+window you move it over, and when you release the mouse button then the crosshair icon will return to its original
+position, and the values in the settings should stay filled in with whatever window you last dragged on top of. You can
+modify the values if you like, or leave them alone, and then press the Add button to create a new Auto-tray item for
+that window.
 
 If the Spy feature doesn't work for you, alternatively you can use another tool like
 [Window Spy](https://amourspirit.github.io/AutoHotkey-Snippit/WindowSpy.html) or
