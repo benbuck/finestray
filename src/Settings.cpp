@@ -29,6 +29,7 @@
 
 // Standard library
 #include <cstdlib>
+#include <regex>
 
 namespace
 {
@@ -171,7 +172,15 @@ bool Settings::valid() const
         return false;
     }
 
-    // nothing to validate for poll interval or auto-tray items
+    // nothing to validate for poll interval
+
+    for (const AutoTray & autoTray : autoTrays_) {
+        try {
+            std::regex re(autoTray.windowTitle_);
+        } catch (const std::regex_error &) {
+            return false;
+        }
+    }
 
     return true;
 }

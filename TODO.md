@@ -1,5 +1,6 @@
 # To do list
 
+- Refactor regex error handling
 - Get windows error reporting (WER) working
 - Add tray icon promotion (avoid moving to notification area overflow menu)
 - Investigate VirusTotal results for installer

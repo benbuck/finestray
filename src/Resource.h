@@ -39,11 +39,11 @@
 #define IDS_ERROR_PARSE_HOTKEY                    305
 #define IDS_ERROR_REGISTER_HOTKEY                 306
 #define IDS_ERROR_PARSE_MODIFIER                  307
-#define IDS_ERROR_REGISTER_MODIFIER               308
-#define IDS_ERROR_REGISTER_EVENTHOOK              309
-#define IDS_ERROR_CREATE_TRAY_ICON                310
-#define IDS_ERROR_CREATE_MENU                     311
-#define IDS_ERROR_COMMAND_LINE                    312
+#define IDS_ERROR_PARSE_REGEX                     308
+#define IDS_ERROR_REGISTER_MODIFIER               309
+#define IDS_ERROR_REGISTER_EVENTHOOK              310
+#define IDS_ERROR_CREATE_TRAY_ICON                311
+#define IDS_ERROR_CREATE_MENU                     312
 #define IDS_ERROR_CREATE_DIALOG                   313
 #define IDS_ERROR_LOAD_SETTINGS                   314
 #define IDS_ERROR_SAVE_SETTINGS                   315

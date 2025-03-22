@@ -639,6 +639,14 @@ ErrorContext start()
         return ErrorContext(IDS_ERROR_REGISTER_MODIFIER, "override");
     }
 
+    for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
+        try {
+            std::regex re(autoTray.windowTitle_);
+        } catch (const std::regex_error & e) {
+            return ErrorContext(IDS_ERROR_PARSE_REGEX, "'" + autoTray.windowTitle_ + "': " + e.what());
+        }
+    }
+
     WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
 
     return ErrorContext();
@@ -714,10 +722,14 @@ bool windowShouldAutoTray(HWND hwnd)
             // DEBUG_PRINTF("\twindow title match (empty)\n");
             titleMatch = true;
         } else {
-            std::regex re(autoTray.windowTitle_);
-            if (std::regex_match(windowText, re)) {
-                // DEBUG_PRINTF("\twindow title '%s' match\n", autoTray.windowTitle_.c_str());
-                titleMatch = true;
+            try {
+                std::regex re(autoTray.windowTitle_);
+                if (std::regex_match(windowText, re)) {
+                    // DEBUG_PRINTF("\twindow title '%s' match\n", autoTray.windowTitle_.c_str());
+                    titleMatch = true;
+                }
+            } catch (const std::regex_error & e) {
+                WARNING_PRINTF("regex error: %s\n", e.what());
             }
         }
 
