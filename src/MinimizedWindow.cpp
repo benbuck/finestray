@@ -65,21 +65,9 @@ bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
     }
 
     // minimize and hide window
-    if (!ShowWindow(hwnd, SW_MINIMIZE)) {
-        WARNING_PRINTF(
-            "failed to minimize window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-        return false;
-    } else {
-        if (!ShowWindow(hwnd, SW_HIDE)) {
-            WARNING_PRINTF(
-                "failed to hide window %#x, ShowWindow() failed: %s\n",
-                hwnd,
-                StringUtility::lastErrorString().c_str());
-            return false;
-        }
-    }
+    // return value intentionally ignored, ShowWindow returns previous visibility
+    ShowWindow(hwnd, SW_MINIMIZE);
+    ShowWindow(hwnd, SW_HIDE);
 
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
@@ -103,20 +91,12 @@ void restore(HWND hwnd)
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
 
     // show and restore window
-    if (!ShowWindow(hwnd, SW_SHOWNORMAL)) {
-        WARNING_PRINTF(
-            "failed to show window %#x, ShowWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
+    // return value intentionally ignored, ShowWindow returns previous visibility
+    ShowWindow(hwnd, SW_SHOWNORMAL);
 
     // make window foreground
-    if (!SetForegroundWindow(hwnd)) {
-        WARNING_PRINTF(
-            "failed to set foreground window %#x, SetForegroundWindow() failed: %s\n",
-            hwnd,
-            StringUtility::lastErrorString().c_str());
-    }
+    // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
+    SetForegroundWindow(hwnd);
 
     remove(hwnd);
 }
@@ -201,6 +181,15 @@ HWND getFromID(UINT id)
     }
 
     return nullptr;
+}
+
+HWND getFromIndex(UINT index)
+{
+    if (index >= minimizedWindows_.size()) {
+        return nullptr;
+    }
+
+    return minimizedWindows_[index].hwnd_;
 }
 
 HWND getLast()

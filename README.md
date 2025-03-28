@@ -205,6 +205,17 @@ window. Because of this, Finestray provides three possible ways, which can be us
   expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window which
   has a title like "Untitled - Notepad", you could use a regular expression like: `.*Notepad$`.
 
+Auto-tray event options:
+
+- **Open**:
+  Select this option if you want the specified auto-tray window to minimize to the tray when it opens, or when Finestray
+  launches and the window is already open.
+- **Minimize**:
+  Select this option if you want the specified auto-tray window to minimize to the tray when it is minimized.
+- **Open and Minimize**
+  Select this option if you want the specified auto-tray window to minimize to the tray both when it opens, and when it
+  is minimized.
+
 Note that the Override modifier also has an effect on auto-trays. It overrides the normal auto-tray behavior. For
 example, if you are holding down the override modifier keys when a window is created, it will prevent the normal
 auto-tray behavior from happening. If you minimize an auto-tray window while holding the override modifier keys, the

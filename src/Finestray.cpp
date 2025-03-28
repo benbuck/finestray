@@ -47,7 +47,6 @@
 
 // Standard library
 #include <regex>
-#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -64,10 +63,25 @@ enum class HotkeyID
     Menu
 };
 
+struct AutoTrayItem
+{
+    AutoTrayItem(HWND hwnd)
+        : hwnd_(hwnd)
+    {
+    }
+
+    HWND hwnd_;
+};
+
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 ErrorContext start();
 void stop();
-bool windowShouldAutoTray(HWND hwnd);
+bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent);
+void minimizeAllWindows();
+bool minimizeWindow(HWND hwnd);
+void restoreAllWindows();
+void restoreWindow(HWND hwnd);
+void restoreLastWindow();
 void onAddWindow(HWND hwnd);
 void onRemoveWindow(HWND hwnd);
 void onChangeWindowTitle(HWND hwnd, const std::string & title);
@@ -80,6 +94,8 @@ void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
+void showSettingsDialog();
+void toggleSettingsDialog();
 void onSettingsDialogComplete(bool success, const Settings & settings);
 std::string getSettingsFileName();
 std::string getStartupShortcutFullPath();
@@ -90,7 +106,7 @@ TrayIcon trayIcon_;
 WindowHandleWrapper settingsDialogWindow_;
 bool contextMenuActive_;
 Settings settings_;
-std::set<HWND> autoTrayedWindows_;
+std::vector<AutoTrayItem> autoTrayedWindows_;
 Hotkey hotkeyMinimize_;
 Hotkey hotkeyMinimizeAll_;
 Hotkey hotkeyRestore_;
@@ -240,18 +256,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     if (err) {
         errorMessage(err);
         INFO_PRINTF("start error, showing settings dialog\n");
-        settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+        showSettingsDialog();
     } else {
         if (!Settings::fileExists(settingsFile)) {
             INFO_PRINTF("no settings file, showing settings dialog\n");
-            settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+            showSettingsDialog();
         }
     }
 
     DEBUG_PRINTF("running message loop\n");
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
-        // needed to have working tab stops in the dialog
+        // needed to have working tab stops in the settings dialog
         if (settingsDialogWindow_ && IsDialogMessageA(settingsDialogWindow_, &msg)) {
             continue;
         }
@@ -260,6 +276,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     DEBUG_PRINTF("exiting\n");
+
+    // if there are any minimized windows, restore them
+    MinimizedWindow::restoreAll();
 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
@@ -291,26 +310,19 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case IDM_MINIMIZE_ALL: {
                     INFO_PRINTF("menu minimize all\n");
-                    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-                    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
-                        if (window.second.visible) {
-                            MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
-                        }
-                    }
+                    minimizeAllWindows();
                     break;
                 }
 
                 case IDM_RESTORE_ALL: {
                     INFO_PRINTF("menu restore all\n");
-                    MinimizedWindow::restoreAll();
+                    restoreAllWindows();
                     break;
                 }
 
                 case IDM_SETTINGS: {
                     INFO_PRINTF("menu settings\n");
-                    if (!settingsDialogWindow_) {
-                        settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
-                    }
+                    showSettingsDialog();
                     break;
                 }
 
@@ -322,38 +334,29 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
-                    if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id < (IDM_MINIMIZEDWINDOW_BASE + minimizedWindows.size()))) {
-                        INFO_PRINTF("menu restore minimized window %u\n", id - IDM_MINIMIZEDWINDOW_BASE);
+                    if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id <= IDM_MINIMIZEDWINDOW_MAX)) {
                         unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
-                        unsigned int count = 0;
-                        for (HWND minimizedWindow : minimizedWindows) {
-                            if (count == index) {
-                                MinimizedWindow::restore(minimizedWindow);
-                                break;
-                            }
-                            ++count;
+                        INFO_PRINTF("menu restore minimized window index %u\n", index);
+                        HWND minimizedWindow = MinimizedWindow::getFromIndex(index);
+                        if (!minimizedWindow) {
+                            WARNING_PRINTF("no minimized window at index %u\n", index);
+                        } else {
+                            restoreWindow(minimizedWindow);
                         }
-                    } else {
-                        std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-                        if ((id >= IDM_VISIBLEWINDOW_BASE) && (id < (IDM_VISIBLEWINDOW_BASE + windowList.size()))) {
-                            INFO_PRINTF("menu minimize visible window %u\n", id - IDM_VISIBLEWINDOW_BASE);
-                            unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
-                            unsigned int count = 0;
-                            for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
-                                if (window.second.visible) {
-                                    if (count == index) {
-                                        MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
-                                        break;
-                                    }
-                                    ++count;
-                                }
-                            }
+                    } else if ((id >= IDM_VISIBLEWINDOW_BASE) && (id <= IDM_VISIBLEWINDOW_MAX)) {
+                        unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
+                        INFO_PRINTF("menu minimize visible window index %u\n", index);
+                        HWND visibleWindow = WindowList::getVisibleIndex(index);
+                        if (!visibleWindow) {
+                            WARNING_PRINTF("no visible window at index %u\n", index);
+                        } else {
+                            minimizeWindow(visibleWindow);
                         }
                     }
+
+                    break;
                 }
             }
-            break;
         }
 
         case WM_CREATE: {
@@ -365,11 +368,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY: {
             INFO_PRINTF("destroying window\n");
-
-            // if there are any minimized windows, restore them
-            MinimizedWindow::restoreAll();
-
-            // exit
             PostQuitMessage(0);
             return 0;
         }
@@ -395,8 +393,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             std::string className = getWindowClassName(foregroundHwnd);
                             DEBUG_PRINTF("\twindow class name '%s'\n", className.c_str());
 #endif
-
-                            MinimizedWindow::minimize(foregroundHwnd, hwnd, settings_.minimizePlacement_);
+                            minimizeWindow(foregroundHwnd);
                         }
                     }
                     break;
@@ -404,29 +401,19 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case HotkeyID::MinimizeAll: {
                     INFO_PRINTF("hotkey minimize all\n");
-                    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-                    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
-                        if (window.second.visible) {
-                            MinimizedWindow::minimize(window.first, hwnd, settings_.minimizePlacement_);
-                        }
-                    }
+                    minimizeAllWindows();
                     break;
                 }
 
                 case HotkeyID::Restore: {
                     INFO_PRINTF("hotkey restore\n");
-                    HWND lastHwnd = MinimizedWindow::getLast();
-                    if (!lastHwnd) {
-                        WARNING_PRINTF("no minimized windows to restore, ignoring\n");
-                    } else {
-                        MinimizedWindow::restore(lastHwnd);
-                    }
+                    restoreLastWindow();
                     break;
                 }
 
                 case HotkeyID::RestoreAll: {
                     INFO_PRINTF("hotkey restore all\n");
-                    MinimizedWindow::restoreAll();
+                    restoreAllWindows();
                     break;
                 }
 
@@ -481,15 +468,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     HWND hwndTray = MinimizedWindow::getFromID((UINT)wParam);
                     if (hwndTray) {
                         INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
-                        MinimizedWindow::restore(hwndTray);
+                        restoreWindow(hwndTray);
                     } else if (wParam == trayIcon_.id()) {
-                        if (!settingsDialogWindow_) {
-                            INFO_PRINTF("showing settings dialog\n");
-                            settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
-                        } else {
-                            INFO_PRINTF("hidinging settings dialog\n");
-                            settingsDialogWindow_ = nullptr;
-                        }
+                        INFO_PRINTF("toggling settings dialog\n");
+                        toggleSettingsDialog();
                     } else {
                         WARNING_PRINTF("unknown tray icon id %#x\n", wParam);
                     }
@@ -506,11 +488,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_SHOWSETTINGS: {
             INFO_PRINTF("showing settings dialog\n");
-            if (settingsDialogWindow_) {
-                WARNING_PRINTF("settings dialog already open, ignoring\n");
-            } else {
-                settingsDialogWindow_ = SettingsDialog::create(hwnd, settings_, onSettingsDialogComplete);
-            }
+            showSettingsDialog();
             break;
         }
 
@@ -665,7 +643,7 @@ void stop()
     hotkeyMenu_.destroy();
 }
 
-bool windowShouldAutoTray(HWND hwnd)
+bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 {
     CHAR executable[MAX_PATH];
     DWORD dwProcId = 0;
@@ -734,30 +712,78 @@ bool windowShouldAutoTray(HWND hwnd)
         }
 
         if (executableMatch && classMatch && titleMatch) {
-            DEBUG_PRINTF("\tauto-tray match\n");
-            return true;
+            DEBUG_PRINTF("\tauto-tray ID match\n");
+
+            bool shouldAutoTray;
+            switch (trayEvent) {
+                case TrayEvent::Open: shouldAutoTray = trayEventIncludesOpen(autoTray.trayEvent_); break;
+                case TrayEvent::Minimize: shouldAutoTray = trayEventIncludesMinimize(autoTray.trayEvent_); break;
+                default: {
+                    ERROR_PRINTF("invalid auto-tray action\n");
+                    shouldAutoTray = false;
+                    break;
+                }
+            }
+
+            DEBUG_PRINTF("\tshould auto-tray: %s\n", StringUtility::boolToCString(shouldAutoTray));
+            return shouldAutoTray;
         }
     }
 
+    DEBUG_PRINTF("\tno auto-tray match\n");
     return false;
+}
+
+void minimizeAllWindows()
+{
+    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+        if (window.second.visible) {
+            MinimizedWindow::minimize(window.first, appWindow_, settings_.minimizePlacement_);
+        }
+    }
+}
+
+bool minimizeWindow(HWND hwnd)
+{
+    return MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
+}
+
+void restoreAllWindows()
+{
+    MinimizedWindow::restoreAll();
+}
+
+void restoreWindow(HWND hwnd)
+{
+    MinimizedWindow::restore(hwnd);
+}
+
+void restoreLastWindow()
+{
+    HWND minimizedWindow = MinimizedWindow::getLast();
+    MinimizedWindow::restore(minimizedWindow);
 }
 
 void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
-    if (autoTrayedWindows_.find(hwnd) != autoTrayedWindows_.end()) {
+    auto it = std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+        return item.hwnd_ == hwnd;
+    });
+    if (it != autoTrayedWindows_.end()) {
         DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
         return;
     }
 
-    if (windowShouldAutoTray(hwnd)) {
+    if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            if (MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_)) {
-                autoTrayedWindows_.insert(hwnd);
+            if (minimizeWindow(hwnd)) {
+                autoTrayedWindows_.emplace_back(hwnd);
             }
         }
     }
@@ -767,7 +793,9 @@ void onRemoveWindow(HWND hwnd)
 {
     DEBUG_PRINTF("removed window: %#x\n", hwnd);
 
-    auto it = autoTrayedWindows_.find(hwnd);
+    auto it = std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+        return item.hwnd_ == hwnd;
+    });
     if (it == autoTrayedWindows_.end()) {
         DEBUG_PRINTF("\tignoring, not auto-trayed\n");
         return;
@@ -776,7 +804,7 @@ void onRemoveWindow(HWND hwnd)
     if (!MinimizedWindow::exists(hwnd)) {
         DEBUG_PRINTF("\tcleaning up\n");
         MinimizedWindow::remove(hwnd);
-        autoTrayedWindows_.erase(hwnd);
+        autoTrayedWindows_.erase(it);
     }
 }
 
@@ -819,20 +847,48 @@ void onMinimizeEvent(
     }
 
     DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
-    if (!windowShouldAutoTray(hwnd)) {
+    if (!windowShouldAutoTray(hwnd, TrayEvent::Minimize)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifiers active, minimizing\n");
-            MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
+            minimizeWindow(hwnd);
         }
     } else {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            if (MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_)) {
-                autoTrayedWindows_.insert(hwnd);
+            if (minimizeWindow(hwnd)) {
+                autoTrayedWindows_.emplace_back(hwnd);
             }
         }
+    }
+}
+
+void showSettingsDialog()
+{
+    if (settingsDialogWindow_) {
+        WARNING_PRINTF("settings dialog already open, making visible\n");
+
+        // return value intentionally ignored, ShowWindow returns previous visibility
+        ShowWindow(settingsDialogWindow_, SW_SHOW);
+
+        // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
+        SetForegroundWindow(settingsDialogWindow_);
+
+        return;
+    }
+
+    settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+}
+
+void toggleSettingsDialog()
+{
+    if (!settingsDialogWindow_) {
+        INFO_PRINTF("showing settings dialog\n");
+        settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+    } else {
+        INFO_PRINTF("hiding settings dialog\n");
+        settingsDialogWindow_ = nullptr;
     }
 }
 
@@ -851,7 +907,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
                 ERROR_PRINTF("expected error after restart with invalid settings\n");
             } else {
                 errorMessage(err);
-                settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+                showSettingsDialog();
             }
 
             return;
@@ -871,7 +927,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
                 ErrorContext err = start();
                 if (err) {
                     errorMessage(err);
-                    settingsDialogWindow_ = SettingsDialog::create(appWindow_, settings_, onSettingsDialogComplete);
+                    showSettingsDialog();
                     return;
                 }
             }
@@ -890,7 +946,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
         }
     }
 
-    settingsDialogWindow_ = nullptr;
+    settingsDialogWindow_.destroy();
 }
 
 std::string getSettingsFileName()

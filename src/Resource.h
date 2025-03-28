@@ -30,6 +30,10 @@
 #define IDS_COLUMN_EXECUTABLE                     222
 #define IDS_COLUMN_WINDOW_CLASS                   223
 #define IDS_COLUMN_WINDOW_TITLE                   224
+#define IDS_COLUMN_TRAY_EVENT                     225
+#define IDS_TRAY_EVENT_OPEN                       230
+#define IDS_TRAY_EVENT_MINIMIZE                   231
+#define IDS_TRAY_EVENT_OPEN_AND_MINIMIZE          232
 
 // error strings
 #define IDS_ERROR_INIT_COM                        301
@@ -61,7 +65,7 @@
 // controls
 #define IDC_MINIMIZE_PLACEMENT_TRAY              1001
 #define IDC_MINIMIZE_PLACEMENT_MENU              1002
-#define ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU     1003
+#define IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU     1003
 #define IDC_START_WITH_WINDOWS                   1004
 #define IDC_SHOW_WINDOWS_IN_MENU                 1005
 #define IDC_LOG_TO_FILE                          1006
@@ -76,13 +80,16 @@
 #define IDC_AUTO_TRAY_EDIT_EXECUTABLE            1015
 #define IDC_AUTO_TRAY_EDIT_WINDOWCLASS           1016
 #define IDC_AUTO_TRAY_EDIT_WINDOWTITLE           1017
-#define IDC_AUTO_TRAY_ITEM_UPDATE                1018
-#define IDC_AUTO_TRAY_ITEM_ADD                   1019
-#define IDC_AUTO_TRAY_ITEM_DELETE                1020
-#define IDC_AUTO_TRAY_ITEM_SPY                   1021
-#define IDC_HELP_PAGE                            1022
-#define IDC_ABOUT                                1023
-#define IDC_RESET                                1024
-#define IDC_EXIT                                 1025
+#define IDC_AUTO_TRAY_EVENT_OPEN                 1018
+#define IDC_AUTO_TRAY_EVENT_MINIMIZE             1019
+#define IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE    1020
+#define IDC_AUTO_TRAY_ITEM_UPDATE                1021
+#define IDC_AUTO_TRAY_ITEM_ADD                   1022
+#define IDC_AUTO_TRAY_ITEM_DELETE                1023
+#define IDC_AUTO_TRAY_ITEM_SPY                   1024
+#define IDC_HELP_PAGE                            1025
+#define IDC_ABOUT                                1026
+#define IDC_RESET                                1027
+#define IDC_EXIT                                 1028
 
 // clang-format on

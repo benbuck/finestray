@@ -40,5 +40,6 @@ void start(
 void stop();
 
 std::map<HWND, WindowData> getAll();
+HWND getVisibleIndex(unsigned int index);
 
 } // namespace WindowList

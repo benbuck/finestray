@@ -131,6 +131,8 @@ add_executable(Finestray WIN32
     src/SettingsDialog.h
     src/StringUtility.cpp
     src/StringUtility.h
+    src/TrayEvent.cpp
+    src/TrayEvent.h
     src/TrayIcon.cpp
     src/TrayIcon.h
     src/WindowHandleWrapper.h

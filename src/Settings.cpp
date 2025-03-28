@@ -34,6 +34,7 @@
 namespace
 {
 
+bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 double getNumber(const cJSON * cjson, const char * key, double defaultValue);
 const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
@@ -48,6 +49,7 @@ enum SettingKeys : unsigned int
     SK_Executable,
     SK_WindowClass,
     SK_WindowTitle,
+    SK_TrayEvent,
     SK_HotkeyMinimize,
     SK_HotkeyMinimizeAll,
     SK_HotkeyRestore,
@@ -72,11 +74,12 @@ const char hotkeyMenuDefault_[] = "alt ctrl shift home";
 const char modifiersOverrideDefault_[] = "alt ctrl shift";
 const unsigned int pollIntervalDefault_ = 500;
 const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
-const char * settingKeys_[SK_Count] = { "start-with-windows", "show-windows-in-menu", "log-to-file",
-                                        "minimize-placement", "executable",           "window-class",
-                                        "window-title",       "hotkey-minimize",      "hotkey-minimize-all",
-                                        "hotkey-restore",     "hotkey-restore-all",   "hotkey-menu",
-                                        "modifiers-override", "poll-interval",        "auto-tray" };
+const char * settingKeys_[SK_Count] = {
+    "start-with-windows", "show-windows-in-menu", "log-to-file",    "minimize-placement",
+    "executable",         "window-class",         "window-title",   "tray-event",
+    "hotkey-minimize",    "hotkey-minimize-all",  "hotkey-restore", "hotkey-restore-all",
+    "hotkey-menu",        "modifiers-override",   "poll-interval",  "auto-tray"
+};
 
 } // anonymous namespace
 
@@ -212,12 +215,18 @@ void Settings::normalize()
 
     for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
         AutoTray & autoTray = *it;
-        if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
-            ++it;
-        } else {
+        if (autoTray.executable_.empty() && autoTray.windowClass_.empty() && autoTray.windowTitle_.empty()) {
             DEBUG_PRINTF("Removing empty auto-tray item\n");
             it = autoTrays_.erase(it);
+            continue;
         }
+
+        if (autoTray.trayEvent_ == TrayEvent::None) {
+            DEBUG_PRINTF("Changing auto-tray item with no event to minimize\n");
+            autoTray.trayEvent_ = TrayEvent::Minimize;
+        }
+
+        ++it;
     }
 }
 
@@ -242,16 +251,13 @@ void Settings::dump()
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToString(autoTray.trayEvent_).c_str());
     }
 #endif
 }
 
-void Settings::addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle)
+void Settings::addAutoTray(AutoTray && autoTray)
 {
-    AutoTray autoTray;
-    autoTray.executable_ = executable;
-    autoTray.windowClass_ = windowClass;
-    autoTray.windowTitle_ = windowTitle;
     autoTrays_.push_back(autoTray);
 }
 
@@ -383,6 +389,13 @@ std::string Settings::constructJSON()
                     fail = true;
                 }
 
+                if (!cJSON_AddStringToObject(
+                        item,
+                        settingKeys_[SK_TrayEvent],
+                        trayEventToString(autoTray.trayEvent_).c_str())) {
+                    fail = true;
+                }
+
                 if (!cJSON_AddItemToArray(autotrayArray, item)) {
                     fail = true;
                 }
@@ -398,7 +411,10 @@ std::string Settings::constructJSON()
     return cjson.print();
 }
 
-bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
+namespace
+{
+
+bool autoTrayItemCallback(const cJSON * cjson, void * userData)
 {
     if (!cJSON_IsObject(cjson)) {
         WARNING_PRINTF("bad type for '%s'\n", cjson->string);
@@ -408,29 +424,21 @@ bool Settings::autoTrayItemCallback(const cJSON * cjson, void * userData)
     const char * executable = getString(cjson, settingKeys_[SK_Executable], nullptr);
     const char * windowClass = getString(cjson, settingKeys_[SK_WindowClass], nullptr);
     const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
+    const char * trayEvent = getString(cjson, settingKeys_[SK_TrayEvent], nullptr);
     if (executable || windowClass || windowTitle) {
         Settings * settings = (Settings *)userData;
-        settings->addAutoTray(executable ? executable : "", windowClass ? windowClass : "", windowTitle ? windowTitle : "");
+
+        Settings::AutoTray autoTray;
+        autoTray.executable_ = executable ? executable : "";
+        autoTray.windowClass_ = windowClass ? windowClass : "";
+        autoTray.windowTitle_ = windowTitle ? windowTitle : "";
+        autoTray.trayEvent_ = trayEvent ? trayEventFromString(trayEvent) : TrayEvent::Minimize;
+
+        settings->addAutoTray(std::move(autoTray));
     }
 
     return true;
 }
-
-bool Settings::AutoTray::operator==(const AutoTray & rhs) const
-{
-    if (this == &rhs) {
-        return true;
-    }
-    return (executable_ == rhs.executable_) && (windowClass_ == rhs.windowClass_) && (windowTitle_ == rhs.windowTitle_);
-}
-
-bool Settings::AutoTray::operator!=(const AutoTray & rhs) const
-{
-    return !(*this == rhs);
-}
-
-namespace
-{
 
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
 {

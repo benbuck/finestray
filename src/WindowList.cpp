@@ -92,6 +92,25 @@ std::map<HWND, WindowData> getAll()
     return windowList_;
 }
 
+HWND getVisibleIndex(unsigned int index)
+{
+    if (index >= windowList_.size()) {
+        return nullptr;
+    }
+
+    unsigned int count = 0;
+    for (const std::pair<HWND, WindowList::WindowData> & window : windowList_) {
+        if (window.second.visible) {
+            if (count == index) {
+                return window.first;
+            }
+            ++count;
+        }
+    }
+
+    return nullptr;
+}
+
 } // namespace WindowList
 
 namespace

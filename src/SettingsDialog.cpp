@@ -31,6 +31,7 @@
 
 // Standard library
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,7 @@ enum class AutoTrayListViewColumn
     Executable,
     WindowClass,
     WindowTitle,
+    TrayEvent,
     Count
 };
 
@@ -67,6 +69,8 @@ void spyDisableIcon(HWND dialogHwnd);
 void spyUpdate(HWND dialogHwnd);
 std::string getDialogItemText(HWND dialogHwnd, int id);
 std::string getListViewItemText(HWND listViewHwnd, int item, int subItem);
+TrayEvent resourceStringToTrayEvent(const std::string & str);
+std::string trayEventToResourceString(TrayEvent trayEvent);
 
 Settings settings_;
 SettingsDialog::CompletionCallback completionCallback_;
@@ -90,12 +94,11 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
     HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
     HWND dialogHwnd = CreateDialogA(hinstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
 
-    if (!ShowWindow(dialogHwnd, SW_SHOW)) {
-        WARNING_PRINTF("ShowWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-    if (!SetForegroundWindow(dialogHwnd)) {
-        WARNING_PRINTF("SetForegroundWindow failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+    // return value intentionally ignored, ShowWindow returns previous visibility
+    ShowWindow(dialogHwnd, SW_SHOW);
+
+    // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
+    SetForegroundWindow(dialogHwnd);
 
     return dialogHwnd;
 }
@@ -159,11 +162,11 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
-            int checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
+            int checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
             switch (settings_.minimizePlacement_) {
                 case MinimizePlacement::Tray: checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY; break;
                 case MinimizePlacement::Menu: checkButtonId = IDC_MINIMIZE_PLACEMENT_MENU; break;
-                case MinimizePlacement::TrayAndMenu: checkButtonId = ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU; break;
+                case MinimizePlacement::TrayAndMenu: checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU; break;
                 case MinimizePlacement::None:
                 default: {
                     WARNING_PRINTF("bad minimize placement %d\n", settings_.minimizePlacement_);
@@ -174,7 +177,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             if (!CheckRadioButton(
                     dialogHwnd,
                     IDC_MINIMIZE_PLACEMENT_TRAY,
-                    ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU,
+                    IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU,
                     checkButtonId)) {
                 WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
@@ -200,14 +203,22 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
                 WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, nullptr)) {
                 WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, nullptr)) {
                 WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
             }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
+            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, nullptr)) {
                 WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+            }
+
+            if (!CheckRadioButton(
+                    dialogHwnd,
+                    IDC_AUTO_TRAY_EVENT_OPEN,
+                    IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
+                    IDC_AUTO_TRAY_EVENT_MINIMIZE)) {
+                WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
             }
 
             spyEnableIcon(dialogHwnd);
@@ -257,7 +268,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         break;
                     }
 
-                    case ICC_MINIMIZE_PLACEMENT_TRAY_AND_MENU: {
+                    case IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU: {
                         settings_.minimizePlacement_ = MinimizePlacement::TrayAndMenu;
                         break;
                     }
@@ -366,9 +377,12 @@ void autoTrayListViewInit(HWND dialogHwnd)
 {
     autoTrayListViewHwnd_ = GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_LIST);
 
+    const int columnWeights[(size_t)AutoTrayListViewColumn::Count] = { 100, 100, 100, 75 };
+    int totalColumnWeight = std::accumulate(std::begin(columnWeights), std::end(columnWeights), 0);
+
     HWND hWndHdr = (HWND)::SendMessage(autoTrayListViewHwnd_, LVM_GETHEADER, 0, 0);
     int count = (int)::SendMessage(hWndHdr, HDM_GETITEMCOUNT, 0, 0L);
-    if (count < 3) {
+    if (count < (int)AutoTrayListViewColumn::Count) {
         unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
             std::string lastErrorString = StringUtility::lastErrorString();
@@ -380,17 +394,16 @@ void autoTrayListViewInit(HWND dialogHwnd)
         RECT rect;
         GetWindowRect(autoTrayListViewHwnd_, &rect);
         int width = rect.right - rect.left;
-        int columnWidth = (width - 18) / (int)AutoTrayListViewColumn::Count;
 
         LVCOLUMNA listViewColumn;
         memset(&listViewColumn, 0, sizeof(listViewColumn));
         listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
         listViewColumn.fmt = LVCFMT_LEFT;
-        listViewColumn.cx = columnWidth;
 
         std::string str;
 
         listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
+        listViewColumn.cx = (width * columnWeights[listViewColumn.iSubItem]) / totalColumnWeight;
         str = getResourceString(IDS_COLUMN_EXECUTABLE);
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
@@ -401,7 +414,8 @@ void autoTrayListViewInit(HWND dialogHwnd)
             return;
         }
 
-        ++listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
+        listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
+        listViewColumn.cx = (width * columnWeights[listViewColumn.iSubItem]) / totalColumnWeight;
         str = getResourceString(IDS_COLUMN_WINDOW_CLASS);
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
@@ -413,7 +427,20 @@ void autoTrayListViewInit(HWND dialogHwnd)
         }
 
         listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
+        listViewColumn.cx = (width * columnWeights[listViewColumn.iSubItem]) / totalColumnWeight;
         str = getResourceString(IDS_COLUMN_WINDOW_TITLE);
+        listViewColumn.pszText = (LPSTR)str.c_str();
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
+            -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
+
+        listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::TrayEvent);
+        listViewColumn.cx = (width * columnWeights[listViewColumn.iSubItem]) / totalColumnWeight;
+        str = getResourceString(IDS_COLUMN_TRAY_EVENT);
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
             -1) {
@@ -437,11 +464,12 @@ void autoTrayListViewInit(HWND dialogHwnd)
 
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
-    listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
 
     for (size_t a = 0; a < settings_.autoTrays_.size(); ++a) {
         listViewItem.iItem = (int)a;
         listViewItem.lParam = a;
+        listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
+
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].executable_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
@@ -450,6 +478,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
             errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
             return;
         }
+
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowClass_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
@@ -458,8 +487,19 @@ void autoTrayListViewInit(HWND dialogHwnd)
             errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
             return;
         }
+
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowTitle_.c_str();
+        if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
+            std::string lastErrorString = StringUtility::lastErrorString();
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
+            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+            return;
+        }
+
+        std::string str = trayEventToResourceString(settings_.autoTrays_[a].trayEvent_);
+        listViewItem.iSubItem = (int)AutoTrayListViewColumn::TrayEvent;
+        listViewItem.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
             std::string lastErrorString = StringUtility::lastErrorString();
             WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
@@ -489,6 +529,10 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* dialogHwnd */)
         autoTray.executable_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::Executable);
         autoTray.windowClass_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowClass);
         autoTray.windowTitle_ = getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
+
+        std::string trayEventStr =
+            getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::TrayEvent);
+        autoTray.trayEvent_ = resourceStringToTrayEvent(trayEventStr);
 
         if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
             autoTrays.push_back(autoTray);
@@ -568,7 +612,7 @@ int autoTrayListViewCompare(LPARAM item1, LPARAM item2, LPARAM sortParam)
 
 void autoTrayListViewItemAdd(HWND dialogHwnd)
 {
-    DEBUG_PRINTF("Deleting auto tray item\n");
+    DEBUG_PRINTF("Adding auto tray item\n");
 
     int itemCount = (int)SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0);
 
@@ -577,12 +621,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
     listViewItem.iItem = itemCount;
     listViewItem.lParam = itemCount;
-
-    std::string str;
-
-    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
-    listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
         std::string lastErrorString = StringUtility::lastErrorString();
         WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", lastErrorString.c_str());
@@ -590,26 +629,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
         return;
     }
 
-    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS));
-    listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
-    listViewItem.pszText = (LPSTR)str.c_str();
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
-    }
-
-    str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE));
-    listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
-    listViewItem.pszText = (LPSTR)str.c_str();
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, itemCount, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
-    }
-
+    autoTrayListViewItemUpdate(dialogHwnd, itemCount);
     autoTrayListViewItemEdit(dialogHwnd, itemCount);
 
     autoTrayListViewActiveItem_ = itemCount;
@@ -665,6 +685,28 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
         errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
         return;
     }
+
+    TrayEvent trayEvent;
+    if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN) == BST_CHECKED) {
+        trayEvent = TrayEvent::Open;
+    } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_EVENT_MINIMIZE) == BST_CHECKED) {
+        trayEvent = TrayEvent::Minimize;
+    } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE) == BST_CHECKED) {
+        trayEvent = TrayEvent::OpenAndMinimize;
+    } else {
+        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, "No tray event selected"));
+        trayEvent = TrayEvent::None;
+    }
+
+    str = trayEventToResourceString(trayEvent);
+    listViewItem.iSubItem = (int)AutoTrayListViewColumn::TrayEvent;
+    listViewItem.pszText = (LPSTR)str.c_str();
+    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
+        std::string lastErrorString = StringUtility::lastErrorString();
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
+        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
+        return;
+    }
 }
 
 void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
@@ -699,14 +741,21 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
 
     if ((item < 0) || (item >= itemCount)) {
         WARNING_PRINTF("Item %d out of range\n", item);
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, nullptr)) {
             WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, nullptr)) {
             WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
+        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, nullptr)) {
             WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+        if (!CheckRadioButton(
+                dialogHwnd,
+                IDC_AUTO_TRAY_EVENT_OPEN,
+                IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
+                IDC_AUTO_TRAY_EVENT_MINIMIZE)) {
+            WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
         }
         autoTrayListViewActiveItem_ = -1;
     } else {
@@ -725,6 +774,24 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
             getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::WindowTitle);
         if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowTitle.c_str())) {
             WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+
+        std::string trayEventStr =
+            getListViewItemText(autoTrayListViewHwnd_, item, (int)AutoTrayListViewColumn::TrayEvent);
+
+        int checkButtonId;
+        if (trayEventStr == getResourceString(IDS_TRAY_EVENT_OPEN)) {
+            checkButtonId = IDC_AUTO_TRAY_EVENT_OPEN;
+        } else if (trayEventStr == getResourceString(IDS_TRAY_EVENT_MINIMIZE)) {
+            checkButtonId = IDC_AUTO_TRAY_EVENT_MINIMIZE;
+        } else if (trayEventStr == getResourceString(IDS_TRAY_EVENT_OPEN_AND_MINIMIZE)) {
+            checkButtonId = IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE;
+        } else {
+            WARNING_PRINTF("Unknown tray event %s\n", trayEventStr.c_str());
+            checkButtonId = IDC_AUTO_TRAY_EVENT_MINIMIZE;
+        }
+        if (!CheckRadioButton(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE, checkButtonId)) {
+            WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         autoTrayListViewActiveItem_ = item;
@@ -825,6 +892,16 @@ void spyBegin(HWND dialogHwnd)
     spyMode_ = true;
 
     spyDisableIcon(dialogHwnd);
+
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, nullptr)) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, nullptr)) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, nullptr)) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
 
     SetCapture(dialogHwnd);
 }
@@ -981,6 +1058,37 @@ std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
     text.resize(res); // don't include nul terminator
 
     return text;
+}
+
+TrayEvent resourceStringToTrayEvent(const std::string & str)
+{
+    if (str == getResourceString(IDS_TRAY_EVENT_OPEN)) {
+        return TrayEvent::Open;
+    }
+
+    if (str == getResourceString(IDS_TRAY_EVENT_MINIMIZE)) {
+        return TrayEvent::Minimize;
+    }
+
+    if (str == getResourceString(IDS_TRAY_EVENT_OPEN_AND_MINIMIZE)) {
+        return TrayEvent::OpenAndMinimize;
+    }
+
+    WARNING_PRINTF("Unknown tray event %s\n", str.c_str());
+    return TrayEvent::None;
+}
+
+std::string trayEventToResourceString(TrayEvent trayEvent)
+{
+    switch (trayEvent) {
+        case TrayEvent::Open: return getResourceString(IDS_TRAY_EVENT_OPEN);
+        case TrayEvent::Minimize: return getResourceString(IDS_TRAY_EVENT_MINIMIZE);
+        case TrayEvent::OpenAndMinimize: return getResourceString(IDS_TRAY_EVENT_OPEN_AND_MINIMIZE);
+        default: {
+            WARNING_PRINTF("Unknown tray event %d\n", (int)trayEvent);
+            return "";
+        }
+    }
 }
 
 } // anonymous namespace

@@ -16,6 +16,7 @@
 
 // App
 #include "MinimizePlacement.h"
+#include "TrayEvent.h"
 
 // Standard library
 #include <string>
@@ -42,15 +43,17 @@ public:
 
     struct AutoTray
     {
-        bool operator==(const AutoTray & rhs) const;
-        bool operator!=(const AutoTray & rhs) const;
+        bool operator==(const AutoTray & rhs) const = default;
+        bool operator!=(const AutoTray & rhs) const = default;
 
         std::string executable_;
         std::string windowClass_;
         std::string windowTitle_;
+
+        TrayEvent trayEvent_ { TrayEvent::Minimize };
     };
 
-    void addAutoTray(const std::string & executable, const std::string & windowClass, const std::string & windowTitle);
+    void addAutoTray(AutoTray && autoTray);
 
     static bool fileExists(const std::string & fileName);
 
@@ -70,5 +73,4 @@ public:
 private:
     bool parseJson(const std::string & json);
     std::string constructJSON();
-    static bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 };
