@@ -28,9 +28,9 @@ project(Finestray
 
 set(COMPILE_CONFIG_OPTIONS
     $<$<CXX_COMPILER_ID:MSVC>:
-        /D_HAS_EXCEPTIONS=0 # disable exceptions
         /GR- # disable run-time type information (RTTI)
         /GS # enable security checks
+        /guard:cf # control flow guard
         /MP # build with multiple processes
         /W4 # maximum warning levels
         /WX # treat warnings as errors
@@ -38,7 +38,7 @@ set(COMPILE_CONFIG_OPTIONS
         # Debug compile options
         $<$<CONFIG:Debug>:
             /Od # don't optimize
-            /RTC1 # enable all run-time checks
+            /RTC1 # enable basic run-time checks
             /Zi # enable debug info in pdb format
         >
 
@@ -47,11 +47,11 @@ set(COMPILE_CONFIG_OPTIONS
             /O2 # enable maximum speed optimizations
             /Ot # favor fast code
             /GL # enable whole program optimization
+            /Gw # enable global data optimization
         >
     >
 
     $<$<CXX_COMPILER_ID:Clang>:
-        -fno-exceptions # disable exceptions
         -fno-rtti # disable run-time type information (RTTI)
         -Wall # enable all warnings
         -Wextra # enable extra warnings
@@ -73,6 +73,7 @@ set(COMPILE_CONFIG_OPTIONS
 
 set(LINK_CONFIG_OPTIONS
     $<$<CXX_COMPILER_ID:MSVC>:
+        /GUARD:CF # control flow guard
         # Release link options
         $<$<CONFIG:Release>:
             /LTCG # link time code generation
