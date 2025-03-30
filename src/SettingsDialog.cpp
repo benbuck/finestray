@@ -925,17 +925,15 @@ void spyEnableIcon(HWND dialogHwnd)
     if (!hCrossCursor) {
         WARNING_PRINTF("LoadCursor failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        if (!SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, (WPARAM)hCrossCursor, 0)) {
-            WARNING_PRINTF("SendDlgItemMessage failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
+        // return value ignored, poorly defined
+        SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, (WPARAM)hCrossCursor, 0);
     }
 }
 
 void spyDisableIcon(HWND dialogHwnd)
 {
-    if (!SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, 0, 0)) {
-        WARNING_PRINTF("SendDlgItemMessage failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+    // return value ignored, poorly defined
+    SendDlgItemMessage(dialogHwnd, IDC_AUTO_TRAY_ITEM_SPY, STM_SETICON, 0, 0);
 
     HCURSOR hCursor = LoadCursor(NULL, IDC_CROSS);
     if (!hCursor) {

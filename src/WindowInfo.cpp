@@ -60,9 +60,13 @@ WindowInfo::WindowInfo(HWND hwnd)
 
     int len = GetWindowTextLengthA(hwnd);
     if (!len) {
-        WARNING_PRINTF(
-            "failed to get window text length, GetWindowTextLengthA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
+        if (GetLastError() != ERROR_SUCCESS) {
+            WARNING_PRINTF(
+                "failed to get window text length, GetWindowTextLengthA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+        } else {
+            title_.clear(); // no title
+        }
     } else {
         title_.resize(len + 1);
         res = GetWindowTextA(hwnd, &title_[0], (int)title_.size());
