@@ -33,7 +33,7 @@ public:
 
     ~HandleWrapper() { close(); }
 
-    HandleWrapper & operator=(HandleWrapper && other)
+    HandleWrapper & operator=(HandleWrapper && other) noexcept
     {
         close();
 

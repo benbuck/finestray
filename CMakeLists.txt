@@ -36,6 +36,7 @@ set(COMPILE_CONFIG_OPTIONS
         #/MP # build with multiple processes
         /W4 # maximum warning levels
         /WX # treat warnings as errors
+        /analyze
 
         # Debug compile options
         $<$<CONFIG:Debug>:
@@ -183,6 +184,7 @@ target_link_libraries(Finestray
 set_target_properties(Finestray
     PROPERTIES
         CXX_CLANG_TIDY "clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
+        VS_USER_PROPS "${CMAKE_CURRENT_SOURCE_DIR}/analysis.props"
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

@@ -27,7 +27,7 @@ namespace WindowList
 struct WindowData
 {
     std::string title;
-    bool visible;
+    bool visible {};
 };
 
 void start(

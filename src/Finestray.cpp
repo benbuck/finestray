@@ -358,6 +358,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
             }
+            break;
         }
 
         case WM_CREATE: {
@@ -435,6 +436,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
             }
+            break;
         }
 
         // message from the tray (taskbar) icon
