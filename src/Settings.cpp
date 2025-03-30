@@ -42,6 +42,7 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
 
 enum SettingKeys : unsigned int
 {
+    SK_Version,
     SK_StartWithWindows,
     SK_ShowWindowsInMenu,
     SK_LogToFile,
@@ -62,6 +63,7 @@ enum SettingKeys : unsigned int
     SK_Count
 };
 
+const unsigned int versionCurrent_ = 1;
 const bool startWithWindowsDefault_ = false;
 const bool showWindowsInMenu_ = false;
 const bool logToFileDefault_ = false;
@@ -74,17 +76,29 @@ const char hotkeyMenuDefault_[] = "alt ctrl shift home";
 const char modifiersOverrideDefault_[] = "alt ctrl shift";
 const unsigned int pollIntervalDefault_ = 500;
 const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
-const char * settingKeys_[SK_Count] = {
-    "start-with-windows", "show-windows-in-menu", "log-to-file",    "minimize-placement",
-    "executable",         "window-class",         "window-title",   "tray-event",
-    "hotkey-minimize",    "hotkey-minimize-all",  "hotkey-restore", "hotkey-restore-all",
-    "hotkey-menu",        "modifiers-override",   "poll-interval",  "auto-tray"
-};
+const char * settingKeys_[SK_Count] = { "version",
+                                        "start-with-windows",
+                                        "show-windows-in-menu",
+                                        "log-to-file",
+                                        "minimize-placement",
+                                        "executable",
+                                        "window-class",
+                                        "window-title",
+                                        "tray-event",
+                                        "hotkey-minimize",
+                                        "hotkey-minimize-all",
+                                        "hotkey-restore",
+                                        "hotkey-restore-all",
+                                        "hotkey-menu",
+                                        "modifiers-override",
+                                        "poll-interval",
+                                        "auto-tray" };
 
 } // anonymous namespace
 
 Settings::Settings()
-    : startWithWindows_(startWithWindowsDefault_)
+    : version_(versionCurrent_)
+    , startWithWindows_(startWithWindowsDefault_)
     , logToFile_(logToFileDefault_)
     , minimizePlacement_(minimizePlacementDefault_)
     , hotkeyMinimize_(hotkeyMinimizeDefault_)
@@ -108,6 +122,7 @@ bool Settings::fromJSON(const std::string & json)
 
     DEBUG_PRINTF("parsed settings JSON:\n%s\n", cjson.print().c_str());
 
+    version_ = (unsigned int)getNumber(cjson, settingKeys_[SK_Version], (double)versionCurrent_);
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
     showWindowsInMenu_ = getBool(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_);
     logToFile_ = getBool(cjson, settingKeys_[SK_LogToFile], logToFile_);
@@ -146,6 +161,10 @@ std::string Settings::toJSON() const
     }
 
     bool fail = false;
+
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_Version], (double)version_)) {
+        fail = true;
+    }
 
     if (!cJSON_AddBoolToObject(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_)) {
         fail = true;
@@ -239,6 +258,10 @@ std::string Settings::toJSON() const
 
 bool Settings::valid() const
 {
+    if (version_ != versionCurrent_) {
+        return false;
+    }
+
     switch (minimizePlacement_) {
         case MinimizePlacement::Tray:
         case MinimizePlacement::Menu:
@@ -292,6 +315,8 @@ bool Settings::valid() const
 
 void Settings::normalize()
 {
+    version_ = versionCurrent_;
+
     switch (minimizePlacement_) {
         case MinimizePlacement::Tray:
         case MinimizePlacement::Menu:
@@ -336,6 +361,7 @@ void Settings::dump() const
 {
 #if !defined(NDEBUG)
     DEBUG_PRINTF("Settings:\n");
+    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_Version], version_);
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ShowWindowsInMenu], StringUtility::boolToCString(showWindowsInMenu_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));

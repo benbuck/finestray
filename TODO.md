@@ -1,6 +1,5 @@
 # To do list
 
-- Add version to settings file
 - Clean up / simplify SettingsDialog
 - Refactor regex error handling
 - Get windows error reporting (WER) working
