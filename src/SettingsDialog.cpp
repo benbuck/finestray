@@ -386,10 +386,9 @@ void autoTrayListViewInit(HWND dialogHwnd)
     if (count < (int)AutoTrayListViewColumn::Count) {
         unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE | LVS_EX_GRIDLINES;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF(
+                "SendMessage LVM_SETEXTENDEDLISTVIEWSTYLE failed: %s\n",
+                StringUtility::lastErrorString().c_str());
         }
 
         RECT rect;
@@ -409,10 +408,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
             -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
@@ -421,10 +417,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
             -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
@@ -433,10 +426,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
             -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewColumn.iSubItem = static_cast<int>(AutoTrayListViewColumn::TrayEvent);
@@ -445,10 +435,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewColumn.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTCOLUMNA, listViewColumn.iSubItem, (LPARAM)&listViewColumn) ==
             -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_INSERTCOLUMNA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 
@@ -457,10 +444,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
     }
 
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMCOUNT, (WPARAM)settings_.autoTrays_.size(), 0) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMCOUNT failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_SETITEMCOUNT failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     LVITEMA listViewItem;
@@ -474,38 +458,26 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowClass_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].executable_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
         listViewItem.pszText = (LPSTR)settings_.autoTrays_[a].windowTitle_.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         std::string str = trayEventToResourceString(settings_.autoTrays_[a].trayEvent_);
         listViewItem.iSubItem = (int)AutoTrayListViewColumn::TrayEvent;
         listViewItem.pszText = (LPSTR)str.c_str();
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, (LPARAM)&listViewItem) == -1) {
-            std::string lastErrorString = StringUtility::lastErrorString();
-            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-            errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-            return;
+            WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
     }
 
@@ -624,10 +596,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     listViewItem.lParam = itemCount;
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
     if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     autoTrayListViewItemUpdate(dialogHwnd, itemCount);
@@ -661,30 +630,21 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowClass;
     listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::Executable;
     listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE));
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::WindowTitle;
     listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     TrayEvent trayEvent;
@@ -695,7 +655,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE) == BST_CHECKED) {
         trayEvent = TrayEvent::OpenAndMinimize;
     } else {
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, "No tray event selected"));
+        WARNING_PRINTF("No tray event selected");
         trayEvent = TrayEvent::None;
     }
 
@@ -703,10 +663,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     listViewItem.iSubItem = (int)AutoTrayListViewColumn::TrayEvent;
     listViewItem.pszText = (LPSTR)str.c_str();
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, (LPARAM)&listViewItem) == -1) {
-        std::string lastErrorString = StringUtility::lastErrorString();
-        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", lastErrorString.c_str());
-        errorMessage(ErrorContext(IDS_ERROR_CREATE_DIALOG, lastErrorString));
-        return;
+        WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 }
 
