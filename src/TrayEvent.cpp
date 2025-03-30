@@ -16,7 +16,7 @@
 #include "TrayEvent.h"
 #include "Log.h"
 
-std::string trayEventToString(TrayEvent trayEvent)
+const char * trayEventToCString(TrayEvent trayEvent)
 {
     switch (trayEvent) {
         case TrayEvent::None: return "none";
@@ -31,18 +31,18 @@ std::string trayEventToString(TrayEvent trayEvent)
     }
 }
 
-TrayEvent trayEventFromString(const std::string & trayEventString)
+TrayEvent trayEventFromCString(const char * trayEventString)
 {
-    if (trayEventString == "none") {
+    if (!strcmp(trayEventString, "none")) {
         return TrayEvent::None;
-    } else if (trayEventString == "open") {
+    } else if (!strcmp(trayEventString, "open")) {
         return TrayEvent::Open;
-    } else if (trayEventString == "minimize") {
+    } else if (!strcmp(trayEventString, "minimize")) {
         return TrayEvent::Minimize;
-    } else if (trayEventString == "open-and-minimize") {
+    } else if (!strcmp(trayEventString, "open-and-minimize")) {
         return TrayEvent::OpenAndMinimize;
     } else {
-        WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString.c_str());
+        WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString);
         return TrayEvent::None;
     }
 }

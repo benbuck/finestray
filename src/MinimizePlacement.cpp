@@ -16,7 +16,7 @@
 #include "MinimizePlacement.h"
 #include "Log.h"
 
-std::string minimizePlacementToString(MinimizePlacement minimizePlacement)
+const char * minimizePlacementToCString(MinimizePlacement minimizePlacement)
 {
     switch (minimizePlacement) {
         case MinimizePlacement::None: return "none";
@@ -31,18 +31,18 @@ std::string minimizePlacementToString(MinimizePlacement minimizePlacement)
     }
 }
 
-MinimizePlacement minimizePlacementFromString(const std::string & minimizePlacementString)
+MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString)
 {
-    if (minimizePlacementString == "none") {
+    if (!strcmp(minimizePlacementString, "none")) {
         return MinimizePlacement::None;
-    } else if (minimizePlacementString == "tray") {
+    } else if (!strcmp(minimizePlacementString, "tray")) {
         return MinimizePlacement::Tray;
-    } else if (minimizePlacementString == "menu") {
+    } else if (!strcmp(minimizePlacementString, "menu")) {
         return MinimizePlacement::Menu;
-    } else if (minimizePlacementString == "tray-and-menu") {
+    } else if (!strcmp(minimizePlacementString, "tray-and-menu")) {
         return MinimizePlacement::TrayAndMenu;
     } else {
-        WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString.c_str());
+        WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString);
         return MinimizePlacement::None;
     }
 }

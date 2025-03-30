@@ -25,7 +25,7 @@ enum class TrayEvent
     OpenAndMinimize
 };
 
-std::string trayEventToString(TrayEvent trayEvent);
-TrayEvent trayEventFromString(const std::string & trayEventString);
+const char * trayEventToCString(TrayEvent trayEvent);
+TrayEvent trayEventFromCString(const char * trayEventString);
 bool trayEventIncludesOpen(TrayEvent trayEvent);
 bool trayEventIncludesMinimize(TrayEvent trayEvent);

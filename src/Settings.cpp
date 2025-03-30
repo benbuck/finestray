@@ -128,8 +128,8 @@ bool Settings::fromJSON(const std::string & json)
     logToFile_ = getBool(cjson, settingKeys_[SK_LogToFile], logToFile_);
 
     const std::string & minimizePlacementString =
-        getString(cjson, settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
-    minimizePlacement_ = minimizePlacementFromString(minimizePlacementString);
+        getString(cjson, settingKeys_[SK_MinimizePlacement], minimizePlacementToCString(minimizePlacement_));
+    minimizePlacement_ = minimizePlacementFromCString(minimizePlacementString.c_str());
     if (minimizePlacement_ == MinimizePlacement::None) {
         WARNING_PRINTF("bad %s argument: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementString.c_str());
     }
@@ -178,10 +178,7 @@ std::string Settings::toJSON() const
         fail = true;
     }
 
-    if (!cJSON_AddStringToObject(
-            cjson,
-            settingKeys_[SK_MinimizePlacement],
-            minimizePlacementToString(minimizePlacement_).c_str())) {
+    if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_MinimizePlacement], minimizePlacementToCString(minimizePlacement_))) {
         fail = true;
     }
 
@@ -234,10 +231,7 @@ std::string Settings::toJSON() const
                     fail = true;
                 }
 
-                if (!cJSON_AddStringToObject(
-                        item,
-                        settingKeys_[SK_TrayEvent],
-                        trayEventToString(autoTray.trayEvent_).c_str())) {
+                if (!cJSON_AddStringToObject(item, settingKeys_[SK_TrayEvent], trayEventToCString(autoTray.trayEvent_))) {
                     fail = true;
                 }
 
@@ -365,7 +359,7 @@ void Settings::dump() const
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ShowWindowsInMenu], StringUtility::boolToCString(showWindowsInMenu_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToCString(minimizePlacement_));
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimizeAll], hotkeyMinimizeAll_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
@@ -379,7 +373,7 @@ void Settings::dump() const
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
-        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToString(autoTray.trayEvent_).c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToCString(autoTray.trayEvent_));
     }
 #endif
 }
@@ -421,7 +415,7 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData)
         autoTray.executable_ = executable ? executable : "";
         autoTray.windowClass_ = windowClass ? windowClass : "";
         autoTray.windowTitle_ = windowTitle ? windowTitle : "";
-        autoTray.trayEvent_ = trayEvent ? trayEventFromString(trayEvent) : TrayEvent::Minimize;
+        autoTray.trayEvent_ = trayEvent ? trayEventFromCString(trayEvent) : TrayEvent::Minimize;
 
         settings->addAutoTray(std::move(autoTray));
     }
