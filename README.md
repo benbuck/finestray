@@ -60,8 +60,8 @@ to their normal placement:
   This feature allows specific windows to be minimized to the tray as soon as they appear or when they are minimized.
   Please see the [Auto-tray Settings](#auto-tray-settings) section for more information.
 - **Context menu**:
-  For any of the tray icons created by Finestray, including its own, you can right click on it to see the [Context menu]
-  (#context-menu).
+  For any of the tray icons created by Finestray, including its own, you can right click on it to see the
+  [Context menu](#context-menu).
 
 ## Context Menu
 
@@ -240,8 +240,8 @@ window identification features.
 ## Limitations
 
 Unfortunately, Finestray can not currently minimize all windows to the tray. Some software creates windows that do not
-adhere to the normal behavior for minimizing. For example, apps obtained from the Windows Store may not be compatible
-with Finestray. WhatsApp is one popular app that Finestray can't currently minimize to the tray.
+adhere to the typical behavior for minimizing. For example, apps obtained from the Windows Store may not be compatible
+with Finestray.
 
 ## Legal
 
@@ -249,7 +249,7 @@ Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
 
 Finestray is distributed under the [Apache License, Version 2.0](LICENSE).
 
-Please see the (privacy policy)[PRIVACY.md] for information about privacy concerns.
+Please see the [privacy policy](PRIVACY.md) for information about privacy concerns.
 
 Finestray uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
