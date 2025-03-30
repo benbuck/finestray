@@ -14,17 +14,30 @@
 
 #pragma once
 
-// App
-#include "ErrorContext.h"
-
 // Windows
 #include <Windows.h>
 
 // Standard library
 #include <string>
 
-std::string getResourceString(unsigned int id);
-std::string getWindowText(HWND hwnd);
-bool isWindowUserVisible(HWND hwnd);
-void errorMessage(unsigned int id);
-void errorMessage(const ErrorContext & errorContext);
+class WindowInfo
+{
+public:
+    WindowInfo() = delete;
+    WindowInfo(HWND hwnd);
+    ~WindowInfo() = default;
+
+    HWND hwnd() const { return hwnd_; }
+
+    const std::string & className() const { return className_; }
+
+    const std::string & executable() const { return executable_; }
+
+    const std::string & title() const { return title_; }
+
+private:
+    HWND hwnd_ {};
+    std::string className_;
+    std::string executable_;
+    std::string title_;
+};

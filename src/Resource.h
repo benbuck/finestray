@@ -77,8 +77,8 @@
 #define IDC_MODIFIER_OVERRIDE                    1012
 #define IDC_POLL_INTERVAL                        1013
 #define IDC_AUTO_TRAY_LIST                       1014
-#define IDC_AUTO_TRAY_EDIT_EXECUTABLE            1015
-#define IDC_AUTO_TRAY_EDIT_WINDOWCLASS           1016
+#define IDC_AUTO_TRAY_EDIT_WINDOWCLASS           1015
+#define IDC_AUTO_TRAY_EDIT_EXECUTABLE            1016
 #define IDC_AUTO_TRAY_EDIT_WINDOWTITLE           1017
 #define IDC_AUTO_TRAY_EVENT_OPEN                 1018
 #define IDC_AUTO_TRAY_EVENT_MINIMIZE             1019

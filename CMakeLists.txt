@@ -138,6 +138,8 @@ add_executable(Finestray WIN32
     src/WindowHandleWrapper.h
     src/WindowIcon.cpp
     src/WindowIcon.h
+    src/WindowInfo.cpp
+    src/WindowInfo.h
     src/WindowList.cpp
     src/WindowList.h
     src/WindowMessage.h

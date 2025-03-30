@@ -1,6 +1,5 @@
 # To do list
 
-- Refactor window ID (executable / class / title) code
 - Add version to settings file
 - Clean up / simplify SettingsDialog
 - Remove file I/O from Settings, use JSON strings I/O

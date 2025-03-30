@@ -70,23 +70,6 @@ std::string getWindowText(HWND hwnd)
     return text;
 }
 
-std::string getWindowClassName(HWND hwnd)
-{
-    std::string className;
-    className.resize(256);
-    int res = GetClassNameA(hwnd, &className[0], (int)className.size());
-    if (!res) {
-        WARNING_PRINTF(
-            "failed to get window class name, GetClassNameA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return std::string();
-    }
-
-    className.resize(res); // remove nul terminator
-
-    return className;
-}
-
 bool isWindowUserVisible(HWND hwnd)
 {
     return IsWindowVisible(hwnd) && isAltTabWindow(hwnd) && !isToolWindow(hwnd) && !isCloakedWindow(hwnd);

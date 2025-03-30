@@ -36,6 +36,7 @@
 #include "WinEventHookHandleWrapper.h"
 #include "WindowHandleWrapper.h"
 #include "WindowIcon.h"
+#include "WindowInfo.h"
 #include "WindowList.h"
 #include "WindowMessage.h"
 
@@ -387,11 +388,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
                         if (windowStyle & WS_MINIMIZEBOX) {
 #if !defined(NDEBUG)
-                            std::string text = getWindowText(foregroundHwnd);
-                            DEBUG_PRINTF("\twindow text '%s'\n", text.c_str());
-
-                            std::string className = getWindowClassName(foregroundHwnd);
-                            DEBUG_PRINTF("\twindow class name '%s'\n", className.c_str());
+                            WindowInfo windowInfo(foregroundHwnd);
+                            DEBUG_PRINTF("\twindow executable '%s'\n", windowInfo.executable().c_str());
+                            DEBUG_PRINTF("\twindow text '%s'\n", windowInfo.title().c_str());
+                            DEBUG_PRINTF("\twindow class name '%s'\n", windowInfo.className().c_str());
 #endif
                             minimizeWindow(foregroundHwnd);
                         }
@@ -645,32 +645,10 @@ void stop()
 
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 {
-    CHAR executable[MAX_PATH];
-    DWORD dwProcId = 0;
-    if (!GetWindowThreadProcessId(hwnd, &dwProcId)) {
-        WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
-    } else {
-        HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId));
-        if (!process) {
-            WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
-        } else {
-            if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executable, sizeof(executable))) {
-                WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
-            } else {
-                DEBUG_PRINTF("\texecutable: %s\n", executable);
-            }
-        }
-    }
-
-    std::string windowText = getWindowText(hwnd);
-    if (!windowText.empty()) {
-        DEBUG_PRINTF("\ttitle: %s\n", windowText.c_str());
-    }
-
-    std::string className = getWindowClassName(hwnd);
-    if (!className.empty()) {
-        DEBUG_PRINTF("\tclass: %s\n", className.c_str());
-    }
+    WindowInfo windowInfo(hwnd);
+    DEBUG_PRINTF("\texecutable: %s\n", windowInfo.executable().c_str());
+    DEBUG_PRINTF("\ttitle: %s\n", windowInfo.title().c_str());
+    DEBUG_PRINTF("\tclass: %s\n", windowInfo.className().c_str());
 
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
         bool executableMatch = false;
@@ -678,7 +656,7 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
             // DEBUG_PRINTF("\texecutable match (empty)\n");
             executableMatch = true;
         } else {
-            if (StringUtility::toLower(autoTray.executable_) == StringUtility::toLower(executable)) {
+            if (StringUtility::toLower(autoTray.executable_) == StringUtility::toLower(windowInfo.executable())) {
                 // DEBUG_PRINTF("\texecutable '%s' match\n", autoTray.executable_.c_str());
                 executableMatch = true;
             }
@@ -689,7 +667,7 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
             // DEBUG_PRINTF("\twindow class match (empty)\n");
             classMatch = true;
         } else {
-            if (autoTray.windowClass_ == className) {
+            if (autoTray.windowClass_ == windowInfo.className()) {
                 // DEBUG_PRINTF("\twindow class '%s' match\n", autoTray.windowClass_.c_str());
                 classMatch = true;
             }
@@ -702,7 +680,7 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
         } else {
             try {
                 std::regex re(autoTray.windowTitle_);
-                if (std::regex_match(windowText, re)) {
+                if (std::regex_match(windowInfo.title(), re)) {
                     // DEBUG_PRINTF("\twindow title '%s' match\n", autoTray.windowTitle_.c_str());
                     titleMatch = true;
                 }

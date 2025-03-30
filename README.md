@@ -191,19 +191,19 @@ The auto-tray settings are a list of items that each identify a window that you 
 to the tray when it opens, and when you minimize it. The complication is that it's often not trivial to identify a
 window. Because of this, Finestray provides three possible ways, which can be used in combination, to identify a window:
 
-- **Executable name**:
-  This value corresponds to program the created the window. Provide the full path to the executable, for example
-  `C:\Windows\notepad.exe`. This must match (case insensitive) the path of the executable that owns the window, or you
-  can leave this empty if you don't care which executable created the window.
 - **Window class**:
   This value corresponds to the "class" of the window. The class is an internal value, which you can find using the
   [Spy feature](#spy-feature). The class you provide must exactly match the internal value, or you can leave this empty
   if you don't care what the window class is.
+- **Executable name**:
+  This value corresponds to program the created the window. Provide the full path to the executable, for example
+  `C:\Windows\notepad.exe`. This must match (case insensitive) the full path of the executable that owns the window, or
+  you  can leave this empty if you don't care which executable created the window.
 - **Window title**:
   This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
   is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
   expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window which
-  has a title like "Untitled - Notepad", you could use a regular expression like: `.*Notepad$`.
+  has a title like "Untitled - Notepad", you could use a regular expression like: `.* - Notepad$`.
 
 Auto-tray event options:
 
