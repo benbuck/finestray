@@ -653,6 +653,21 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
     DEBUG_PRINTF("\tclass: %s\n", windowInfo.className().c_str());
 
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
+        bool classMatch = false;
+        if (autoTray.windowClass_.empty()) {
+            // DEBUG_PRINTF("\twindow class match (empty)\n");
+            classMatch = true;
+        } else {
+            if (autoTray.windowClass_ == windowInfo.className()) {
+                // DEBUG_PRINTF("\twindow class '%s' match\n", autoTray.windowClass_.c_str());
+                classMatch = true;
+            }
+        }
+        if (!classMatch) {
+            DEBUG_PRINTF("\twindow class '%s' does not match\n", autoTray.windowClass_.c_str());
+            continue;
+        }
+
         bool executableMatch = false;
         if (autoTray.executable_.empty()) {
             // DEBUG_PRINTF("\texecutable match (empty)\n");
@@ -663,16 +678,9 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
                 executableMatch = true;
             }
         }
-
-        bool classMatch = false;
-        if (autoTray.windowClass_.empty()) {
-            // DEBUG_PRINTF("\twindow class match (empty)\n");
-            classMatch = true;
-        } else {
-            if (autoTray.windowClass_ == windowInfo.className()) {
-                // DEBUG_PRINTF("\twindow class '%s' match\n", autoTray.windowClass_.c_str());
-                classMatch = true;
-            }
+        if (!executableMatch) {
+            DEBUG_PRINTF("\texecutable '%s' does not match\n", autoTray.executable_.c_str());
+            continue;
         }
 
         bool titleMatch = false;
@@ -690,24 +698,26 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
                 WARNING_PRINTF("regex error: %s\n", e.what());
             }
         }
-
-        if (executableMatch && classMatch && titleMatch) {
-            DEBUG_PRINTF("\tauto-tray ID match\n");
-
-            bool shouldAutoTray;
-            switch (trayEvent) {
-                case TrayEvent::Open: shouldAutoTray = trayEventIncludesOpen(autoTray.trayEvent_); break;
-                case TrayEvent::Minimize: shouldAutoTray = trayEventIncludesMinimize(autoTray.trayEvent_); break;
-                default: {
-                    ERROR_PRINTF("invalid auto-tray action\n");
-                    shouldAutoTray = false;
-                    break;
-                }
-            }
-
-            DEBUG_PRINTF("\tshould auto-tray: %s\n", StringUtility::boolToCString(shouldAutoTray));
-            return shouldAutoTray;
+        if (!titleMatch) {
+            DEBUG_PRINTF("\twindow title '%s' does not match\n", autoTray.windowTitle_.c_str());
+            continue;
         }
+
+        DEBUG_PRINTF("\tauto-tray ID match\n");
+
+        bool shouldAutoTray;
+        switch (trayEvent) {
+            case TrayEvent::Open: shouldAutoTray = trayEventIncludesOpen(autoTray.trayEvent_); break;
+            case TrayEvent::Minimize: shouldAutoTray = trayEventIncludesMinimize(autoTray.trayEvent_); break;
+            default: {
+                ERROR_PRINTF("invalid auto-tray action\n");
+                shouldAutoTray = false;
+                break;
+            }
+        }
+
+        DEBUG_PRINTF("\tshould auto-tray: %s\n", StringUtility::boolToCString(shouldAutoTray));
+        return shouldAutoTray;
     }
 
     DEBUG_PRINTF("\tno auto-tray match\n");
