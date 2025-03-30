@@ -33,13 +33,13 @@ public:
     bool operator==(const Settings & rhs) const = default;
     bool operator!=(const Settings & rhs) const = default;
 
-    bool readFromFile(const std::string & fileName);
-    bool writeToFile(const std::string & fileName);
+    bool fromJSON(const std::string & json);
+    std::string toJSON() const;
 
     bool valid() const;
 
     void normalize();
-    void dump();
+    void dump() const;
 
     struct AutoTray
     {
@@ -69,8 +69,4 @@ public:
     std::string modifiersOverride_;
     unsigned int pollInterval_ {}; // zero to disable
     std::vector<AutoTray> autoTrays_;
-
-private:
-    bool parseJson(const std::string & json);
-    std::string constructJSON();
 };

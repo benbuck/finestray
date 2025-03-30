@@ -2,7 +2,6 @@
 
 - Add version to settings file
 - Clean up / simplify SettingsDialog
-- Remove file I/O from Settings, use JSON strings I/O
 - Refactor regex error handling
 - Get windows error reporting (WER) working
 - Add tray icon promotion (avoid moving to notification area overflow menu)

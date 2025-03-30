@@ -98,170 +98,7 @@ Settings::Settings()
 {
 }
 
-bool Settings::readFromFile(const std::string & fileName)
-{
-    DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
-
-    std::string writeableDir = getWriteableDir();
-    std::string json = fileRead(pathJoin(writeableDir, fileName));
-    if (json.empty()) {
-        return false;
-    }
-
-    return parseJson(json);
-}
-
-bool Settings::writeToFile(const std::string & fileName)
-{
-    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
-
-    if (!valid()) {
-        ERROR_PRINTF("writing invalid settings\n");
-        dump();
-    }
-
-    normalize();
-
-    std::string json = constructJSON();
-    if (json.empty()) {
-        return false;
-    }
-
-    std::string writeableDir = getWriteableDir();
-    if (!fileWrite(pathJoin(writeableDir, fileName), json)) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Settings::valid() const
-{
-    switch (minimizePlacement_) {
-        case MinimizePlacement::Tray:
-        case MinimizePlacement::Menu:
-        case MinimizePlacement::TrayAndMenu: {
-            break;
-        }
-
-        case MinimizePlacement::None:
-        default: {
-            return false;
-            break;
-        }
-    }
-
-    if (!Hotkey::valid(hotkeyMinimize_)) {
-        return false;
-    }
-
-    if (!Hotkey::valid(hotkeyMinimizeAll_)) {
-        return false;
-    }
-
-    if (!Hotkey::valid(hotkeyRestore_)) {
-        return false;
-    }
-
-    if (!Hotkey::valid(hotkeyRestoreAll_)) {
-        return false;
-    }
-
-    if (!Hotkey::valid(hotkeyMenu_)) {
-        return false;
-    }
-
-    if (!Hotkey::valid(modifiersOverride_)) {
-        return false;
-    }
-
-    // nothing to validate for poll interval
-
-    for (const AutoTray & autoTray : autoTrays_) {
-        try {
-            std::regex re(autoTray.windowTitle_);
-        } catch (const std::regex_error &) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void Settings::normalize()
-{
-    switch (minimizePlacement_) {
-        case MinimizePlacement::Tray:
-        case MinimizePlacement::Menu:
-        case MinimizePlacement::TrayAndMenu: {
-            // no change
-            break;
-        }
-
-        case MinimizePlacement::None:
-        default: {
-            DEBUG_PRINTF("Fixing bad minimize placement: %d\n", minimizePlacement_);
-            minimizePlacement_ = minimizePlacementDefault_;
-            break;
-        }
-    }
-
-    hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
-    hotkeyMinimizeAll_ = Hotkey::normalize(hotkeyMinimizeAll_);
-    hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
-    hotkeyRestoreAll_ = Hotkey::normalize(hotkeyRestoreAll_);
-    hotkeyMenu_ = Hotkey::normalize(hotkeyMenu_);
-    modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
-
-    for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
-        AutoTray & autoTray = *it;
-        if (autoTray.executable_.empty() && autoTray.windowClass_.empty() && autoTray.windowTitle_.empty()) {
-            DEBUG_PRINTF("Removing empty auto-tray item\n");
-            it = autoTrays_.erase(it);
-            continue;
-        }
-
-        if (autoTray.trayEvent_ == TrayEvent::None) {
-            DEBUG_PRINTF("Changing auto-tray item with no event to minimize\n");
-            autoTray.trayEvent_ = TrayEvent::Minimize;
-        }
-
-        ++it;
-    }
-}
-
-void Settings::dump()
-{
-#if !defined(NDEBUG)
-    DEBUG_PRINTF("Settings:\n");
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ShowWindowsInMenu], StringUtility::boolToCString(showWindowsInMenu_));
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimizeAll], hotkeyMinimizeAll_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
-    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
-    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
-
-    for (const AutoTray & autoTray : autoTrays_) {
-        DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
-        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
-        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
-        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
-        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToString(autoTray.trayEvent_).c_str());
-    }
-#endif
-}
-
-void Settings::addAutoTray(AutoTray && autoTray)
-{
-    autoTrays_.push_back(autoTray);
-}
-
-bool Settings::parseJson(const std::string & json)
+bool Settings::fromJSON(const std::string & json)
 {
     CJsonWrapper cjson(cJSON_Parse(json.c_str()));
     if (!cjson) {
@@ -300,18 +137,7 @@ bool Settings::parseJson(const std::string & json)
     return true;
 }
 
-bool Settings::fileExists(const std::string & fileName)
-{
-    std::string writeableDir = getWriteableDir();
-    if (writeableDir.empty()) {
-        return false;
-    }
-
-    std::string fullPath = pathJoin(writeableDir, fileName);
-    return ::fileExists(fullPath);
-}
-
-std::string Settings::constructJSON()
+std::string Settings::toJSON() const
 {
     CJsonWrapper cjson(cJSON_CreateObject());
     if (!cjson) {
@@ -409,6 +235,143 @@ std::string Settings::constructJSON()
     }
 
     return cjson.print();
+}
+
+bool Settings::valid() const
+{
+    switch (minimizePlacement_) {
+        case MinimizePlacement::Tray:
+        case MinimizePlacement::Menu:
+        case MinimizePlacement::TrayAndMenu: {
+            break;
+        }
+
+        case MinimizePlacement::None:
+        default: {
+            return false;
+            break;
+        }
+    }
+
+    if (!Hotkey::valid(hotkeyMinimize_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyMinimizeAll_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyRestore_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyRestoreAll_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(hotkeyMenu_)) {
+        return false;
+    }
+
+    if (!Hotkey::valid(modifiersOverride_)) {
+        return false;
+    }
+
+    // nothing to validate for poll interval
+
+    for (const AutoTray & autoTray : autoTrays_) {
+        try {
+            std::regex re(autoTray.windowTitle_);
+        } catch (const std::regex_error &) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Settings::normalize()
+{
+    switch (minimizePlacement_) {
+        case MinimizePlacement::Tray:
+        case MinimizePlacement::Menu:
+        case MinimizePlacement::TrayAndMenu: {
+            // no change
+            break;
+        }
+
+        case MinimizePlacement::None:
+        default: {
+            DEBUG_PRINTF("Fixing bad minimize placement: %d\n", minimizePlacement_);
+            minimizePlacement_ = minimizePlacementDefault_;
+            break;
+        }
+    }
+
+    hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
+    hotkeyMinimizeAll_ = Hotkey::normalize(hotkeyMinimizeAll_);
+    hotkeyRestore_ = Hotkey::normalize(hotkeyRestore_);
+    hotkeyRestoreAll_ = Hotkey::normalize(hotkeyRestoreAll_);
+    hotkeyMenu_ = Hotkey::normalize(hotkeyMenu_);
+    modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
+
+    for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
+        AutoTray & autoTray = *it;
+        if (autoTray.executable_.empty() && autoTray.windowClass_.empty() && autoTray.windowTitle_.empty()) {
+            DEBUG_PRINTF("Removing empty auto-tray item\n");
+            it = autoTrays_.erase(it);
+            continue;
+        }
+
+        if (autoTray.trayEvent_ == TrayEvent::None) {
+            DEBUG_PRINTF("Changing auto-tray item with no event to minimize\n");
+            autoTray.trayEvent_ = TrayEvent::Minimize;
+        }
+
+        ++it;
+    }
+}
+
+void Settings::dump() const
+{
+#if !defined(NDEBUG)
+    DEBUG_PRINTF("Settings:\n");
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_ShowWindowsInMenu], StringUtility::boolToCString(showWindowsInMenu_));
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
+    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToString(minimizePlacement_).c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimizeAll], hotkeyMinimizeAll_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
+    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
+
+    for (const AutoTray & autoTray : autoTrays_) {
+        DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_Executable], autoTray.executable_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
+        DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToString(autoTray.trayEvent_).c_str());
+    }
+#endif
+}
+
+void Settings::addAutoTray(AutoTray && autoTray)
+{
+    autoTrays_.push_back(autoTray);
+}
+
+bool Settings::fileExists(const std::string & fileName)
+{
+    std::string writeableDir = getWriteableDir();
+    if (writeableDir.empty()) {
+        return false;
+    }
+
+    std::string fullPath = pathJoin(writeableDir, fileName);
+    return ::fileExists(fullPath);
 }
 
 namespace

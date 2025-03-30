@@ -95,6 +95,8 @@ void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
+bool readSettingsFromFile(const std::string & fileName, Settings & settings);
+bool writeSettingsToFile(const std::string & fileName, const Settings & settings);
 void showSettingsDialog();
 void toggleSettingsDialog();
 void onSettingsDialogComplete(bool success, const Settings & settings);
@@ -158,7 +160,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
 
     // get settings from file
     std::string settingsFile = getSettingsFileName();
-    if (settings_.readFromFile(settingsFile)) {
+    if (readSettingsFromFile(settingsFile, settings_)) {
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
         updateStartWithWindowsShortcut();
     } else {
@@ -842,6 +844,41 @@ void onMinimizeEvent(
     }
 }
 
+bool readSettingsFromFile(const std::string & fileName, Settings & settings)
+{
+    DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
+
+    std::string writeableDir = getWriteableDir();
+    std::string json = fileRead(pathJoin(writeableDir, fileName));
+    if (json.empty()) {
+        return false;
+    }
+
+    return settings.fromJSON(json);
+}
+
+bool writeSettingsToFile(const std::string & fileName, const Settings & settings)
+{
+    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
+
+    if (!settings.valid()) {
+        ERROR_PRINTF("writing invalid settings\n");
+        settings.dump();
+    }
+
+    std::string json = settings.toJSON();
+    if (json.empty()) {
+        return false;
+    }
+
+    std::string writeableDir = getWriteableDir();
+    if (!fileWrite(pathJoin(writeableDir, fileName), json)) {
+        return false;
+    }
+
+    return true;
+}
+
 void showSettingsDialog()
 {
     if (settingsDialogWindow_) {
@@ -910,7 +947,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
                 }
             }
 
-            if (!settings_.writeToFile(settingsFile)) {
+            settings_.normalize();
+            if (!writeSettingsToFile(settingsFile, settings_)) {
                 errorMessage(ErrorContext(IDS_ERROR_SAVE_SETTINGS, settingsFile));
             } else {
                 DEBUG_PRINTF("wrote settings to %s\n", settingsFile.c_str());
