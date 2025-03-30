@@ -619,6 +619,7 @@ ErrorContext start()
         return ErrorContext(IDS_ERROR_REGISTER_MODIFIER, "override");
     }
 
+    // check auto-tray regular expressions to surface an error if needed
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
         try {
             std::regex re(autoTray.windowTitle_);
