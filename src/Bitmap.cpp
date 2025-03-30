@@ -26,8 +26,8 @@ namespace Bitmap
 
 BitmapHandleWrapper getResource(unsigned int id)
 {
-    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
-    BitmapHandleWrapper bitmap((HBITMAP)LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0));
+    HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+    BitmapHandleWrapper bitmap(static_cast<HBITMAP>(LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0)));
     if (!bitmap) {
         WARNING_PRINTF(
             "failed to load resources bitmap %u, LoadImage() failed: %s\n",
@@ -44,7 +44,7 @@ bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORRE
         return false;
     }
 
-    DeviceContextHandleWrapper desktopDC(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
+    const DeviceContextHandleWrapper desktopDC(GetDC(HWND_DESKTOP), DeviceContextHandleWrapper::Referenced);
 
     BITMAP bm;
     memset(&bm, 0, sizeof(bm));
@@ -61,20 +61,20 @@ bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORRE
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
 
-    std::vector<COLORREF> pixels(bm.bmWidth * bm.bmHeight);
-    if (!GetDIBits(desktopDC, bitmap, 0, bm.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+    std::vector<COLORREF> pixels(static_cast<size_t>(bm.bmWidth * bm.bmHeight));
+    if (!GetDIBits(desktopDC, bitmap, 0, bm.bmHeight, pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
-    bool replaced = false;
+    const bool replaced = false;
     for (COLORREF & pixelColor : pixels) {
         if (pixelColor == oldColor) {
             pixelColor = newColor;
         }
     }
 
-    if (!SetDIBits(desktopDC, bitmap, 0, bm.bmHeight, &pixels[0], &bitmapInfo, DIB_RGB_COLORS)) {
+    if (!SetDIBits(desktopDC, bitmap, 0, bm.bmHeight, pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 

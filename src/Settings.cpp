@@ -28,6 +28,7 @@
 #include <shellapi.h>
 
 // Standard library
+#include <algorithm>
 #include <cstdlib>
 #include <regex>
 
@@ -38,7 +39,7 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData);
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
 double getNumber(const cJSON * cjson, const char * key, double defaultValue);
 const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
-void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void *);
+void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData);
 
 enum SettingKeys : unsigned int
 {
@@ -65,17 +66,16 @@ enum SettingKeys : unsigned int
 
 const unsigned int versionCurrent_ = 1;
 const bool startWithWindowsDefault_ = false;
-const bool showWindowsInMenu_ = false;
+const bool showWindowsInMenuDefault_ = false;
 const bool logToFileDefault_ = false;
 const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
-const char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
-const char hotkeyMinimizeAllDefault_[] = "alt ctrl shift right";
-const char hotkeyRestoreDefault_[] = "alt ctrl shift up";
-const char hotkeyRestoreAllDefault_[] = "alt ctrl shift left";
-const char hotkeyMenuDefault_[] = "alt ctrl shift home";
-const char modifiersOverrideDefault_[] = "alt ctrl shift";
+const char * hotkeyMinimizeDefault_ = "alt ctrl shift down";
+const char * hotkeyMinimizeAllDefault_ = "alt ctrl shift right";
+const char * hotkeyRestoreDefault_ = "alt ctrl shift up";
+const char * hotkeyRestoreAllDefault_ = "alt ctrl shift left";
+const char * hotkeyMenuDefault_ = "alt ctrl shift home";
+const char * modifiersOverrideDefault_ = "alt ctrl shift";
 const unsigned int pollIntervalDefault_ = 500;
-const bool settingsIsFlag_[SK_Count] = { true, false, false, false, false, false, false, false, false, false };
 const char * settingKeys_[SK_Count] = { "version",
                                         "start-with-windows",
                                         "show-windows-in-menu",
@@ -99,6 +99,7 @@ const char * settingKeys_[SK_Count] = { "version",
 Settings::Settings()
     : version_(versionCurrent_)
     , startWithWindows_(startWithWindowsDefault_)
+    , showWindowsInMenu_(showWindowsInMenuDefault_)
     , logToFile_(logToFileDefault_)
     , minimizePlacement_(minimizePlacementDefault_)
     , hotkeyMinimize_(hotkeyMinimizeDefault_)
@@ -108,7 +109,6 @@ Settings::Settings()
     , hotkeyMenu_(hotkeyMenuDefault_)
     , modifiersOverride_(modifiersOverrideDefault_)
     , pollInterval_(pollIntervalDefault_)
-    , autoTrays_()
 {
 }
 
@@ -122,7 +122,7 @@ bool Settings::fromJSON(const std::string & json)
 
     DEBUG_PRINTF("parsed settings JSON:\n%s\n", cjson.print().c_str());
 
-    version_ = (unsigned int)getNumber(cjson, settingKeys_[SK_Version], (double)versionCurrent_);
+    version_ = static_cast<unsigned int>(getNumber(cjson, settingKeys_[SK_Version], static_cast<double>(versionCurrent_)));
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
     showWindowsInMenu_ = getBool(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_);
     logToFile_ = getBool(cjson, settingKeys_[SK_LogToFile], logToFile_);
@@ -140,7 +140,8 @@ bool Settings::fromJSON(const std::string & json)
     hotkeyRestoreAll_ = getString(cjson, settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
     hotkeyMenu_ = getString(cjson, settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
-    pollInterval_ = (unsigned int)getNumber(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_);
+    pollInterval_ = static_cast<unsigned int>(
+        getNumber(cjson, settingKeys_[SK_PollInterval], static_cast<double>(pollInterval_)));
 
     const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);
     if (autotray) {
@@ -157,12 +158,12 @@ std::string Settings::toJSON() const
     CJsonWrapper cjson(cJSON_CreateObject());
     if (!cjson) {
         WARNING_PRINTF("failed to create settings JSON object\n");
-        return std::string();
+        return {};
     }
 
     bool fail = false;
 
-    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_Version], (double)version_)) {
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_Version], static_cast<double>(version_))) {
         fail = true;
     }
 
@@ -200,7 +201,7 @@ std::string Settings::toJSON() const
     if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {
         fail = true;
     }
-    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], (double)pollInterval_)) {
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], static_cast<double>(pollInterval_))) {
         fail = true;
     }
 
@@ -244,7 +245,7 @@ std::string Settings::toJSON() const
 
     if (fail) {
         WARNING_PRINTF("failed to construct json settings\n");
-        return std::string();
+        return {};
     }
 
     return cjson.print();
@@ -296,12 +297,16 @@ bool Settings::valid() const
 
     // nothing to validate for poll interval
 
-    for (const AutoTray & autoTray : autoTrays_) {
-        try {
-            std::regex re(autoTray.windowTitle_);
-        } catch (const std::regex_error &) {
-            return false;
-        }
+    if (std::any_of(autoTrays_.begin(), autoTrays_.end(), [](const AutoTray & autoTray) {
+            try {
+                const std::regex re(autoTray.windowTitle_);
+                static_cast<void>(re);
+                return false;
+            } catch (const std::regex_error &) {
+                return true;
+            }
+        })) {
+        return false;
     }
 
     return true;
@@ -380,17 +385,17 @@ void Settings::dump() const
 
 void Settings::addAutoTray(AutoTray && autoTray)
 {
-    autoTrays_.push_back(autoTray);
+    autoTrays_.emplace_back(std::move(autoTray));
 }
 
 bool Settings::fileExists(const std::string & fileName)
 {
-    std::string writeableDir = getWriteableDir();
+    const std::string writeableDir = getWriteableDir();
     if (writeableDir.empty()) {
         return false;
     }
 
-    std::string fullPath = pathJoin(writeableDir, fileName);
+    const std::string fullPath = pathJoin(writeableDir, fileName);
     return ::fileExists(fullPath);
 }
 
@@ -409,7 +414,7 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData)
     const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
     const char * trayEvent = getString(cjson, settingKeys_[SK_TrayEvent], nullptr);
     if (executable || windowClass || windowTitle) {
-        Settings * settings = (Settings *)userData;
+        Settings * settings = static_cast<Settings *>(userData);
 
         Settings::AutoTray autoTray;
         autoTray.executable_ = executable ? executable : "";
@@ -435,7 +440,8 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
         return defaultValue;
     }
 
-    return cJSON_IsTrue(item) ? true : false;
+    // NOLINTNEXTLINE
+    return cJSON_IsTrue(item) == cJSON_True;
 }
 
 double getNumber(const cJSON * cjson, const char * key, double defaultValue)
@@ -474,7 +480,7 @@ void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), 
     if (!cJSON_IsArray(cjson)) {
         WARNING_PRINTF("bad type for '%s'\n", cjson->string);
     } else {
-        int arrSize = cJSON_GetArraySize(cjson);
+        const int arrSize = cJSON_GetArraySize(cjson);
         for (int i = 0; i < arrSize; ++i) {
             const cJSON * item = cJSON_GetArrayItem(cjson, i);
             if (!callback(item, userData)) {

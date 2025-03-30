@@ -58,7 +58,7 @@ void start(bool enable, const std::string & fileName)
         return;
     }
 
-    std::string writeableDir = getWriteableDir();
+    const std::string writeableDir = getWriteableDir();
     if (writeableDir.empty()) {
         WARNING_PRINTF("no writeable dir found, logging to file disabled\n");
         enableLogging_ = false;
@@ -66,7 +66,7 @@ void start(bool enable, const std::string & fileName)
         return;
     }
 
-    std::string logFileFullPath = pathJoin(writeableDir, fileName);
+    const std::string logFileFullPath = pathJoin(writeableDir, fileName);
 
     HandleWrapper fileHandle(CreateFileA(
         logFileFullPath.c_str(),
@@ -92,14 +92,15 @@ void start(bool enable, const std::string & fileName)
     assert(fileHandle_ != INVALID_HANDLE_VALUE);
     enableLogging_ = true;
 
-    for (size_t p = 0; p < pendingLogs_.size(); ++p) {
-        const std::string & pendingLog = pendingLogs_[p];
+    for (const std::string & pendingLog : pendingLogs_) {
         DWORD bytesWritten = 0;
-        WriteFile(fileHandle_, pendingLog.c_str(), (DWORD)pendingLog.size(), &bytesWritten, nullptr);
+        WriteFile(fileHandle_, pendingLog.c_str(), static_cast<DWORD>(pendingLog.size()), &bytesWritten, nullptr);
         assert(bytesWritten == pendingLog.size());
     }
     pendingLogs_.clear();
 }
+
+// NOLINTBEGIN
 
 void printf(Level level, const char * fmt, ...)
 {
@@ -107,7 +108,7 @@ void printf(Level level, const char * fmt, ...)
     char * buffer = fixedBuffer;
     size_t bufferSize = sizeof(fixedBuffer);
 
-    va_list ap;
+    va_list ap = {};
     va_start(ap, fmt);
     int len = vsnprintf(buffer, bufferSize, fmt, ap);
     if (len >= (int)bufferSize) {
@@ -125,13 +126,15 @@ void printf(Level level, const char * fmt, ...)
     }
 }
 
+// NOLINTEND
+
 void print(Level level, const char * str)
 {
     SYSTEMTIME systemTime;
     memset(&systemTime, 0, sizeof(systemTime));
     GetLocalTime(&systemTime);
     char timeStr[32];
-    snprintf(
+    const int printed = snprintf(
         timeStr,
         sizeof(timeStr),
         "%02u:%02u:%02u.%03u",
@@ -139,8 +142,10 @@ void print(Level level, const char * str)
         systemTime.wMinute,
         systemTime.wSecond,
         systemTime.wMilliseconds);
+    assert(printed < (int)sizeof(timeStr));
+    static_cast<void>(printed);
 
-    const char * levelString;
+    const char * levelString = nullptr;
     switch (level) {
         case Level::Debug: levelString = "DEBUG  "; break;
         case Level::Info: levelString = "INFO   "; break;
@@ -153,7 +158,7 @@ void print(Level level, const char * str)
         }
     }
 
-    std::string line = std::string(timeStr) + " - " + levelString + " - " + str;
+    const std::string line = std::string(timeStr) + " - " + levelString + " - " + str;
 
     OutputDebugStringA(line.c_str());
 
@@ -164,7 +169,7 @@ void print(Level level, const char * str)
 
     if (enableLogging_ && (fileHandle_ != INVALID_HANDLE_VALUE)) {
         DWORD bytesWritten = 0;
-        WriteFile(fileHandle_, line.c_str(), (DWORD)line.size(), &bytesWritten, nullptr);
+        WriteFile(fileHandle_, line.c_str(), static_cast<DWORD>(line.size()), &bytesWritten, nullptr);
         assert(bytesWritten == line.size());
     }
 

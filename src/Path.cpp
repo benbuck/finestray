@@ -40,7 +40,7 @@ std::string executableFileName_;
 std::string executableDir_;
 
 bool getExecutablePathComponents();
-bool checkWriteableDir(const std::string dir);
+bool checkWriteableDir(const std::string & dir);
 
 } // anonymous namespace
 
@@ -48,12 +48,12 @@ std::string getAppDataDir()
 {
     CHAR dir[MAX_PATH] = {};
 
-    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, dir);
+    HRESULT const hresult = SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, dir);
     if (FAILED(hresult)) {
         WARNING_PRINTF(
             "could not get app data dir, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
-        return std::string();
+        return {};
     }
 
     return dir;
@@ -62,7 +62,7 @@ std::string getAppDataDir()
 std::string getExecutableFullPath()
 {
     if (executableFullPath_.empty() && !getExecutablePathComponents()) {
-        return std::string();
+        return {};
     }
 
     return executableFullPath_;
@@ -71,7 +71,7 @@ std::string getExecutableFullPath()
 std::string getExecutableFileName()
 {
     if (executableFileName_.empty() && !getExecutablePathComponents()) {
-        return std::string();
+        return {};
     }
 
     return executableFileName_;
@@ -80,7 +80,7 @@ std::string getExecutableFileName()
 std::string getExecutableDir()
 {
     if (executableDir_.empty() && !getExecutablePathComponents()) {
-        return std::string();
+        return {};
     }
 
     return executableDir_;
@@ -90,12 +90,12 @@ std::string getStartupDir()
 {
     CHAR dir[MAX_PATH];
 
-    HRESULT hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, dir);
+    HRESULT const hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, dir);
     if (FAILED(hresult)) {
         WARNING_PRINTF(
             "could not get startup dir, SHGetFolderPath() failed: %s\n",
             StringUtility::errorToString(hresult).c_str());
-        return std::string();
+        return {};
     }
 
     return dir;
@@ -115,14 +115,14 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
     std::string path;
     path.resize(pathSize);
 
-    LPSTR result = PathCombineA(&path[0], path1.c_str(), path2.c_str());
+    LPSTR result = PathCombineA(path.data(), path1.c_str(), path2.c_str());
     if (!result) {
         WARNING_PRINTF(
             "could not join paths '%s' and '%s', PathCombineA() failed: %s\n",
             path1.c_str(),
             path2.c_str(),
             StringUtility::lastErrorString().c_str());
-        return std::string();
+        return {};
     }
 
     pathSize = strlen(result);
@@ -167,7 +167,7 @@ std::string getWriteableDir()
     }
 
     WARNING_PRINTF("no writeable dir found\n");
-    return std::string();
+    return {};
 }
 
 bool createShortcut(const std::string & shortcutFullPath, const std::string & executableFullPath)
@@ -178,7 +178,7 @@ bool createShortcut(const std::string & shortcutFullPath, const std::string & ex
         nullptr,
         CLSCTX_INPROC_SERVER,
         IID_IShellLinkA,
-        (LPVOID *)shellLink.ReleaseAndGetAddressOf());
+        reinterpret_cast<LPVOID *>(shellLink.ReleaseAndGetAddressOf()));
     if (FAILED(hresult)) {
         WARNING_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
@@ -191,13 +191,14 @@ bool createShortcut(const std::string & shortcutFullPath, const std::string & ex
     }
 
     ComPtr<IPersistFile> persistFile;
-    hresult = shellLink->QueryInterface(IID_IPersistFile, (LPVOID *)persistFile.ReleaseAndGetAddressOf());
+    hresult =
+        shellLink->QueryInterface(IID_IPersistFile, reinterpret_cast<LPVOID *>(persistFile.ReleaseAndGetAddressOf()));
     if (FAILED(hresult)) {
         WARNING_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
         return false;
     }
 
-    std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutFullPath);
+    const std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutFullPath);
     hresult = persistFile->Save(shortcutPathW.c_str(), TRUE);
     if (FAILED(hresult)) {
         WARNING_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
@@ -214,7 +215,7 @@ bool getExecutablePathComponents()
 {
     CHAR moduleFullPath[256];
 
-    size_t length = GetModuleFileNameA(nullptr, moduleFullPath, sizeof(moduleFullPath));
+    const size_t length = GetModuleFileNameA(nullptr, moduleFullPath, sizeof(moduleFullPath));
     if (length == 0) {
         WARNING_PRINTF(
             "could not get executable full path, GetModuleFileNameA() failed: %s\n",
@@ -263,10 +264,10 @@ bool getExecutablePathComponents()
     return true;
 }
 
-bool checkWriteableDir(const std::string dir)
+bool checkWriteableDir(const std::string & dir)
 {
-    std::string fullPath = pathJoin(dir, "test.tmp");
-    HandleWrapper file(CreateFileA(
+    const std::string fullPath = pathJoin(dir, "test.tmp");
+    const HandleWrapper file(CreateFileA(
         fullPath.c_str(),
         GENERIC_WRITE,
         0,
@@ -274,7 +275,7 @@ bool checkWriteableDir(const std::string dir)
         CREATE_ALWAYS,
         FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
         nullptr));
-    bool writeable = file != INVALID_HANDLE_VALUE;
+    const bool writeable = file != INVALID_HANDLE_VALUE;
     DEBUG_PRINTF("dir '%s' %s writeable\n", dir.c_str(), writeable ? "is" : "is not");
     return writeable;
 }

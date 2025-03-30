@@ -24,6 +24,6 @@ namespace Bitmap
 {
 
 BitmapHandleWrapper getResource(unsigned int id);
-bool replaceColor(const BitmapHandleWrapper & hbmp, COLORREF oldColor, COLORREF newColor);
+bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORREF newColor);
 
 } // namespace Bitmap

@@ -86,7 +86,7 @@ void Hotkey::destroy()
 
 bool Hotkey::valid(const std::string & hotkeyStr)
 {
-    ParseResult parseResult = parseInternal(hotkeyStr);
+    const ParseResult parseResult = parseInternal(hotkeyStr);
     return parseResultValid(parseResult);
 }
 
@@ -153,9 +153,9 @@ Hotkey::ParseResult Hotkey::parseInternal(const std::string & hotkeyStr)
 {
     ParseResult parseResult;
 
-    std::string tmp = StringUtility::toLower(hotkeyStr);
+    const std::string tmp = StringUtility::toLower(hotkeyStr);
 
-    std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
+    const std::vector<std::string> tokens = StringUtility::split(tmp, " \t");
     for (std::string token : tokens) {
         token = StringUtility::trim(token);
         token = StringUtility::toLower(token);
@@ -185,8 +185,8 @@ Hotkey::ParseResult Hotkey::parseInternal(const std::string & hotkeyStr)
             continue;
         }
 
-        SHORT scan = VkKeyScanA(token[0]);
-        if ((unsigned int)scan == 0xFFFF) {
+        SHORT const scan = VkKeyScanA(token[0]);
+        if (static_cast<unsigned int>(scan) == 0xFFFF) {
             parseResult.unrecognized.push_back(token);
             continue;
         }
@@ -204,7 +204,7 @@ bool Hotkey::parseResultValid(const ParseResult & parseResult)
         return false;
     }
 
-    if (parseResult.noneCount && (parseResult.keys.size() || parseResult.modifiers.size())) {
+    if (parseResult.noneCount && (!parseResult.keys.empty() || !parseResult.modifiers.empty())) {
         WARNING_PRINTF(
             "hotkey has 'none' with other keys ('%s') and/or modifiers ('%s'), not valid\n",
             StringUtility::join(parseResult.keys, " ").c_str(),
@@ -217,7 +217,7 @@ bool Hotkey::parseResultValid(const ParseResult & parseResult)
         return false;
     }
 
-    if (parseResult.unrecognized.size()) {
+    if (!parseResult.unrecognized.empty()) {
         WARNING_PRINTF(
             "hotkey has unrecognized strings ('%s'), not valid\n",
             StringUtility::join(parseResult.unrecognized, " ").c_str());

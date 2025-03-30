@@ -28,10 +28,8 @@
 WindowInfo::WindowInfo(HWND hwnd)
     : hwnd_(hwnd)
 {
-    int res;
-
     className_.resize(256);
-    res = GetClassNameA(hwnd, &className_[0], (int)className_.size());
+    int res = GetClassNameA(hwnd, className_.data(), static_cast<int>(className_.size()));
     if (!res) {
         WARNING_PRINTF(
             "failed to get window class name, GetClassNameA() failed: %s\n",
@@ -42,15 +40,15 @@ WindowInfo::WindowInfo(HWND hwnd)
     }
 
     char executableFullPath[MAX_PATH] = {};
-    DWORD processID;
+    DWORD processID = 0;
     if (!GetWindowThreadProcessId(hwnd, &processID)) {
         WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
+        const HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
         if (!process) {
             WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            if (!GetModuleFileNameExA((HMODULE)(HANDLE)process, nullptr, executableFullPath, MAX_PATH)) {
+            if (!GetModuleFileNameExA(static_cast<HANDLE>(process), nullptr, executableFullPath, MAX_PATH)) {
                 WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 executable_ = executableFullPath;
@@ -58,7 +56,7 @@ WindowInfo::WindowInfo(HWND hwnd)
         }
     }
 
-    int len = GetWindowTextLengthA(hwnd);
+    const int len = GetWindowTextLengthA(hwnd);
     if (!len) {
         if (GetLastError() != ERROR_SUCCESS) {
             WARNING_PRINTF(
@@ -69,7 +67,7 @@ WindowInfo::WindowInfo(HWND hwnd)
         }
     } else {
         title_.resize(len + 1);
-        res = GetWindowTextA(hwnd, &title_[0], (int)title_.size());
+        res = GetWindowTextA(hwnd, title_.data(), static_cast<int>(title_.size()));
         if (!res && (GetLastError() != ERROR_SUCCESS)) {
             WARNING_PRINTF(
                 "failed to get window text, GetWindowTextA() failed: %s\n",

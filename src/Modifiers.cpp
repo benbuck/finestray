@@ -22,35 +22,40 @@ bool modifiersActive(UINT modifiers)
         return false;
     }
 
-    if (modifiers & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT)) {
+    if (modifiers & ~(static_cast<UINT>(MOD_ALT) | static_cast<UINT>(MOD_CONTROL) | static_cast<UINT>(MOD_SHIFT))) {
         WARNING_PRINTF("invalid modifiers: %#x\n", modifiers);
         return false;
     }
 
-    if (modifiers & MOD_ALT) {
-        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
+    if (modifiers & static_cast<UINT>(MOD_ALT)) {
+        if (!(static_cast<UINT>(GetKeyState(VK_MENU)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_LMENU)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_RMENU)) & 0x8000U)) {
             DEBUG_PRINTF("\talt modifier not down\n");
             return false;
         }
     }
 
-    if (modifiers & MOD_CONTROL) {
-        if (!(GetKeyState(VK_MENU) & 0x8000) && !(GetKeyState(VK_LMENU) & 0x8000) && !(GetKeyState(VK_RMENU) & 0x8000)) {
+    if (modifiers & static_cast<UINT>(MOD_CONTROL)) {
+        if (!(static_cast<UINT>(GetKeyState(VK_MENU)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_LMENU)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_RMENU)) & 0x8000U)) {
             DEBUG_PRINTF("\tctrl modifier not down\n");
             return false;
         }
     }
 
-    if (modifiers & MOD_SHIFT) {
-        if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_LSHIFT) & 0x8000) &&
-            !(GetKeyState(VK_RSHIFT) & 0x8000)) {
+    if (modifiers & static_cast<UINT>(MOD_SHIFT)) {
+        if (!(static_cast<UINT>(GetKeyState(VK_SHIFT)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_LSHIFT)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_RSHIFT)) & 0x8000U)) {
             DEBUG_PRINTF("\tshift modifier not down\n");
             return false;
         }
     }
 
-    if (modifiers & MOD_WIN) {
-        if (!(GetKeyState(VK_LWIN) & 0x8000) && !(GetKeyState(VK_RWIN) & 0x8000)) {
+    if (modifiers & static_cast<UINT>(MOD_WIN)) {
+        if (!(static_cast<UINT>(GetKeyState(VK_LWIN)) & 0x8000U) && !(static_cast<UINT>(GetKeyState(VK_RWIN)) & 0x8000U)) {
             DEBUG_PRINTF("\twin modifier not down\n");
             return false;
         }

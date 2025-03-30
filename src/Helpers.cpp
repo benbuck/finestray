@@ -32,10 +32,10 @@ bool isCloakedWindow(HWND hwnd);
 
 std::string getResourceString(unsigned int id)
 {
-    HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+    HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
 
     LPWSTR str = nullptr;
-    int strLength = LoadStringW(hinstance, id, (LPWSTR)&str, 0);
+    const int strLength = LoadStringW(hinstance, id, reinterpret_cast<LPWSTR>(&str), 0);
     if (!strLength) {
         WARNING_PRINTF(
             "failed to load resources string %u, LoadStringA() failed: %s\n",
@@ -44,25 +44,25 @@ std::string getResourceString(unsigned int id)
         return "Error ID: " + std::to_string(id);
     }
 
-    std::wstring wstr(str, strLength);
+    const std::wstring wstr(str, strLength);
     return StringUtility::wideStringToString(wstr);
 }
 
 std::string getWindowText(HWND hwnd)
 {
     std::string text;
-    int len = GetWindowTextLengthA(hwnd);
+    const int len = GetWindowTextLengthA(hwnd);
     if (!len) {
-        return std::string();
+        return {};
     }
 
     text.resize(len + 1);
-    int res = GetWindowTextA(hwnd, &text[0], (int)text.size());
+    const int res = GetWindowTextA(hwnd, text.data(), static_cast<int>(text.size()));
     if (!res && (GetLastError() != ERROR_SUCCESS)) {
         WARNING_PRINTF(
             "failed to get window text, GetWindowTextA() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return std::string();
+        return {};
     }
 
     text.resize(res); // remove nul terminator
@@ -115,8 +115,11 @@ bool isAltTabWindow(HWND hwnd)
     HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
 
     // See if we are the last active visible popup
-    HWND hwndTry;
-    while ((hwndTry = GetLastActivePopup(hwndWalk)) != hwndTry) {
+    while (true) {
+        HWND hwndTry = GetLastActivePopup(hwndWalk);
+        if (hwndTry == hwndWalk) {
+            break;
+        }
         if (IsWindowVisible(hwndTry)) {
             break;
         }
@@ -128,7 +131,8 @@ bool isAltTabWindow(HWND hwnd)
 
 bool isToolWindow(HWND hwnd)
 {
-    LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+    LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+    // NOLINTNEXTLINE
     return (exStyle & WS_EX_TOOLWINDOW) != 0;
 }
 
@@ -136,7 +140,7 @@ bool isToolWindow(HWND hwnd)
 bool isCloakedWindow(HWND hwnd)
 {
     BOOL isCloaked = FALSE;
-    HRESULT hr = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked));
+    HRESULT const hr = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked));
     return SUCCEEDED(hr) && isCloaked;
 }
 

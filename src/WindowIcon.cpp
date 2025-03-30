@@ -25,29 +25,27 @@ namespace WindowIcon
 
 HICON get(HWND hwnd)
 {
-    HICON hicon;
-
-    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0);
+    HICON hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0));
     if (hicon) {
         return hicon;
     }
 
-    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_BIG, 0);
+    hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_BIG, 0));
     if (hicon) {
         return hicon;
     }
 
-    hicon = (HICON)SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0);
+    hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0));
     if (hicon) {
         return hicon;
     }
 
-    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICONSM);
+    hicon = reinterpret_cast<HICON>(GetClassLongPtr(hwnd, GCLP_HICONSM));
     if (hicon) {
         return hicon;
     }
 
-    hicon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
+    hicon = reinterpret_cast<HICON>(GetClassLongPtr(hwnd, GCLP_HICON));
     if (hicon) {
         return hicon;
     }
@@ -64,7 +62,7 @@ BitmapHandleWrapper bitmap(HWND hwnd)
 {
     HICON hicon = get(hwnd);
     if (!hicon) {
-        return BitmapHandleWrapper();
+        return {};
     }
 
     ICONINFOEXA iconInfo;
@@ -75,20 +73,20 @@ BitmapHandleWrapper bitmap(HWND hwnd)
             "failed to get icon info for %#x, GetIconInfoEx() failed: %s\n",
             hwnd,
             StringUtility::lastErrorString().c_str());
-        return BitmapHandleWrapper();
+        return {};
     }
 
-    BitmapHandleWrapper iconMaskBitmap(iconInfo.hbmMask);
-    BitmapHandleWrapper iconColorBitmap(iconInfo.hbmColor);
+    const BitmapHandleWrapper iconMaskBitmap(iconInfo.hbmMask);
+    const BitmapHandleWrapper iconColorBitmap(iconInfo.hbmColor);
 
-    DeviceContextHandleWrapper displayDC(
+    const DeviceContextHandleWrapper displayDC(
         CreateICA("DISPLAY", nullptr, nullptr, nullptr),
         DeviceContextHandleWrapper::Created);
     if (!displayDC) {
         WARNING_PRINTF(
             "failed to get desktop information context, CreateICA() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return BitmapHandleWrapper();
+        return {};
     }
 
     DeviceContextHandleWrapper bitmapDC(CreateCompatibleDC(displayDC), DeviceContextHandleWrapper::Created);
@@ -96,31 +94,31 @@ BitmapHandleWrapper bitmap(HWND hwnd)
         WARNING_PRINTF(
             "failed to get desktop device context, CreateCompatibleDC() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return BitmapHandleWrapper();
+        return {};
     }
 
-    int cx = GetSystemMetrics(SM_CXMENUCHECK);
-    int cy = GetSystemMetrics(SM_CYMENUCHECK);
+    const int cx = GetSystemMetrics(SM_CXMENUCHECK);
+    const int cy = GetSystemMetrics(SM_CYMENUCHECK);
 
     BitmapHandleWrapper bitmap(CreateCompatibleBitmap(displayDC, cx, cy));
     if (!bitmap) {
         WARNING_PRINTF(
             "failed to create bitmap, CreateCompatibleBitmap() failed: %s\n",
             StringUtility::lastErrorString().c_str());
-        return BitmapHandleWrapper();
+        return {};
     }
 
     if (!bitmapDC.selectObject(bitmap)) {
-        return BitmapHandleWrapper();
+        return {};
     }
 
-    RECT rect = { 0, 0, cx, cy };
-    BrushHandleWrapper brush(CreateSolidBrush(GetSysColor(COLOR_MENU)));
+    RECT const rect = { 0, 0, cx, cy };
+    const BrushHandleWrapper brush(CreateSolidBrush(GetSysColor(COLOR_MENU)));
     if (!FillRect(bitmapDC, &rect, brush)) {
         WARNING_PRINTF("failed to fill background, FillRect() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
-    if (!DrawIconEx(bitmapDC, 0, 0, hicon, cx, cy, 0, 0, DI_NORMAL)) {
+    if (!DrawIconEx(bitmapDC, 0, 0, hicon, cx, cy, 0, nullptr, DI_NORMAL)) {
         WARNING_PRINTF("failed to draw icon, DrawIconEx() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 

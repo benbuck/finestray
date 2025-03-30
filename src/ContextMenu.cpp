@@ -37,7 +37,7 @@ bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHa
 bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWindows)
 {
     // create popup menu
-    MenuHandleWrapper menu(CreatePopupMenu());
+    const MenuHandleWrapper menu(CreatePopupMenu());
     if (!menu) {
         WARNING_PRINTF(
             "failed to create context menu, CreatePopupMenu() failed: %s\n",
@@ -57,10 +57,10 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
 
     std::vector<BitmapHandleWrapper> bitmaps;
 
-    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+    const std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
     if (showWindows) {
         unsigned int visibleCount = 0;
-        for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+        for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
             if (window.second.visible) {
                 bitmaps.emplace_back(WindowIcon::bitmap(window.first));
                 if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount, bitmaps.back())) {
@@ -96,7 +96,7 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         }
     }
 
-    std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
+    const std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
 
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
         unsigned int minimizedCount = 0;
@@ -143,19 +143,19 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         return false;
     }
 
-    BitmapHandleWrapper appBitmap(Bitmap::getResource(IDB_APP));
-    BitmapHandleWrapper minimizeBitmap(Bitmap::getResource(IDB_MINIMIZE));
-    BitmapHandleWrapper restoreBitmap(Bitmap::getResource(IDB_RESTORE));
-    BitmapHandleWrapper settingsBitmap(Bitmap::getResource(IDB_SETTINGS));
-    BitmapHandleWrapper exitBitmap(Bitmap::getResource(IDB_EXIT));
+    const BitmapHandleWrapper appBitmap(Bitmap::getResource(IDB_APP));
+    const BitmapHandleWrapper minimizeBitmap(Bitmap::getResource(IDB_MINIMIZE));
+    const BitmapHandleWrapper restoreBitmap(Bitmap::getResource(IDB_RESTORE));
+    const BitmapHandleWrapper settingsBitmap(Bitmap::getResource(IDB_SETTINGS));
+    const BitmapHandleWrapper exitBitmap(Bitmap::getResource(IDB_EXIT));
 
     if (!appBitmap || !minimizeBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        COLORREF oldColor1 = RGB(0xFF, 0xFF, 0xFF);
-        COLORREF oldColor2 = RGB(0x00, 0x00, 0x00);
-        DWORD menuColor = GetSysColor(COLOR_MENU);
-        COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+        COLORREF const oldColor1 = RGB(0xFF, 0xFF, 0xFF);
+        COLORREF const oldColor2 = RGB(0x00, 0x00, 0x00);
+        DWORD const menuColor = GetSysColor(COLOR_MENU);
+        COLORREF const newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
 
         Bitmap::replaceColor(appBitmap, oldColor1, newColor);
         Bitmap::replaceColor(settingsBitmap, oldColor1, newColor);
@@ -256,7 +256,7 @@ bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHa
     std::string title = getWindowText(hwnd);
     constexpr size_t maxTitleLength = 30;
     if (title.length() > maxTitleLength) {
-        std::string_view ellipsis = "...";
+        const std::string_view ellipsis = "...";
         title.resize(maxTitleLength - ellipsis.length());
         title += ellipsis; // FIX - localize this?
     }

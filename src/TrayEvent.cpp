@@ -35,16 +35,22 @@ TrayEvent trayEventFromCString(const char * trayEventString)
 {
     if (!strcmp(trayEventString, "none")) {
         return TrayEvent::None;
-    } else if (!strcmp(trayEventString, "open")) {
-        return TrayEvent::Open;
-    } else if (!strcmp(trayEventString, "minimize")) {
-        return TrayEvent::Minimize;
-    } else if (!strcmp(trayEventString, "open-and-minimize")) {
-        return TrayEvent::OpenAndMinimize;
-    } else {
-        WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString);
-        return TrayEvent::None;
     }
+
+    if (!strcmp(trayEventString, "open")) {
+        return TrayEvent::Open;
+    }
+
+    if (!strcmp(trayEventString, "minimize")) {
+        return TrayEvent::Minimize;
+    }
+
+    if (!strcmp(trayEventString, "open-and-minimize")) {
+        return TrayEvent::OpenAndMinimize;
+    }
+
+    WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString);
+    return TrayEvent::None;
 }
 
 bool trayEventIncludesOpen(TrayEvent trayEvent)

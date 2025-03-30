@@ -24,50 +24,50 @@
 
 std::string fileRead(const std::string & fileName)
 {
-    std::string contents;
-
-    HandleWrapper file(
+    const HandleWrapper file(
         CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (file == INVALID_HANDLE_VALUE) {
         WARNING_PRINTF(
             "could not open '%s' for reading, CreateFileA() failed: %s\n",
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
-    } else {
-        LARGE_INTEGER fileSize;
-        if (!GetFileSizeEx(file, &fileSize)) {
-            WARNING_PRINTF(
-                "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
-                fileName.c_str(),
-                StringUtility::lastErrorString().c_str());
-        } else {
-            std::string buffer;
-            buffer.resize(fileSize.QuadPart + 1);
-            buffer[buffer.size() - 1] = '\0';
-
-            DWORD bytesRead = 0;
-            if (!ReadFile(file, &buffer[0], fileSize.LowPart, &bytesRead, nullptr)) {
-                WARNING_PRINTF(
-                    "could not read %d bytes from '%s', ReadFile() failed: %s\n",
-                    fileSize,
-                    fileName.c_str(),
-                    GetLastError());
-            } else {
-                if (bytesRead != fileSize.LowPart) {
-                    WARNING_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
-                } else {
-                    contents = buffer;
-                }
-            }
-        }
+        return {};
     }
 
-    return contents;
+    LARGE_INTEGER fileSize;
+    if (!GetFileSizeEx(file, &fileSize)) {
+        WARNING_PRINTF(
+            "could not get file size for '%s', GetFileSizeEx() failed: %s\n",
+            fileName.c_str(),
+            StringUtility::lastErrorString().c_str());
+        return {};
+    }
+
+    std::string buffer;
+    buffer.resize(fileSize.QuadPart + 1);
+    buffer[buffer.size() - 1] = '\0';
+
+    DWORD bytesRead = 0;
+    if (!ReadFile(file, buffer.data(), fileSize.LowPart, &bytesRead, nullptr)) {
+        WARNING_PRINTF(
+            "could not read %d bytes from '%s', ReadFile() failed: %s\n",
+            fileSize,
+            fileName.c_str(),
+            GetLastError());
+        return {};
+    }
+
+    if (bytesRead != fileSize.LowPart) {
+        WARNING_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+        return {};
+    }
+
+    return buffer;
 }
 
 bool fileWrite(const std::string & fileName, const std::string & contents)
 {
-    HandleWrapper file(
+    const HandleWrapper file(
         CreateFileA(fileName.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (file == INVALID_HANDLE_VALUE) {
         WARNING_PRINTF(
@@ -75,21 +75,21 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
             fileName.c_str(),
             StringUtility::lastErrorString().c_str());
         return false;
-    } else {
-        DWORD bytesWritten = 0;
-        if (!WriteFile(file, contents.c_str(), (DWORD)contents.size(), &bytesWritten, nullptr)) {
-            WARNING_PRINTF(
-                "could not write %d bytes to '%s', WriteFile() failed: %s\n",
-                contents.size(),
-                fileName.c_str(),
-                GetLastError());
-            return false;
-        } else {
-            if (bytesWritten != contents.size()) {
-                WARNING_PRINTF("wrote %d bytes to '%s', expected %zu\n", bytesWritten, fileName.c_str(), contents.size());
-                return false;
-            }
-        }
+    }
+
+    DWORD bytesWritten = 0;
+    if (!WriteFile(file, contents.c_str(), static_cast<DWORD>(contents.size()), &bytesWritten, nullptr)) {
+        WARNING_PRINTF(
+            "could not write %d bytes to '%s', WriteFile() failed: %s\n",
+            contents.size(),
+            fileName.c_str(),
+            GetLastError());
+        return false;
+    }
+
+    if (bytesWritten != contents.size()) {
+        WARNING_PRINTF("wrote %d bytes to '%s', expected %zu\n", bytesWritten, fileName.c_str(), contents.size());
+        return false;
     }
 
     return true;
@@ -97,7 +97,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
 
 bool fileExists(const std::string & fileName)
 {
-    DWORD attrib = GetFileAttributesA(fileName.c_str());
+    const DWORD attrib = GetFileAttributesA(fileName.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
@@ -116,6 +116,6 @@ bool fileDelete(const std::string & fileName)
 
 bool directoryExists(const std::string & directory)
 {
-    DWORD attrib = GetFileAttributesA(directory.c_str());
+    const DWORD attrib = GetFileAttributesA(directory.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));
 }

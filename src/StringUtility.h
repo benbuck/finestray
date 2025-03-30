@@ -32,7 +32,7 @@ std::vector<std::string> split(const std::string & s, const std::string & delimi
 std::string join(const std::vector<std::string> & vs, const std::string & delimiter);
 std::string wideStringToString(const std::wstring & ws);
 std::wstring stringToWideString(const std::string & s);
-std::string errorToString(unsigned long error);
+std::string errorToString(unsigned int error);
 std::string lastErrorString();
 
 // bool stringToBool(const std::string s, bool & b);

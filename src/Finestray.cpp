@@ -55,7 +55,7 @@
 namespace
 {
 
-enum class HotkeyID
+enum class HotkeyID : unsigned int
 {
     Minimize = 1,
     MinimizeAll,
@@ -66,12 +66,7 @@ enum class HotkeyID
 
 struct AutoTrayItem
 {
-    AutoTrayItem(HWND hwnd)
-        : hwnd_(hwnd)
-    {
-    }
-
-    HWND hwnd_;
+    HWND hwnd_ {};
 };
 
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -120,18 +115,21 @@ UINT taskbarCreatedMessage_;
 
 } // anonymous namespace
 
-int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
+// NOLINTNEXTLINE
+int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nShowCmd)
 {
     // unused
-    (void)prevHinstance;
+    (void)hPrevInstance;
     (void)pCmdLine;
 
 #if defined(_DEBUG)
     // enable memory leak checking
+    // NOLINTBEGIN
     int crtDbgFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
     crtDbgFlag |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
     crtDbgFlag &= ~_CRTDBG_CHECK_CRT_DF;
     _CrtSetDbgFlag(crtDbgFlag);
+    // NOLINTEND
 #endif
 
     // check if already running
@@ -143,7 +141,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     DEBUG_PRINTF("initializing COM\n");
-    COMLibraryWrapper comLibrary;
+    const COMLibraryWrapper comLibrary;
     if (!comLibrary.initialized()) {
         errorMessage(IDS_ERROR_INIT_COM);
         return IDS_ERROR_INIT_COM;
@@ -159,7 +157,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     }
 
     // get settings from file
-    std::string settingsFile = getSettingsFileName();
+    const std::string settingsFile = getSettingsFileName();
     if (readSettingsFromFile(settingsFile, settings_)) {
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
         updateStartWithWindowsShortcut();
@@ -170,8 +168,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         }
 
         // no settings file, update start with windows setting to match reality
-        std::string startupShortcutFullPath = getStartupShortcutFullPath();
-        bool startupShortcutExists = fileExists(startupShortcutFullPath);
+        const std::string startupShortcutFullPath = getStartupShortcutFullPath();
+        const bool startupShortcutExists = fileExists(startupShortcutFullPath);
         if (settings_.startWithWindows_ != startupShortcutExists) {
             INFO_PRINTF("updating start with windows setting to %s\n", StringUtility::boolToCString(startupShortcutExists));
             settings_.startWithWindows_ = startupShortcutExists;
@@ -192,9 +190,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
     wc.lpszClassName = APP_NAME;
     wc.hIcon = hicon;
     wc.hIconSm = hicon;
-    ATOM atom = RegisterClassExA(&wc);
+    ATOM const atom = RegisterClassExA(&wc);
     if (!atom) {
-        std::string lastErrorString = StringUtility::lastErrorString();
+        const std::string lastErrorString = StringUtility::lastErrorString();
         ERROR_PRINTF("could not create window class, RegisterClassExA() failed: %s", lastErrorString.c_str());
         errorMessage(ErrorContext(IDS_ERROR_REGISTER_WINDOW_CLASS, lastErrorString));
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
@@ -215,15 +213,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         nullptr // application data
     );
     if (!appWindow_) {
-        std::string lastErrorString = StringUtility::lastErrorString();
+        const std::string lastErrorString = StringUtility::lastErrorString();
         ERROR_PRINTF("could not create window, CreateWindowA() failed: %s", lastErrorString.c_str());
         errorMessage(ErrorContext(IDS_ERROR_CREATE_WINDOW, lastErrorString));
         return IDS_ERROR_CREATE_WINDOW;
     }
 
     // we intentionally don't show the window
-    // ShowWindow(appWindow_, nCmdShow);
-    (void)nCmdShow;
+    // ShowWindow(appWindow_, nShowCmd);
+    (void)nShowCmd;
 
     ErrorContext err;
 
@@ -245,7 +243,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE prevHinstance, 
         0,
         WINEVENT_OUTOFCONTEXT));
     if (!minimizeEventHook) {
-        std::string lastErrorString = StringUtility::lastErrorString();
+        const std::string lastErrorString = StringUtility::lastErrorString();
         ERROR_PRINTF(
             "failed to hook minimize win event %#x, SetWinEventHook() failed: %s\n",
             (HWND)appWindow_,
@@ -301,7 +299,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg) {
         // command from context menu
         case WM_COMMAND: {
-            WORD id = LOWORD(wParam);
+            WORD const id = LOWORD(wParam);
             switch (id) {
                 // about dialog
                 case IDM_APP:
@@ -338,7 +336,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 default: {
                     if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id <= IDM_MINIMIZEDWINDOW_MAX)) {
-                        unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
+                        const unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
                         INFO_PRINTF("menu restore minimized window index %u\n", index);
                         HWND minimizedWindow = MinimizedWindow::getFromIndex(index);
                         if (!minimizedWindow) {
@@ -347,7 +345,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             restoreWindow(minimizedWindow);
                         }
                     } else if ((id >= IDM_VISIBLEWINDOW_BASE) && (id <= IDM_VISIBLEWINDOW_MAX)) {
-                        unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
+                        const unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
                         INFO_PRINTF("menu minimize visible window index %u\n", index);
                         HWND visibleWindow = WindowList::getVisibleIndex(index);
                         if (!visibleWindow) {
@@ -377,7 +375,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // our hotkey was activated
         case WM_HOTKEY: {
-            HotkeyID hkid = (HotkeyID)wParam;
+            const HotkeyID hkid = static_cast<HotkeyID>(wParam);
             switch (hkid) {
                 case HotkeyID::Minimize: {
                     INFO_PRINTF("hotkey minimize\n");
@@ -387,10 +385,11 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         WARNING_PRINTF("no foreground window to minimize, ignoring\n");
                     } else {
                         // only minimize windows that have a minimize button
-                        LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
+                        LONG const windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
+                        // NOLINTNEXTLINE
                         if (windowStyle & WS_MINIMIZEBOX) {
 #if !defined(NDEBUG)
-                            WindowInfo windowInfo(foregroundHwnd);
+                            const WindowInfo windowInfo(foregroundHwnd);
                             DEBUG_PRINTF("\twindow executable '%s'\n", windowInfo.executable().c_str());
                             DEBUG_PRINTF("\twindow text '%s'\n", windowInfo.title().c_str());
                             DEBUG_PRINTF("\twindow class name '%s'\n", windowInfo.className().c_str());
@@ -440,7 +439,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // message from the tray (taskbar) icon
         case WM_TRAYWINDOW: {
-            switch ((UINT)lParam) {
+            switch (static_cast<UINT>(lParam)) {
                 // user activated context menu
                 case WM_CONTEXTMENU: {
                     INFO_PRINTF("tray context menu\n");
@@ -467,7 +466,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // user selected and activated icon
                 case NIN_SELECT: {
                     INFO_PRINTF("tray icon selected\n");
-                    HWND hwndTray = MinimizedWindow::getFromID((UINT)wParam);
+                    HWND hwndTray = MinimizedWindow::getFromID(static_cast<UINT>(wParam));
                     if (hwndTray) {
                         INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
                         restoreWindow(hwndTray);
@@ -508,9 +507,9 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         default: {
             if (uMsg == taskbarCreatedMessage_) {
                 INFO_PRINTF("taskbar created\n");
-                HINSTANCE hinstance = (HINSTANCE)GetModuleHandle(nullptr);
+                HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
                 HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
-                ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
+                const ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
                 if (err) {
                     ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
                 }
@@ -533,14 +532,15 @@ ErrorContext start()
     UINT vkMinimize = VK_DOWN;
     UINT modifiersMinimize = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMinimize_, vkMinimize, modifiersMinimize)) {
-        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "minimize");
+        return { IDS_ERROR_PARSE_HOTKEY, "minimize" };
     }
     if (!vkMinimize || !modifiersMinimize) {
         INFO_PRINTF("no hotkey to minimize windows\n");
     } else {
         DEBUG_PRINTF("registering hotkey to minimize windows\n");
-        if (!hotkeyMinimize_.create((INT)HotkeyID::Minimize, appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
-            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize");
+        if (!hotkeyMinimize_
+                 .create(static_cast<INT>(HotkeyID::Minimize), appWindow_, vkMinimize, modifiersMinimize | MOD_NOREPEAT)) {
+            return { IDS_ERROR_REGISTER_HOTKEY, "minimize" };
         }
     }
 
@@ -548,15 +548,18 @@ ErrorContext start()
     UINT vkMinimizeAll = VK_RIGHT;
     UINT modifiersMinimizeAll = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMinimizeAll_, vkMinimizeAll, modifiersMinimizeAll)) {
-        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "minimize all");
+        return { IDS_ERROR_PARSE_HOTKEY, "minimize all" };
     }
     if (!vkMinimizeAll || !modifiersMinimizeAll) {
         INFO_PRINTF("no hotkey to minimize all windows\n");
     } else {
         DEBUG_PRINTF("registering hotkey to minimize all windows\n");
-        if (!hotkeyMinimizeAll_
-                 .create((INT)HotkeyID::MinimizeAll, appWindow_, vkMinimizeAll, modifiersMinimizeAll | MOD_NOREPEAT)) {
-            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "minimize all");
+        if (!hotkeyMinimizeAll_.create(
+                static_cast<INT>(HotkeyID::MinimizeAll),
+                appWindow_,
+                vkMinimizeAll,
+                modifiersMinimizeAll | MOD_NOREPEAT)) {
+            return { IDS_ERROR_REGISTER_HOTKEY, "minimize all" };
         }
     }
 
@@ -564,14 +567,15 @@ ErrorContext start()
     UINT vkRestore = VK_UP;
     UINT modifiersRestore = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyRestore_, vkRestore, modifiersRestore)) {
-        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "restore");
+        return { IDS_ERROR_PARSE_HOTKEY, "restore" };
     }
     if (!vkRestore || !modifiersRestore) {
         INFO_PRINTF("no hotkey to restore windows\n");
     } else {
         DEBUG_PRINTF("registering hotkey to restore windows\n");
-        if (!hotkeyRestore_.create((INT)HotkeyID::Restore, appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
-            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore");
+        if (!hotkeyRestore_
+                 .create(static_cast<INT>(HotkeyID::Restore), appWindow_, vkRestore, modifiersRestore | MOD_NOREPEAT)) {
+            return { IDS_ERROR_REGISTER_HOTKEY, "restore" };
         }
     }
 
@@ -579,15 +583,18 @@ ErrorContext start()
     UINT vkRestoreAll = VK_LEFT;
     UINT modifiersRestoreAll = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyRestoreAll_, vkRestoreAll, modifiersRestoreAll)) {
-        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "restore all");
+        return { IDS_ERROR_PARSE_HOTKEY, "restore all" };
     }
     if (!vkRestoreAll || !modifiersRestoreAll) {
         INFO_PRINTF("no hotkey to restore all windows\n");
     } else {
         DEBUG_PRINTF("registering hotkey to restore all windows\n");
-        if (!hotkeyRestoreAll_
-                 .create((INT)HotkeyID::RestoreAll, appWindow_, vkRestoreAll, modifiersRestoreAll | MOD_NOREPEAT)) {
-            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "restore all");
+        if (!hotkeyRestoreAll_.create(
+                static_cast<INT>(HotkeyID::RestoreAll),
+                appWindow_,
+                vkRestoreAll,
+                modifiersRestoreAll | MOD_NOREPEAT)) {
+            return { IDS_ERROR_REGISTER_HOTKEY, "restore all" };
         }
     }
 
@@ -595,14 +602,14 @@ ErrorContext start()
     UINT vkMenu = VK_HOME;
     UINT modifiersMenu = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.hotkeyMenu_, vkMenu, modifiersMenu)) {
-        return ErrorContext(IDS_ERROR_PARSE_HOTKEY, "menu");
+        return { IDS_ERROR_PARSE_HOTKEY, "menu" };
     }
     if (!vkMenu || !modifiersMenu) {
         INFO_PRINTF("no hotkey to show context menu\n");
     } else {
         DEBUG_PRINTF("registering hotkey to show context menu\n");
-        if (!hotkeyMenu_.create((INT)HotkeyID::Menu, appWindow_, vkMenu, modifiersMenu | MOD_NOREPEAT)) {
-            return ErrorContext(IDS_ERROR_REGISTER_HOTKEY, "menu");
+        if (!hotkeyMenu_.create(static_cast<INT>(HotkeyID::Menu), appWindow_, vkMenu, modifiersMenu | MOD_NOREPEAT)) {
+            return { IDS_ERROR_REGISTER_HOTKEY, "menu" };
         }
     }
 
@@ -610,27 +617,31 @@ ErrorContext start()
     UINT vkOverride = 0;
     modifiersOverride_ = MOD_ALT | MOD_CONTROL | MOD_SHIFT;
     if (!Hotkey::parse(settings_.modifiersOverride_, vkOverride, modifiersOverride_)) {
-        return ErrorContext(IDS_ERROR_PARSE_MODIFIER, "override");
+        return { IDS_ERROR_PARSE_MODIFIER, "override" };
     }
     if (!modifiersOverride_) {
         INFO_PRINTF("no override modifiers\n");
-    } else if (vkOverride || (modifiersOverride_ & ~(MOD_ALT | MOD_CONTROL | MOD_SHIFT))) {
+    } else if (
+        vkOverride ||
+        (modifiersOverride_ &
+         ~(static_cast<UINT>(MOD_ALT) | static_cast<UINT>(MOD_CONTROL) | static_cast<UINT>(MOD_SHIFT)))) {
         WARNING_PRINTF("invalid override modifiers\n");
-        return ErrorContext(IDS_ERROR_REGISTER_MODIFIER, "override");
+        return { IDS_ERROR_REGISTER_MODIFIER, "override" };
     }
 
     // check auto-tray regular expressions to surface an error if needed
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
         try {
-            std::regex re(autoTray.windowTitle_);
+            const std::regex re(autoTray.windowTitle_);
+            static_cast<void>(re);
         } catch (const std::regex_error & e) {
-            return ErrorContext(IDS_ERROR_PARSE_REGEX, "'" + autoTray.windowTitle_ + "': " + e.what());
+            return { IDS_ERROR_PARSE_REGEX, "'" + autoTray.windowTitle_ + "': " + e.what() };
         }
     }
 
     WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
 
-    return ErrorContext();
+    return {};
 }
 
 void stop()
@@ -648,7 +659,7 @@ void stop()
 
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 {
-    WindowInfo windowInfo(hwnd);
+    const WindowInfo windowInfo(hwnd);
     DEBUG_PRINTF("\texecutable: %s\n", windowInfo.executable().c_str());
     DEBUG_PRINTF("\ttitle: %s\n", windowInfo.title().c_str());
     DEBUG_PRINTF("\tclass: %s\n", windowInfo.className().c_str());
@@ -690,7 +701,7 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
             titleMatch = true;
         } else {
             try {
-                std::regex re(autoTray.windowTitle_);
+                const std::regex re(autoTray.windowTitle_);
                 if (std::regex_match(windowInfo.title(), re)) {
                     // DEBUG_PRINTF("\twindow title '%s' match\n", autoTray.windowTitle_.c_str());
                     titleMatch = true;
@@ -706,13 +717,12 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 
         DEBUG_PRINTF("\tauto-tray ID match\n");
 
-        bool shouldAutoTray;
+        bool shouldAutoTray = false;
         switch (trayEvent) {
             case TrayEvent::Open: shouldAutoTray = trayEventIncludesOpen(autoTray.trayEvent_); break;
             case TrayEvent::Minimize: shouldAutoTray = trayEventIncludesMinimize(autoTray.trayEvent_); break;
             default: {
                 ERROR_PRINTF("invalid auto-tray action\n");
-                shouldAutoTray = false;
                 break;
             }
         }
@@ -727,8 +737,8 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 
 void minimizeAllWindows()
 {
-    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-    for (const std::pair<HWND, WindowList::WindowData> & window : windowList) {
+    const std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+    for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
         if (window.second.visible) {
             MinimizedWindow::minimize(window.first, appWindow_, settings_.minimizePlacement_);
         }
@@ -859,8 +869,8 @@ bool readSettingsFromFile(const std::string & fileName, Settings & settings)
 {
     DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
 
-    std::string writeableDir = getWriteableDir();
-    std::string json = fileRead(pathJoin(writeableDir, fileName));
+    const std::string writeableDir = getWriteableDir();
+    const std::string json = fileRead(pathJoin(writeableDir, fileName));
     if (json.empty()) {
         return false;
     }
@@ -877,17 +887,13 @@ bool writeSettingsToFile(const std::string & fileName, const Settings & settings
         settings.dump();
     }
 
-    std::string json = settings.toJSON();
+    const std::string json = settings.toJSON();
     if (json.empty()) {
         return false;
     }
 
-    std::string writeableDir = getWriteableDir();
-    if (!fileWrite(pathJoin(writeableDir, fileName), json)) {
-        return false;
-    }
-
-    return true;
+    const std::string writeableDir = getWriteableDir();
+    return fileWrite(pathJoin(writeableDir, fileName), json);
 }
 
 void showSettingsDialog()
@@ -928,7 +934,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 
             // restart to trigger error message
             stop();
-            ErrorContext err = start();
+            const ErrorContext err = start();
             if (!err) {
                 ERROR_PRINTF("expected error after restart with invalid settings\n");
             } else {
@@ -939,8 +945,8 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             return;
         }
 
-        bool settingsChanged = (settings != settings_);
-        std::string settingsFile = getSettingsFileName();
+        const bool settingsChanged = (settings != settings_);
+        const std::string settingsFile = getSettingsFileName();
         if (settingsChanged || !Settings::fileExists(settingsFile)) {
             if (settingsChanged) {
                 settings_ = settings;
@@ -950,7 +956,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
 
                 // restart to apply new settings
                 stop();
-                ErrorContext err = start();
+                const ErrorContext err = start();
                 if (err) {
                     errorMessage(err);
                     showSettingsDialog();
@@ -983,18 +989,18 @@ std::string getSettingsFileName()
 
 std::string getStartupShortcutFullPath()
 {
-    std::string startupDir = getStartupDir();
+    const std::string startupDir = getStartupDir();
     return pathJoin(startupDir, APP_NAME ".lnk");
 }
 
 void updateStartWithWindowsShortcut()
 {
-    std::string startupShortcutFullPath = getStartupShortcutFullPath();
+    const std::string startupShortcutFullPath = getStartupShortcutFullPath();
     if (settings_.startWithWindows_) {
         if (fileExists(startupShortcutFullPath)) {
             DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutFullPath.c_str());
         } else {
-            std::string exeFullPath = getExecutableFullPath();
+            const std::string exeFullPath = getExecutableFullPath();
             if (!createShortcut(startupShortcutFullPath, exeFullPath)) {
                 WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutFullPath.c_str());
             }

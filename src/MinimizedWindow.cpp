@@ -31,19 +31,12 @@ namespace
 
 struct MinimizedWindowData
 {
-    MinimizedWindowData(HWND hwnd, HWND messageHwnd, std::unique_ptr<TrayIcon> && trayIcon)
-        : hwnd_(hwnd)
-        , messageHwnd_(messageHwnd)
-        , trayIcon_(std::move(trayIcon))
-    {
-    }
-
-    HWND hwnd_;
-    HWND messageHwnd_;
+    HWND hwnd_ {};
+    HWND messageHwnd_ {};
     std::unique_ptr<TrayIcon> trayIcon_;
 };
 
-typedef std::vector<MinimizedWindowData> MinimizedWindows;
+using MinimizedWindows = std::vector<MinimizedWindowData>;
 
 MinimizedWindows minimizedWindows_;
 
@@ -58,7 +51,7 @@ bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
 
-    MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it != minimizedWindows_.end()) {
         DEBUG_PRINTF("not minimizing already minimized window %#x\n", hwnd);
         return false;
@@ -71,9 +64,9 @@ bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
-        trayIcon.reset(new TrayIcon());
+        trayIcon = std::make_unique<TrayIcon>();
         HICON hicon = WindowIcon::get(hwnd);
-        ErrorContext err = trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, hicon);
+        const ErrorContext err = trayIcon->create(hwnd, messageHwnd, WM_TRAYWINDOW, hicon);
         if (err) {
             WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
             trayIcon.reset();
@@ -103,7 +96,7 @@ void restore(HWND hwnd)
 
 void remove(HWND hwnd)
 {
-    MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
         WARNING_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
         return;
@@ -115,13 +108,12 @@ void remove(HWND hwnd)
 
 void addAll(MinimizePlacement minimizePlacement)
 {
-    for (MinimizedWindows::iterator it = minimizedWindows_.begin(); it != minimizedWindows_.end(); ++it) {
-        MinimizedWindowData & minimizedWindow = *it;
+    for (MinimizedWindowData & minimizedWindow : minimizedWindows_) {
         if (minimizePlacementIncludesTray(minimizePlacement)) {
             if (!minimizedWindow.trayIcon_) {
-                minimizedWindow.trayIcon_.reset(new TrayIcon());
+                minimizedWindow.trayIcon_ = std::make_unique<TrayIcon>();
                 HICON hicon = WindowIcon::get(minimizedWindow.hwnd_);
-                ErrorContext err = minimizedWindow.trayIcon_->create(
+                const ErrorContext err = minimizedWindow.trayIcon_->create(
                     minimizedWindow.hwnd_,
                     minimizedWindow.messageHwnd_,
                     WM_TRAYWINDOW,
@@ -153,8 +145,7 @@ void updatePlacement(MinimizePlacement minimizePlacement)
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         addAll(minimizePlacement);
     } else {
-        for (MinimizedWindows::iterator it = minimizedWindows_.begin(); it != minimizedWindows_.end(); ++it) {
-            MinimizedWindowData & minimizedWindow = *it;
+        for (MinimizedWindowData & minimizedWindow : minimizedWindows_) {
             minimizedWindow.trayIcon_.reset();
         }
     }
@@ -162,19 +153,18 @@ void updatePlacement(MinimizePlacement minimizePlacement)
 
 void updateTitle(HWND hwnd, const std::string & title)
 {
-    MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
         WARNING_PRINTF("failed to update title for minimized window %#x, not found\n", hwnd);
     } else {
-        MinimizedWindowData & minimizedWindow = *it;
+        const MinimizedWindowData & minimizedWindow = *it;
         minimizedWindow.trayIcon_->updateTip(title);
     }
 }
 
 HWND getFromID(UINT id)
 {
-    for (MinimizedWindows::const_iterator cit = minimizedWindows_.cbegin(); cit != minimizedWindows_.cend(); ++cit) {
-        const MinimizedWindowData & minimizedWindow = *cit;
+    for (const MinimizedWindowData & minimizedWindow : minimizedWindows_) {
         if (minimizedWindow.trayIcon_ && (minimizedWindow.trayIcon_->id() == id)) {
             return minimizedWindow.hwnd_;
         }
@@ -204,8 +194,7 @@ HWND getLast()
 std::vector<HWND> getAll()
 {
     std::vector<HWND> minimizedWindows;
-    for (MinimizedWindows::const_iterator cit = minimizedWindows_.cbegin(); cit != minimizedWindows_.cend(); ++cit) {
-        const MinimizedWindowData & minimizedWindow = *cit;
+    for (const MinimizedWindowData & minimizedWindow : minimizedWindows_) {
         minimizedWindows.push_back(minimizedWindow.hwnd_);
     }
     return minimizedWindows;

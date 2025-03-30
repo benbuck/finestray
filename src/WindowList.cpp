@@ -34,7 +34,7 @@ void (*changeWindowVisibilityCallback_)(HWND, bool);
 UINT_PTR timer_;
 std::map<HWND, WindowData> windowList_;
 
-VOID timerProc(HWND, UINT, UINT_PTR userData, DWORD);
+VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 } // anonymous namespace
@@ -99,7 +99,7 @@ HWND getVisibleIndex(unsigned int index)
     }
 
     unsigned int count = 0;
-    for (const std::pair<HWND, WindowList::WindowData> & window : windowList_) {
+    for (const std::pair<HWND, WindowList::WindowData> window : windowList_) {
         if (window.second.visible) {
             if (count == index) {
                 return window.first;
@@ -116,16 +116,20 @@ HWND getVisibleIndex(unsigned int index)
 namespace
 {
 
-VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
+VOID timerProc(
+    HWND /* unnamedParam1 */,
+    UINT /* unnamedParam2 */,
+    UINT_PTR /* unnamedParam3 */,
+    DWORD /* unnamedParam4 */)
 {
     std::map<HWND, WindowData> newWindowList;
-    if (!EnumWindows(enumWindowsProc, (LPARAM)&newWindowList)) {
+    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&newWindowList))) {
         ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
     if (removeWindowCallback_) {
-        for (std::pair<HWND, WindowData> window : windowList_) {
+        for (const std::pair<HWND, WindowData> window : windowList_) {
             if (newWindowList.find(window.first) == newWindowList.end()) {
                 // removed window found
                 removeWindowCallback_(window.first);
@@ -135,7 +139,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
     // check for added windows
     if (addWindowCallback_) {
-        for (std::pair<HWND, WindowData> window : newWindowList) {
+        for (const std::pair<HWND, WindowData> window : newWindowList) {
             if (windowList_.find(window.first) == windowList_.end()) {
                 // added window found
                 addWindowCallback_(window.first);
@@ -145,16 +149,20 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
     // check for changed window titles or visibility
     if (changeWindowTitleCallback_ || changeWindowVisibilityCallback_) {
-        for (std::pair<HWND, WindowData> window : newWindowList) {
+        for (const std::pair<HWND, WindowData> window : newWindowList) {
             auto it = windowList_.find(window.first);
             if (it != windowList_.end()) {
                 // existing window found
                 if (it->second.title != window.second.title) {
                     // window title changed
-                    changeWindowTitleCallback_(window.first, window.second.title);
+                    if (changeWindowTitleCallback_) {
+                        changeWindowTitleCallback_(window.first, window.second.title);
+                    }
                 } else if (it->second.visible != window.second.visible) {
                     // window visibility changed
-                    changeWindowVisibilityCallback_(window.first, window.second.visible);
+                    if (changeWindowVisibilityCallback_) {
+                        changeWindowVisibilityCallback_(window.first, window.second.visible);
+                    }
                 }
             }
         }
@@ -166,7 +174,7 @@ VOID timerProc(HWND, UINT, UINT_PTR, DWORD)
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    std::map<HWND, WindowData> & windowList = *(std::map<HWND, WindowData> *)lParam;
+    std::map<HWND, WindowData> & windowList = *reinterpret_cast<std::map<HWND, WindowData> *>(lParam);
     windowList[hwnd].title = getWindowText(hwnd);
     windowList[hwnd].visible = isWindowUserVisible(hwnd);
 

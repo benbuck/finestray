@@ -30,7 +30,7 @@ std::string toLower(const std::string & s)
 {
     std::string lower(s);
     std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) {
-        return (char)std::tolower(c);
+        return static_cast<char>(std::tolower(c));
     });
     return lower;
 }
@@ -45,13 +45,13 @@ std::string trim(const std::string & s)
     while ((rit.base() != it) && std::isspace(*rit)) {
         rit++;
     }
-    return std::string(it, rit.base());
+    return { it, rit.base() };
 }
 
 std::vector<std::string> split(const std::string & s, const std::string & delimiters)
 {
     std::vector<std::string> strings;
-    size_t start;
+    size_t start = 0;
     size_t end = 0;
     while ((start = s.find_first_not_of(delimiters, end)) != std::string::npos) {
         end = s.find_first_of(delimiters, start);
@@ -77,16 +77,16 @@ std::string wideStringToString(const std::wstring & ws)
     int ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (ret <= 0) {
         WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
-        return std::string();
+        return {};
     }
 
     std::string s;
     s.resize(ret);
 
-    ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, &s[0], (int)s.size(), nullptr, nullptr);
+    ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, s.data(), static_cast<int>(s.size()), nullptr, nullptr);
     if (ret <= 0) {
         WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
-        return std::string();
+        return {};
     }
 
     s.resize(ret - 1); // remove nul terminator
@@ -99,16 +99,16 @@ std::wstring stringToWideString(const std::string & s)
     int ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
     if (ret <= 0) {
         WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
-        return std::wstring();
+        return {};
     }
 
     std::wstring ws;
     ws.resize(ret);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, &ws[0], (int)ws.size());
+    ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, ws.data(), static_cast<int>(ws.size()));
     if (ret <= 0) {
         WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
-        return std::wstring();
+        return {};
     }
 
     ws.resize(ret - 1); // remove nul terminator
@@ -116,15 +116,15 @@ std::wstring stringToWideString(const std::string & s)
     return ws;
 }
 
-std::string errorToString(unsigned long error)
+std::string errorToString(unsigned int error)
 {
-    LPSTR str;
-    size_t size = FormatMessageA(
+    LPSTR str = nullptr;
+    const size_t size = FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         nullptr,
         error,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPSTR)&str,
+        reinterpret_cast<LPSTR>(&str),
         0,
         nullptr);
     if (!size) {
@@ -148,7 +148,7 @@ std::string errorToString(unsigned long error)
 
 std::string lastErrorString()
 {
-    DWORD lastError = GetLastError();
+    DWORD const lastError = GetLastError();
     return std::to_string(lastError) + " - " + errorToString(lastError);
 }
 

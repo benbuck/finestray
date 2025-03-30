@@ -35,16 +35,22 @@ MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementStr
 {
     if (!strcmp(minimizePlacementString, "none")) {
         return MinimizePlacement::None;
-    } else if (!strcmp(minimizePlacementString, "tray")) {
-        return MinimizePlacement::Tray;
-    } else if (!strcmp(minimizePlacementString, "menu")) {
-        return MinimizePlacement::Menu;
-    } else if (!strcmp(minimizePlacementString, "tray-and-menu")) {
-        return MinimizePlacement::TrayAndMenu;
-    } else {
-        WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString);
-        return MinimizePlacement::None;
     }
+
+    if (!strcmp(minimizePlacementString, "tray")) {
+        return MinimizePlacement::Tray;
+    }
+
+    if (!strcmp(minimizePlacementString, "menu")) {
+        return MinimizePlacement::Menu;
+    }
+
+    if (!strcmp(minimizePlacementString, "tray-and-menu")) {
+        return MinimizePlacement::TrayAndMenu;
+    }
+
+    WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString);
+    return MinimizePlacement::None;
 }
 
 bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)

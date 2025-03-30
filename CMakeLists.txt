@@ -14,6 +14,8 @@
 
 cmake_minimum_required(VERSION 3.28)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -31,7 +33,7 @@ set(COMPILE_CONFIG_OPTIONS
         /GR- # disable run-time type information (RTTI)
         /GS # enable security checks
         /guard:cf # control flow guard
-        /MP # build with multiple processes
+        #/MP # build with multiple processes
         /W4 # maximum warning levels
         /WX # treat warnings as errors
 
@@ -176,6 +178,11 @@ target_link_libraries(Finestray
         Comctl32.lib
         ShLwApi.lib
         dwmapi.lib
+)
+
+set_target_properties(Finestray
+    PROPERTIES
+        CXX_CLANG_TIDY "clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
