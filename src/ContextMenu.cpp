@@ -72,21 +72,12 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
         }
 
         if (visibleCount) {
-            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-                WARNING_PRINTF(
-                    "failed to create menu entry, AppendMenuA() failed: %s\n",
-                    StringUtility::lastErrorString().c_str());
-                return false;
-            }
             if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZE_ALL, getResourceString(IDS_MENU_MINIMIZE_ALL).c_str())) {
                 WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
                     StringUtility::lastErrorString().c_str());
                 return false;
             }
-        }
-
-        if (visibleCount) {
             if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
                 WARNING_PRINTF(
                     "failed to create menu entry, AppendMenuA() failed: %s\n",
@@ -152,10 +143,10 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
     if (!appBitmap || !minimizeBitmap || !restoreBitmap || !settingsBitmap || !exitBitmap) {
         WARNING_PRINTF("failed to load bitmap: %s\n", StringUtility::lastErrorString().c_str());
     } else {
-        COLORREF const oldColor1 = RGB(0xFF, 0xFF, 0xFF);
-        COLORREF const oldColor2 = RGB(0x00, 0x00, 0x00);
-        DWORD const menuColor = GetSysColor(COLOR_MENU);
-        COLORREF const newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
+        constexpr COLORREF oldColor1 = RGB(0xFF, 0xFF, 0xFF);
+        constexpr COLORREF oldColor2 = RGB(0x00, 0x00, 0x00);
+        const DWORD menuColor = GetSysColor(COLOR_MENU);
+        const COLORREF newColor = RGB(GetBValue(menuColor), GetGValue(menuColor), GetRValue(menuColor));
 
         Bitmap::replaceColor(appBitmap, oldColor1, newColor);
         Bitmap::replaceColor(settingsBitmap, oldColor1, newColor);

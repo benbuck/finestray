@@ -39,7 +39,7 @@ void showAboutDialog(HWND hwnd)
 
     const std::string & aboutTextStr = getResourceString(IDS_ABOUT_TEXT);
     const std::string & aboutCaptionStr = getResourceString(IDS_ABOUT_CAPTION);
-    const UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
+    constexpr UINT type = MB_OK | MB_ICONINFORMATION | MB_TASKMODAL;
 
     aboutDialogOpen_ = true;
     const int result = MessageBoxA(hwnd, aboutTextStr.c_str(), aboutCaptionStr.c_str(), type);

@@ -66,7 +66,7 @@ WindowInfo::WindowInfo(HWND hwnd)
             title_.clear(); // no title
         }
     } else {
-        title_.resize(len + 1);
+        title_.resize(static_cast<size_t>(len) + 1);
         res = GetWindowTextA(hwnd, title_.data(), static_cast<int>(title_.size()));
         if (!res && (GetLastError() != ERROR_SUCCESS)) {
             WARNING_PRINTF(

@@ -23,6 +23,8 @@
 #include "WindowMessage.h"
 
 // Standard library
+#include <algorithm>
+#include <iterator>
 #include <list>
 #include <memory>
 
@@ -164,13 +166,17 @@ void updateTitle(HWND hwnd, const std::string & title)
 
 HWND getFromID(UINT id)
 {
-    for (const MinimizedWindowData & minimizedWindow : minimizedWindows_) {
-        if (minimizedWindow.trayIcon_ && (minimizedWindow.trayIcon_->id() == id)) {
-            return minimizedWindow.hwnd_;
-        }
+    const MinimizedWindows::iterator it = std::find_if(
+        minimizedWindows_.begin(),
+        minimizedWindows_.end(),
+        [id](const MinimizedWindowData & minimizedWindow) {
+            return minimizedWindow.trayIcon_ && (minimizedWindow.trayIcon_->id() == id);
+        });
+    if (it == minimizedWindows_.end()) {
+        return nullptr;
     }
 
-    return nullptr;
+    return it->hwnd_;
 }
 
 HWND getFromIndex(UINT index)
@@ -179,7 +185,7 @@ HWND getFromIndex(UINT index)
         return nullptr;
     }
 
-    return minimizedWindows_[index].hwnd_;
+    return minimizedWindows_.at(index).hwnd_;
 }
 
 HWND getLast()
@@ -194,9 +200,13 @@ HWND getLast()
 std::vector<HWND> getAll()
 {
     std::vector<HWND> minimizedWindows;
-    for (const MinimizedWindowData & minimizedWindow : minimizedWindows_) {
-        minimizedWindows.push_back(minimizedWindow.hwnd_);
-    }
+    std::transform(
+        minimizedWindows_.begin(),
+        minimizedWindows_.end(),
+        std::back_inserter(minimizedWindows),
+        [](const MinimizedWindowData & minimizedWindow) {
+            return minimizedWindow.hwnd_;
+        });
     return minimizedWindows;
 }
 

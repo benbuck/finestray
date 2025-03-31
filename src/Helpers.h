@@ -23,6 +23,7 @@
 // Standard library
 #include <string>
 
+HINSTANCE getInstance();
 std::string getResourceString(unsigned int id);
 std::string getWindowText(HWND hwnd);
 bool isWindowUserVisible(HWND hwnd);

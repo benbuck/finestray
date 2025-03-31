@@ -30,9 +30,14 @@ bool isCloakedWindow(HWND hwnd);
 
 } // anonymous namespace
 
+HINSTANCE getInstance()
+{
+    return GetModuleHandle(nullptr);
+}
+
 std::string getResourceString(unsigned int id)
 {
-    HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+    HINSTANCE hinstance = getInstance();
 
     LPWSTR str = nullptr;
     const int strLength = LoadStringW(hinstance, id, reinterpret_cast<LPWSTR>(&str), 0);
@@ -56,7 +61,7 @@ std::string getWindowText(HWND hwnd)
         return {};
     }
 
-    text.resize(len + 1);
+    text.resize(static_cast<size_t>(len) + 1);
     const int res = GetWindowTextA(hwnd, text.data(), static_cast<int>(text.size()));
     if (!res && (GetLastError() != ERROR_SUCCESS)) {
         WARNING_PRINTF(
@@ -132,8 +137,7 @@ bool isAltTabWindow(HWND hwnd)
 bool isToolWindow(HWND hwnd)
 {
     LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    // NOLINTNEXTLINE
-    return (exStyle & WS_EX_TOOLWINDOW) != 0;
+    return (exStyle & WS_EX_TOOLWINDOW) != 0; // NOLINT
 }
 
 // from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507

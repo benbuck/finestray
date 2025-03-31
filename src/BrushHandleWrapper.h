@@ -24,6 +24,8 @@
 class BrushHandleWrapper
 {
 public:
+    BrushHandleWrapper() = default;
+
     explicit BrushHandleWrapper(HBRUSH hbrush)
         : hbrush_(hbrush)
     {
@@ -37,6 +39,11 @@ public:
             }
         }
     }
+
+    BrushHandleWrapper(const BrushHandleWrapper &) = delete;
+    BrushHandleWrapper(BrushHandleWrapper &&) = delete;
+    BrushHandleWrapper & operator=(const BrushHandleWrapper &) = delete;
+    BrushHandleWrapper & operator=(BrushHandleWrapper &&) = delete;
 
     operator HBRUSH() const { return hbrush_; }
 

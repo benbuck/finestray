@@ -64,18 +64,18 @@ enum SettingKeys : unsigned int
     SK_Count
 };
 
-const unsigned int versionCurrent_ = 1;
-const bool startWithWindowsDefault_ = false;
-const bool showWindowsInMenuDefault_ = false;
-const bool logToFileDefault_ = false;
-const MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
-const char * hotkeyMinimizeDefault_ = "alt ctrl shift down";
-const char * hotkeyMinimizeAllDefault_ = "alt ctrl shift right";
-const char * hotkeyRestoreDefault_ = "alt ctrl shift up";
-const char * hotkeyRestoreAllDefault_ = "alt ctrl shift left";
-const char * hotkeyMenuDefault_ = "alt ctrl shift home";
-const char * modifiersOverrideDefault_ = "alt ctrl shift";
-const unsigned int pollIntervalDefault_ = 500;
+constexpr unsigned int versionCurrent_ = 1;
+constexpr bool startWithWindowsDefault_ = false;
+constexpr bool showWindowsInMenuDefault_ = false;
+constexpr bool logToFileDefault_ = false;
+constexpr MinimizePlacement minimizePlacementDefault_ = MinimizePlacement::TrayAndMenu;
+constexpr char hotkeyMinimizeDefault_[] = "alt ctrl shift down";
+constexpr char hotkeyMinimizeAllDefault_[] = "alt ctrl shift right";
+constexpr char hotkeyRestoreDefault_[] = "alt ctrl shift up";
+constexpr char hotkeyRestoreAllDefault_[] = "alt ctrl shift left";
+constexpr char hotkeyMenuDefault_[] = "alt ctrl shift home";
+constexpr char modifiersOverrideDefault_[] = "alt ctrl shift";
+constexpr unsigned int pollIntervalDefault_ = 500;
 const char * settingKeys_[SK_Count] = { "version",
                                         "start-with-windows",
                                         "show-windows-in-menu",
@@ -267,7 +267,6 @@ bool Settings::valid() const
         case MinimizePlacement::None:
         default: {
             return false;
-            break;
         }
     }
 
@@ -404,8 +403,17 @@ namespace
 
 bool autoTrayItemCallback(const cJSON * cjson, void * userData)
 {
+    if (!cjson) {
+        WARNING_PRINTF("null cjson\n");
+        return false;
+    }
     if (!cJSON_IsObject(cjson)) {
         WARNING_PRINTF("bad type for '%s'\n", cjson->string);
+        return false;
+    }
+    Settings * settings = static_cast<Settings *>(userData);
+    if (!settings) {
+        WARNING_PRINTF("null settings\n");
         return false;
     }
 
@@ -414,8 +422,6 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData)
     const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
     const char * trayEvent = getString(cjson, settingKeys_[SK_TrayEvent], nullptr);
     if (executable || windowClass || windowTitle) {
-        Settings * settings = static_cast<Settings *>(userData);
-
         Settings::AutoTray autoTray;
         autoTray.executable_ = executable ? executable : "";
         autoTray.windowClass_ = windowClass ? windowClass : "";
@@ -440,8 +446,7 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
         return defaultValue;
     }
 
-    // NOLINTNEXTLINE
-    return cJSON_IsTrue(item) == cJSON_True;
+    return cJSON_IsTrue(item) == cJSON_True; // NOLINT
 }
 
 double getNumber(const cJSON * cjson, const char * key, double defaultValue)
@@ -461,7 +466,7 @@ double getNumber(const cJSON * cjson, const char * key, double defaultValue)
 
 const char * getString(const cJSON * cjson, const char * key, const char * defaultValue)
 {
-    cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
+    const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {
         return defaultValue;
     }
@@ -477,6 +482,15 @@ const char * getString(const cJSON * cjson, const char * key, const char * defau
 
 void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData)
 {
+    if (!cjson) {
+        WARNING_PRINTF("null cjson\n");
+        return;
+    }
+    if (!callback) {
+        WARNING_PRINTF("null callback\n");
+        return;
+    }
+
     if (!cJSON_IsArray(cjson)) {
         WARNING_PRINTF("bad type for '%s'\n", cjson->string);
     } else {

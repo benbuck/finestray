@@ -51,7 +51,7 @@ public:
 
     ~BitmapHandleWrapper() { destroy(); }
 
-    void destroy()
+    void destroy() noexcept
     {
         if (hbitmap_) {
             if (!DeleteObject(hbitmap_)) {
@@ -65,7 +65,7 @@ public:
 
     operator bool() const { return hbitmap_ != nullptr; }
 
-    HBITMAP release()
+    HBITMAP release() noexcept
     {
         HBITMAP hbitmap = hbitmap_;
         hbitmap_ = nullptr;

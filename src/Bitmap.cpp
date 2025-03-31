@@ -26,7 +26,7 @@ namespace Bitmap
 
 BitmapHandleWrapper getResource(unsigned int id)
 {
-    HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+    HINSTANCE hinstance = GetModuleHandle(nullptr);
     BitmapHandleWrapper bitmap(static_cast<HBITMAP>(LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0)));
     if (!bitmap) {
         WARNING_PRINTF(
@@ -61,16 +61,17 @@ bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORRE
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
 
-    std::vector<COLORREF> pixels(static_cast<size_t>(bm.bmWidth * bm.bmHeight));
+    std::vector<COLORREF> pixels(static_cast<size_t>(bm.bmWidth) * static_cast<size_t>(bm.bmHeight));
     if (!GetDIBits(desktopDC, bitmap, 0, bm.bmHeight, pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
-    const bool replaced = false;
+    bool replaced = false;
     for (COLORREF & pixelColor : pixels) {
         if (pixelColor == oldColor) {
             pixelColor = newColor;
+            replaced = true;
         }
     }
 

@@ -115,7 +115,7 @@ std::string pathJoin(const std::string & path1, const std::string & path2)
     std::string path;
     path.resize(pathSize);
 
-    LPSTR result = PathCombineA(path.data(), path1.c_str(), path2.c_str());
+    LPCSTR result = PathCombineA(path.data(), path1.c_str(), path2.c_str());
     if (!result) {
         WARNING_PRINTF(
             "could not join paths '%s' and '%s', PathCombineA() failed: %s\n",
@@ -238,7 +238,7 @@ bool getExecutablePathComponents()
     executableFullPath_ = moduleFullPath;
     DEBUG_PRINTF("executable full path: %s\n", executableFullPath_.c_str());
 
-    CHAR * fileName = PathFindFileNameA(moduleFullPath);
+    LPCSTR fileName = PathFindFileNameA(moduleFullPath);
     if (fileName == moduleFullPath) {
         WARNING_PRINTF(
             "could not find file name in module full path '%s', PathFindFileNameA() failed: %s\n",

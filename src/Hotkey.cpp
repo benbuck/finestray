@@ -45,11 +45,6 @@ const std::map<std::string, UINT> vkeyMap_ = {
 
 } // anonymous namespace
 
-Hotkey::~Hotkey()
-{
-    destroy();
-}
-
 bool Hotkey::create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers)
 {
     DEBUG_PRINTF("creating hotkey %d\n", id);
@@ -108,7 +103,7 @@ std::string Hotkey::normalize(const std::string & hotkeyStr)
             if (!normalized.empty()) {
                 normalized += ' ';
             }
-            normalized += parseResult.keys[0];
+            normalized += parseResult.keys.at(0);
         }
     }
 
@@ -136,12 +131,12 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
     }
 
     if (!parseResult.keys.empty()) {
-        std::string vkey = parseResult.keys[0];
+        std::string vkey = parseResult.keys.at(0);
         const auto & vkit = vkeyMap_.find(vkey);
         if (vkit != vkeyMap_.end()) {
             key = vkit->second;
         } else {
-            key = VkKeyScanA(vkey[0]);
+            key = VkKeyScanA(vkey.at(0));
         }
     }
 
@@ -185,7 +180,7 @@ Hotkey::ParseResult Hotkey::parseInternal(const std::string & hotkeyStr)
             continue;
         }
 
-        SHORT const scan = VkKeyScanA(token[0]);
+        SHORT const scan = VkKeyScanA(token.at(0));
         if (static_cast<unsigned int>(scan) == 0xFFFF) {
             parseResult.unrecognized.push_back(token);
             continue;

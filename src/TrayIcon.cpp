@@ -24,16 +24,11 @@
 
 volatile LONG TrayIcon::gid_ = 0;
 
-TrayIcon::~TrayIcon()
-{
-    destroy();
-}
-
 ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
 {
-    LONG const id = InterlockedIncrement(&gid_);
+    LONG const gid = InterlockedIncrement(&gid_);
 
-    DEBUG_PRINTF("creating tray icon %u\n", id);
+    DEBUG_PRINTF("creating tray icon %u\n", gid);
 
     if (nid_.uID) {
         WARNING_PRINTF("tray icon already created, destroying first\n");
@@ -43,7 +38,7 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
     ZeroMemory(&nid_, sizeof(nid_));
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
     nid_.hWnd = messageHwnd;
-    nid_.uID = static_cast<UINT>(id);
+    nid_.uID = static_cast<UINT>(gid);
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_GUID;
     nid_.uCallbackMessage = msg;
     nid_.hIcon = hicon ? hicon : LoadIcon(nullptr, IDI_APPLICATION);
@@ -98,7 +93,7 @@ void TrayIcon::updateTip(const std::string & tip)
 {
     if (nid_.uID) {
         DEBUG_PRINTF("updating tray icon %u tip to %s\n", nid_.uID, tip.c_str());
-        const size_t tipMaxSize = sizeof(nid_.szTip) / sizeof(nid_.szTip[0]);
+        constexpr size_t tipMaxSize = sizeof(nid_.szTip) / sizeof(nid_.szTip[0]);
         strncpy_s(nid_.szTip, tip.c_str(), tipMaxSize - 1);
         if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {
             WARNING_PRINTF(

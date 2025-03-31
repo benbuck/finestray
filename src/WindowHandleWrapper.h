@@ -33,6 +33,11 @@ public:
 
     ~WindowHandleWrapper() { destroy(); }
 
+    WindowHandleWrapper(const WindowHandleWrapper &) = delete;
+    WindowHandleWrapper(WindowHandleWrapper &&) = delete;
+    WindowHandleWrapper & operator=(const WindowHandleWrapper &) = delete;
+    WindowHandleWrapper & operator=(WindowHandleWrapper &&) = delete;
+
     void operator=(HWND hwnd)
     {
         destroy();

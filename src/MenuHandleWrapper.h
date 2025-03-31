@@ -24,6 +24,8 @@
 class MenuHandleWrapper
 {
 public:
+    MenuHandleWrapper() = delete;
+
     explicit MenuHandleWrapper(HMENU hmenu)
         : hmenu_(hmenu)
     {
@@ -37,6 +39,11 @@ public:
             }
         }
     }
+
+    MenuHandleWrapper(const MenuHandleWrapper &) = delete;
+    MenuHandleWrapper(MenuHandleWrapper &&) = delete;
+    MenuHandleWrapper & operator=(const MenuHandleWrapper &) = delete;
+    MenuHandleWrapper & operator=(MenuHandleWrapper &&) = delete;
 
     operator HMENU() const { return hmenu_; }
 

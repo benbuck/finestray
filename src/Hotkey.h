@@ -24,8 +24,14 @@
 class Hotkey
 {
 public:
-    Hotkey() = default;
-    ~Hotkey();
+    Hotkey() noexcept = default;
+
+    ~Hotkey() { destroy(); }
+
+    Hotkey(const Hotkey &) = delete;
+    Hotkey(Hotkey &&) = delete;
+    Hotkey & operator=(const Hotkey &) = delete;
+    Hotkey & operator=(Hotkey &&) = delete;
 
     bool create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers);
     void destroy();

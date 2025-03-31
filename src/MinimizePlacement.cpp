@@ -52,13 +52,3 @@ MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementStr
     WARNING_PRINTF("error, bad minimize placement string: %s\n", minimizePlacementString);
     return MinimizePlacement::None;
 }
-
-bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
-{
-    return (minimizePlacement == MinimizePlacement::Tray) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
-}
-
-bool minimizePlacementIncludesMenu(MinimizePlacement minimizePlacement)
-{
-    return (minimizePlacement == MinimizePlacement::Menu) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
-}

@@ -24,12 +24,19 @@
 class WinEventHookHandleWrapper
 {
 public:
+    WinEventHookHandleWrapper() = delete;
+
     explicit WinEventHookHandleWrapper(HWINEVENTHOOK hwineventhook)
         : hwineventhook_(hwineventhook)
     {
     }
 
     ~WinEventHookHandleWrapper() { destroy(); }
+
+    WinEventHookHandleWrapper(const WinEventHookHandleWrapper &) = delete;
+    WinEventHookHandleWrapper(WinEventHookHandleWrapper &&) = delete;
+    WinEventHookHandleWrapper & operator=(const WinEventHookHandleWrapper &) = delete;
+    WinEventHookHandleWrapper & operator=(WinEventHookHandleWrapper &&) = delete;
 
     void destroy()
     {

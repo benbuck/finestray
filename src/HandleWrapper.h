@@ -43,6 +43,10 @@ public:
         return *this;
     }
 
+    HandleWrapper(const HandleWrapper &) = delete;
+    HandleWrapper(HandleWrapper &&) = delete;
+    HandleWrapper & operator=(const HandleWrapper &) = delete;
+
     void close()
     {
         if (handle_ != INVALID_HANDLE_VALUE) {

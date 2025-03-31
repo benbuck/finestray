@@ -23,6 +23,8 @@
 class CJsonWrapper
 {
 public:
+    CJsonWrapper() = delete;
+
     explicit CJsonWrapper(cJSON * cjson)
         : cjson_(cjson)
     {
@@ -35,8 +37,17 @@ public:
         }
     }
 
+    CJsonWrapper(const CJsonWrapper &) = delete;
+    CJsonWrapper(CJsonWrapper &&) = delete;
+    CJsonWrapper & operator=(const CJsonWrapper &) = delete;
+    CJsonWrapper & operator=(CJsonWrapper &&) = delete;
+
     operator cJSON *() const { return cjson_; }
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 26408) // Avoid malloc() and free(), prefer the nothrow version of new with delete
+#endif
     std::string print()
     {
         char * rawJson = cJSON_Print(cjson_);
@@ -44,6 +55,9 @@ public:
         free(rawJson);
         return json;
     }
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 private:
     cJSON * cjson_ {};

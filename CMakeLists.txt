@@ -36,7 +36,16 @@ set(COMPILE_CONFIG_OPTIONS
         #/MP # build with multiple processes
         /W4 # maximum warning levels
         /WX # treat warnings as errors
-        /analyze
+        /analyze # enable static code analysis
+        /wd26440 # Function can be declared 'noexcept'
+        /wd26447 # The function is declared 'noexcept' but calls function which may throw exceptions
+        /wd26455 # Default constructor should not throw. Declare it 'noexcept'
+        /wd26467 # Converting from floating point to unsigned integral types results in non-portable code if the double/float has a negative value.
+        /wd26472 # Don't use a static_cast for arithmetic conversions
+        /wd26826 # Don't use C-style variable arguments
+        /wd26485 # No array to pointer decay
+        /wd26490 # Don't use reinterpret_cast
+        /wd26492 # Don't use const_cast
 
         # Debug compile options
         $<$<CONFIG:Debug>:

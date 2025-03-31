@@ -100,22 +100,27 @@ void start(bool enable, const std::string & fileName)
     pendingLogs_.clear();
 }
 
+#if defined(_MSC_VER)
+#pragma warning(push, 4)
+#pragma warning(disable : 26400 26401 26409)
+#endif
+
 // NOLINTBEGIN
 
-void printf(Level level, const char * fmt, ...)
+void printf(Level level, const char * fmt, ...) noexcept
 {
-    char fixedBuffer[1024];
+    char fixedBuffer[1024] = {};
     char * buffer = fixedBuffer;
     size_t bufferSize = sizeof(fixedBuffer);
 
-    va_list ap = {};
+    va_list ap;
     va_start(ap, fmt);
     int len = vsnprintf(buffer, bufferSize, fmt, ap);
-    if (len >= (int)bufferSize) {
-        bufferSize = (size_t)len + 1;
+    if (len >= static_cast<int>(bufferSize)) {
+        bufferSize = static_cast<size_t>(len) + 1;
         buffer = new char[bufferSize];
         len = vsnprintf(buffer, bufferSize, fmt, ap);
-        assert(len < (int)bufferSize);
+        assert(len < static_cast<int>(bufferSize));
     }
     va_end(ap);
 
@@ -126,9 +131,7 @@ void printf(Level level, const char * fmt, ...)
     }
 }
 
-// NOLINTEND
-
-void print(Level level, const char * str)
+void print(Level level, const char * str) noexcept
 {
     SYSTEMTIME systemTime;
     memset(&systemTime, 0, sizeof(systemTime));
@@ -179,5 +182,11 @@ void print(Level level, const char * str)
     //     }
     // #endif
 }
+
+// NOLINTEND
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 } // namespace Log

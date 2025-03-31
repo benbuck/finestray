@@ -53,7 +53,7 @@ enum class AutoTrayListViewColumn : unsigned int
 INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void autoTrayListViewInit(HWND dialogHwnd);
 std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND dialogHwnd);
-void autoTrayListViewNotify(HWND dialogHwnd, LPNMHDR nmhdr);
+void autoTrayListViewNotify(HWND dialogHwnd, const NMHDR * nmhdr);
 #ifdef SORT_ENABLED
 int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 #endif
@@ -92,7 +92,7 @@ HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionC
     settings_ = settings;
     completionCallback_ = completionCallback;
 
-    HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+    HINSTANCE hinstance = getInstance();
     HWND dialogHwnd = CreateDialogA(hinstance, MAKEINTRESOURCEA(IDD_DIALOG_SETTINGS), hwnd, settingsDialogFunc);
 
     // return value intentionally ignored, ShowWindow returns previous visibility
@@ -235,7 +235,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
         }
 
         case WM_NOTIFY: {
-            LPNMHDR nmhdr = reinterpret_cast<LPNMHDR>(lParam);
+            const NMHDR * nmhdr = reinterpret_cast<const NMHDR *>(lParam);
             // DEBUG_PRINTF("nmhdr hwnd %#x, id %#x, code %d\n", nmhdr->hwndFrom, nmhdr->idFrom, (int)nmhdr->code);
             if (nmhdr->hwndFrom == GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_LIST)) {
                 autoTrayListViewNotify(dialogHwnd, nmhdr);
@@ -389,7 +389,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
     HWND hWndHdr = reinterpret_cast<HWND>(SendMessage(autoTrayListViewHwnd_, LVM_GETHEADER, 0, 0));
     const int count = static_cast<int>(SendMessage(hWndHdr, HDM_GETITEMCOUNT, 0, 0L));
     if (count < static_cast<int>(AutoTrayListViewColumn::Count)) {
-        const unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE |
+        constexpr unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE |
             LVS_EX_GRIDLINES;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
             WARNING_PRINTF(
@@ -478,24 +478,24 @@ void autoTrayListViewInit(HWND dialogHwnd)
         listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
 
         listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
-        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_[a].windowClass_.c_str());
+        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_.at(a).windowClass_.c_str());
         if (SendMessageA(autoTrayListViewHwnd_, LVM_INSERTITEMA, 0, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
             WARNING_PRINTF("SendMessage LVM_INSERTITEMA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
-        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_[a].executable_.c_str());
+        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_.at(a).executable_.c_str());
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
             WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
         listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
-        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_[a].windowTitle_.c_str());
+        listViewItem.pszText = const_cast<LPSTR>(settings_.autoTrays_.at(a).windowTitle_.c_str());
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
             WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
         }
 
-        const std::string str = trayEventToResourceString(settings_.autoTrays_[a].trayEvent_);
+        const std::string str = trayEventToResourceString(settings_.autoTrays_.at(a).trayEvent_);
         listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::TrayEvent);
         listViewItem.pszText = const_cast<LPSTR>(str.c_str());
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, a, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
@@ -540,7 +540,7 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* dialogHwnd */)
     return autoTrays;
 }
 
-void autoTrayListViewNotify(HWND dialogHwnd, LPNMHDR nmhdr)
+void autoTrayListViewNotify(HWND dialogHwnd, const NMHDR * nmhdr)
 {
     switch (nmhdr->code) {
         case LVN_COLUMNCLICK: {
@@ -563,7 +563,7 @@ void autoTrayListViewNotify(HWND dialogHwnd, LPNMHDR nmhdr)
         }
 
         case LVN_ITEMCHANGED: {
-            LPNMLISTVIEW nmListView = reinterpret_cast<LPNMLISTVIEW>(nmhdr);
+            const NMLISTVIEW * nmListView = reinterpret_cast<const NMLISTVIEW *>(nmhdr);
             if (nmListView->uChanged & LVIF_STATE) {
                 if (nmListView->uNewState & LVIS_SELECTED) {
                     autoTrayListViewItemEdit(dialogHwnd, nmListView->iItem);
@@ -652,22 +652,22 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     std::string str;
 
     str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS));
-    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
     listViewItem.pszText = const_cast<LPSTR>(str.c_str());
+    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowClass);
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE));
-    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
     listViewItem.pszText = const_cast<LPSTR>(str.c_str());
+    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::Executable);
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     str = getWindowText(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE));
-    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
     listViewItem.pszText = const_cast<LPSTR>(str.c_str());
+    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::WindowTitle);
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
@@ -684,8 +684,8 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     }
 
     str = trayEventToResourceString(trayEvent);
-    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::TrayEvent);
     listViewItem.pszText = const_cast<LPSTR>(str.c_str());
+    listViewItem.iSubItem = static_cast<int>(AutoTrayListViewColumn::TrayEvent);
     if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMTEXTA, item, reinterpret_cast<LPARAM>(&listViewItem)) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
     }
@@ -857,12 +857,12 @@ void setListViewSortIcon(HWND listView, int col, int sortOrder)
         if ((sortOrder != 0) && (curCol == col)) {
             switch (sortOrder) {
                 case 1: {
-                    item.fmt &= !HDF_SORTUP;
+                    item.fmt &= ~HDF_SORTUP;
                     item.fmt |= HDF_SORTDOWN;
                     break;
                 }
                 case 2: {
-                    item.fmt &= !HDF_SORTDOWN;
+                    item.fmt &= ~HDF_SORTDOWN;
                     item.fmt |= HDF_SORTUP;
                     break;
                 }
@@ -872,7 +872,8 @@ void setListViewSortIcon(HWND listView, int col, int sortOrder)
                 }
             }
         } else {
-            item.fmt &= !HDF_SORTUP & !HDF_SORTDOWN;
+            item.fmt &= ~HDF_SORTUP;
+            item.fmt &= ~HDF_SORTDOWN;
         }
         item.fmt |= HDF_STRING;
         item.mask = HDI_FORMAT | HDI_TEXT;
@@ -999,7 +1000,7 @@ std::string getDialogItemText(HWND dialogHwnd, int id)
     std::string text;
     const int textLength = GetWindowTextLengthA(GetDlgItem(dialogHwnd, id));
     if (textLength > 0) {
-        text.resize(textLength + 1);
+        text.resize(static_cast<size_t>(textLength) + 1);
         if (!GetDlgItemTextA(dialogHwnd, id, text.data(), static_cast<int>(text.size()))) {
             WARNING_PRINTF("GetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             text.clear();

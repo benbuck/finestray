@@ -57,7 +57,7 @@ public:
 
     static bool fileExists(const std::string & fileName);
 
-    unsigned int version_;
+    unsigned int version_ {};
     bool startWithWindows_ {};
     bool showWindowsInMenu_ {};
     bool logToFile_ {};

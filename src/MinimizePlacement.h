@@ -27,5 +27,13 @@ enum class MinimizePlacement
 
 const char * minimizePlacementToCString(MinimizePlacement minimizePlacement);
 MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString);
-bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement);
-bool minimizePlacementIncludesMenu(MinimizePlacement minimizePlacement);
+
+inline constexpr bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
+{
+    return (minimizePlacement == MinimizePlacement::Tray) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
+}
+
+inline constexpr bool minimizePlacementIncludesMenu(MinimizePlacement minimizePlacement)
+{
+    return (minimizePlacement == MinimizePlacement::Menu) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
+}

@@ -24,10 +24,8 @@ class WindowInfo
 {
 public:
     WindowInfo() = delete;
-    WindowInfo(HWND hwnd);
+    explicit WindowInfo(HWND hwnd);
     ~WindowInfo() = default;
-
-    HWND hwnd() const { return hwnd_; }
 
     const std::string & className() const { return className_; }
 

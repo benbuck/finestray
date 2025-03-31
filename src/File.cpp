@@ -45,7 +45,7 @@ std::string fileRead(const std::string & fileName)
 
     std::string buffer;
     buffer.resize(fileSize.QuadPart + 1);
-    buffer[buffer.size() - 1] = '\0';
+    buffer.at(buffer.size() - 1) = '\0';
 
     DWORD bytesRead = 0;
     if (!ReadFile(file, buffer.data(), fileSize.LowPart, &bytesRead, nullptr)) {

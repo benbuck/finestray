@@ -28,8 +28,14 @@
 class TrayIcon
 {
 public:
-    TrayIcon() = default;
-    ~TrayIcon();
+    TrayIcon() noexcept = default;
+
+    ~TrayIcon() { destroy(); }
+
+    TrayIcon(const TrayIcon &) = delete;
+    TrayIcon(TrayIcon &&) = delete;
+    TrayIcon & operator=(const TrayIcon &) = delete;
+    TrayIcon & operator=(TrayIcon &&) = delete;
 
     ErrorContext create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
     void destroy();
@@ -38,12 +44,7 @@ public:
 
     inline UINT id() const { return nid_.uID; }
 
-    inline HWND hwnd() const { return nid_.hWnd; }
-
 private:
-    TrayIcon(const TrayIcon &) = delete;
-    TrayIcon & operator=(const TrayIcon &) = delete;
-
     NOTIFYICONDATAA nid_ {};
 
     static volatile LONG gid_;

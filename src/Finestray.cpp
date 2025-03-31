@@ -115,8 +115,15 @@ UINT taskbarCreatedMessage_;
 
 } // anonymous namespace
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 26461)
+#endif
 // NOLINTNEXTLINE
 int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nShowCmd)
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 {
     // unused
     (void)hPrevInstance;
@@ -387,8 +394,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     } else {
                         // only minimize windows that have a minimize button
                         LONG const windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
-                        // NOLINTNEXTLINE
-                        if (windowStyle & WS_MINIMIZEBOX) {
+                        if (windowStyle & WS_MINIMIZEBOX) { // NOLINT
 #if !defined(NDEBUG)
                             const WindowInfo windowInfo(foregroundHwnd);
                             DEBUG_PRINTF("\twindow executable '%s'\n", windowInfo.executable().c_str());
@@ -441,7 +447,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // message from the tray (taskbar) icon
         case WM_TRAYWINDOW: {
-            switch (static_cast<UINT>(lParam)) {
+            switch (lParam) {
                 // user activated context menu
                 case WM_CONTEXTMENU: {
                     INFO_PRINTF("tray context menu\n");
@@ -509,7 +515,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         default: {
             if (uMsg == taskbarCreatedMessage_) {
                 INFO_PRINTF("taskbar created\n");
-                HINSTANCE hinstance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
+                HINSTANCE hinstance = getInstance();
                 HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
                 const ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
                 if (err) {

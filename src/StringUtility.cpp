@@ -39,11 +39,11 @@ std::string trim(const std::string & s)
 {
     std::string::const_iterator it = s.begin();
     while (it != s.end() && std::isspace(*it)) {
-        it++;
+        ++it;
     }
     std::string::const_reverse_iterator rit = s.rbegin();
     while ((rit.base() != it) && std::isspace(*rit)) {
-        rit++;
+        ++rit;
     }
     return { it, rit.base() };
 }
@@ -67,7 +67,7 @@ std::string join(const std::vector<std::string> & vs, const std::string & delimi
         if (i > 0) {
             s += delimiter;
         }
-        s += vs[i];
+        s += vs.at(i);
     }
     return s;
 }
@@ -89,7 +89,7 @@ std::string wideStringToString(const std::wstring & ws)
         return {};
     }
 
-    s.resize(ret - 1); // remove nul terminator
+    s.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
 
     return s;
 }
@@ -111,7 +111,7 @@ std::wstring stringToWideString(const std::string & s)
         return {};
     }
 
-    ws.resize(ret - 1); // remove nul terminator
+    ws.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
 
     return ws;
 }
@@ -135,8 +135,8 @@ std::string errorToString(unsigned int error)
     LocalFree(str);
 
     // remove trailing newline
-    if ((ret.size() > 1) && (ret[ret.size() - 1] == '\n')) {
-        if ((ret.size() > 2) && (ret[ret.size() - 2] == '\r')) {
+    if ((ret.size() > 1) && (ret.at(ret.size() - 1) == '\n')) {
+        if ((ret.size() > 2) && (ret.at(ret.size() - 2) == '\r')) {
             ret.resize(ret.size() - 2);
         } else {
             ret.resize(ret.size() - 1);

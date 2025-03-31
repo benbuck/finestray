@@ -33,6 +33,8 @@ public:
         Created
     };
 
+    DeviceContextHandleWrapper() = delete;
+
     DeviceContextHandleWrapper(HDC hdc, Mode mode)
         : hdc_(hdc)
         , mode_(mode)
@@ -69,6 +71,11 @@ public:
             }
         }
     }
+
+    DeviceContextHandleWrapper(const DeviceContextHandleWrapper &) = delete;
+    DeviceContextHandleWrapper(DeviceContextHandleWrapper &&) = delete;
+    DeviceContextHandleWrapper & operator=(const DeviceContextHandleWrapper &) = delete;
+    DeviceContextHandleWrapper & operator=(DeviceContextHandleWrapper &&) = delete;
 
     operator HDC() const { return hdc_; }
 

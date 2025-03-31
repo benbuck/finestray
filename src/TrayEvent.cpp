@@ -52,13 +52,3 @@ TrayEvent trayEventFromCString(const char * trayEventString)
     WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString);
     return TrayEvent::None;
 }
-
-bool trayEventIncludesOpen(TrayEvent trayEvent)
-{
-    return (trayEvent == TrayEvent::Open) || (trayEvent == TrayEvent::OpenAndMinimize);
-}
-
-bool trayEventIncludesMinimize(TrayEvent trayEvent)
-{
-    return (trayEvent == TrayEvent::Minimize) || (trayEvent == TrayEvent::OpenAndMinimize);
-}

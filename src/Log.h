@@ -35,7 +35,7 @@ enum class Level
     Error
 };
 
-void printf(Level level, const char * fmt, ...);
-void print(Level level, const char * str);
+void printf(Level level, const char * fmt, ...) noexcept;
+void print(Level level, const char * str) noexcept;
 
 } // namespace Log
