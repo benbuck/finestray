@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <builddir>finestray-cppcheck-build-dir</builddir>
+    <analyze-all-vs-configs>false</analyze-all-vs-configs>
+    <check-headers>true</check-headers>
+    <check-unused-templates>true</check-unused-templates>
+    <inline-suppression>true</inline-suppression>
+    <includedir>
+        <dir name="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/" />
+    </includedir>
+    <undefines>
+        <undefine>SORT_ENABLED</undefine>
+    </undefines>
+    <paths>
+        <dir name="src" />
+    </paths>
+    <libraries>
+        <library>windows</library>
+    </libraries>
+    <check-level-exhaustive />
+    <project-name>finestray</project-name>
+</project>

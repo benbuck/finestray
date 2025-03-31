@@ -16,3 +16,4 @@
 /build
 /icon/unused.*
 Finestray.json
+/Finestray-cppcheck-build-dir
