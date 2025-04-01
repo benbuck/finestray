@@ -1,8 +1,8 @@
 # To do list
 
-- Clean up / simplify SettingsDialog
+- Mimic Win10 taskbar (get icon of shortcut)
+- Clean up / simplify SettingsDialog auto-tray listview code
 - Get windows error reporting (WER) working
-- Add tray icon promotion (avoid moving to notification area overflow menu)
 - Investigate VirusTotal results for installer
 - Add option to make tray icons persistent even when window is restored
 - Find a way to properly minimize UWP app windows
