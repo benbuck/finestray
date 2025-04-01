@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "SettingsDialog.h"
-
 // App
+#include "SettingsDialog.h"
 #include "AboutDialog.h"
 #include "HandleWrapper.h"
 #include "Helpers.h"

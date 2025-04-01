@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "Settings.h"
-
 // App
+#include "Settings.h"
 #include "AppName.h"
 #include "CJsonWrapper.h"
 #include "File.h"

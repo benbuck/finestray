@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "File.h"
-
 // App
+#include "File.h"
 #include "HandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"

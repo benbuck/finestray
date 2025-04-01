@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "Path.h"
-
 // App
+#include "Path.h"
 #include "AppName.h"
 #include "File.h"
 #include "HandleWrapper.h"

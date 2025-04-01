@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "WindowInfo.h"
-
 // Finestray
+#include "WindowInfo.h"
 #include "HandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"

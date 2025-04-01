@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "TrayIcon.h"
-
 // App
+#include "TrayIcon.h"
 #include "IconHandleWrapper.h"
 #include "Log.h"
 #include "Resource.h"

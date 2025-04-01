@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "WindowList.h"
-
 // App
+#include "WindowList.h"
 #include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "StringUtility.h"
-
 // App
+#include "StringUtility.h"
 #include "Log.h"
 
 // Windows

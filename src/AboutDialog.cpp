@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "AboutDialog.h"
-
 // App
+#include "AboutDialog.h"
 #include "Helpers.h"
 #include "Log.h"
 #include "Resource.h"
