@@ -17,45 +17,46 @@
 #include "WindowIcon.h"
 #include "BrushHandleWrapper.h"
 #include "DeviceContextHandleWrapper.h"
+#include "IconHandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"
 
 namespace WindowIcon
 {
 
-HICON get(HWND hwnd)
+IconHandleWrapper get(HWND hwnd)
 {
     HICON hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0));
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
     hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_BIG, 0));
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
     hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_SMALL2, 0));
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
     hicon = reinterpret_cast<HICON>(GetClassLongPtr(hwnd, GCLP_HICONSM));
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
     hicon = reinterpret_cast<HICON>(GetClassLongPtr(hwnd, GCLP_HICON));
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
     hicon = LoadIcon(nullptr, IDI_APPLICATION);
     if (hicon) {
-        return hicon;
+        return { hicon, IconHandleWrapper::Mode::Referenced };
     }
 
-    return nullptr;
+    return {};
 }
 
 BitmapHandleWrapper bitmap(HWND hwnd)

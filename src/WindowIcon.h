@@ -16,6 +16,7 @@
 
 // App
 #include "BitmapHandleWrapper.h"
+#include "IconHandleWrapper.h"
 
 // Windows
 #include <Windows.h>
@@ -23,7 +24,7 @@
 namespace WindowIcon
 {
 
-HICON get(HWND hwnd);
+IconHandleWrapper get(HWND hwnd);
 BitmapHandleWrapper bitmap(HWND hwnd);
 
 } // namespace WindowIcon

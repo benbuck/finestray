@@ -16,6 +16,7 @@
 
 // App
 #include "ErrorContext.h"
+#include "IconHandleWrapper.h"
 
 // Windows
 #include <Windows.h>
@@ -37,7 +38,7 @@ public:
     TrayIcon & operator=(const TrayIcon &) = delete;
     TrayIcon & operator=(TrayIcon &&) = delete;
 
-    ErrorContext create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon);
+    ErrorContext create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleWrapper && icon);
     void destroy();
 
     void updateTip(const std::string & tip);
@@ -47,5 +48,6 @@ public:
 private:
     NOTIFYICONDATAA nid_ {};
 
+    IconHandleWrapper icon_;
     static volatile LONG gid_;
 };

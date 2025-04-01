@@ -23,6 +23,7 @@
 #include "HandleWrapper.h"
 #include "Helpers.h"
 #include "Hotkey.h"
+#include "IconHandleWrapper.h"
 #include "Log.h"
 #include "MenuHandleWrapper.h"
 #include "MinimizedWindow.h"
@@ -186,7 +187,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     DEBUG_PRINTF("settings:\n");
     settings_.dump();
 
-    HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
+    IconHandleWrapper icon(LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY)), IconHandleWrapper::Mode::Referenced);
 
     DEBUG_PRINTF("registering window class\n");
     WNDCLASSEXA wc;
@@ -195,8 +196,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     wc.lpfnWndProc = wndProc;
     wc.hInstance = hinstance;
     wc.lpszClassName = APP_NAME;
-    wc.hIcon = hicon;
-    wc.hIconSm = hicon;
+    wc.hIcon = icon;
+    wc.hIconSm = icon;
     ATOM const atom = RegisterClassExA(&wc);
     if (!atom) {
         const std::string lastErrorString = StringUtility::lastErrorString();
@@ -233,7 +234,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     ErrorContext err;
 
     DEBUG_PRINTF("creating tray icon for app\n");
-    err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
+    err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, std::move(icon));
     if (err) {
         // this error can happen legitimately if the taskbar hasn't been created
         // log an error, and assume we will create the icon when we get the TaskbarCreated message
@@ -516,8 +517,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (uMsg == taskbarCreatedMessage_) {
                 INFO_PRINTF("taskbar created\n");
                 HINSTANCE hinstance = getInstance();
-                HICON hicon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY));
-                const ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, hicon);
+                IconHandleWrapper icon(
+                    LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY)),
+                    IconHandleWrapper::Mode::Referenced);
+                const ErrorContext err = trayIcon_.create(appWindow_, appWindow_, WM_TRAYWINDOW, std::move(icon));
                 if (err) {
                     ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
                 }

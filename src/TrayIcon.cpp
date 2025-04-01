@@ -15,6 +15,7 @@
 #include "TrayIcon.h"
 
 // App
+#include "IconHandleWrapper.h"
 #include "Log.h"
 #include "Resource.h"
 #include "StringUtility.h"
@@ -24,7 +25,7 @@
 
 volatile LONG TrayIcon::gid_ = 0;
 
-ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon)
+ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleWrapper && icon)
 {
     LONG const gid = InterlockedIncrement(&gid_);
 
@@ -35,13 +36,15 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, HICON hicon
         destroy();
     }
 
+    icon_ = std::move(icon);
+
     ZeroMemory(&nid_, sizeof(nid_));
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
     nid_.hWnd = messageHwnd;
     nid_.uID = static_cast<UINT>(gid);
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_GUID;
     nid_.uCallbackMessage = msg;
-    nid_.hIcon = hicon ? hicon : LoadIcon(nullptr, IDI_APPLICATION);
+    nid_.hIcon = icon_ ? icon_ : LoadIcon(nullptr, IDI_APPLICATION);
     nid_.uVersion = NOTIFYICON_VERSION;
 
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0])) &&
