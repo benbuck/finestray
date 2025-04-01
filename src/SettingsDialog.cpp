@@ -70,6 +70,9 @@ void spyDisableIcon(HWND dialogHwnd);
 void spyUpdate(HWND dialogHwnd);
 std::string getDialogItemText(HWND dialogHwnd, int id);
 std::string getListViewItemText(HWND listViewHwnd, int item, int subItem);
+bool setDlgItemTextSafe(HWND dialogHwnd, int id, const std::string & text);
+bool checkDlgButtonSafe(HWND dialogHwnd, int id, bool check);
+bool checkRadioButtonSafe(HWND dialogHwnd, int firstId, int lastId, int checkId);
 TrayEvent resourceStringToTrayEvent(const std::string & str);
 std::string trayEventToResourceString(TrayEvent trayEvent);
 
@@ -150,23 +153,9 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
 
     switch (message) {
         case WM_INITDIALOG: {
-            if (!CheckDlgButton(
-                    dialogHwnd,
-                    IDC_START_WITH_WINDOWS,
-                    settings_.startWithWindows_ ? BST_CHECKED : BST_UNCHECKED)) {
-                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-
-            if (!CheckDlgButton(
-                    dialogHwnd,
-                    IDC_SHOW_WINDOWS_IN_MENU,
-                    settings_.showWindowsInMenu_ ? BST_CHECKED : BST_UNCHECKED)) {
-                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-
-            if (!CheckDlgButton(dialogHwnd, IDC_LOG_TO_FILE, settings_.logToFile_ ? BST_CHECKED : BST_UNCHECKED)) {
-                WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
+            checkDlgButtonSafe(dialogHwnd, IDC_START_WITH_WINDOWS, settings_.startWithWindows_);
+            checkDlgButtonSafe(dialogHwnd, IDC_SHOW_WINDOWS_IN_MENU, settings_.showWindowsInMenu_);
+            checkDlgButtonSafe(dialogHwnd, IDC_LOG_TO_FILE, settings_.logToFile_);
 
             int checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
             switch (settings_.minimizePlacement_) {
@@ -180,52 +169,24 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 }
             }
 
-            if (!CheckRadioButton(
-                    dialogHwnd,
-                    IDC_MINIMIZE_PLACEMENT_TRAY,
-                    IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU,
-                    checkButtonId)) {
-                WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
+            checkRadioButtonSafe(dialogHwnd, IDC_MINIMIZE_PLACEMENT_TRAY, IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU, checkButtonId);
 
-            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MINIMIZE_ALL, settings_.hotkeyMinimizeAll_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_RESTORE_ALL, settings_.hotkeyRestoreAll_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_HOTKEY_MENU, settings_.hotkeyMenu_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_.c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_).c_str())) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
-            if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
-                WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
+            setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_MINIMIZE, settings_.hotkeyMinimize_);
+            setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_MINIMIZE_ALL, settings_.hotkeyMinimizeAll_);
+            setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_RESTORE, settings_.hotkeyRestore_);
+            setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_RESTORE_ALL, settings_.hotkeyRestoreAll_);
+            setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_MENU, settings_.hotkeyMenu_);
+            setDlgItemTextSafe(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_);
+            setDlgItemTextSafe(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_));
+            setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
+            setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
+            setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
 
-            if (!CheckRadioButton(
-                    dialogHwnd,
-                    IDC_AUTO_TRAY_EVENT_OPEN,
-                    IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
-                    IDC_AUTO_TRAY_EVENT_MINIMIZE)) {
-                WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
-            }
+            checkRadioButtonSafe(
+                dialogHwnd,
+                IDC_AUTO_TRAY_EVENT_OPEN,
+                IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
+                IDC_AUTO_TRAY_EVENT_MINIMIZE);
 
             spyEnableIcon(dialogHwnd);
 
@@ -723,45 +684,31 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
 
     if ((item < 0) || (item >= itemCount)) {
         WARNING_PRINTF("Item %d out of range\n", item);
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!CheckRadioButton(
-                dialogHwnd,
-                IDC_AUTO_TRAY_EVENT_OPEN,
-                IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
-                IDC_AUTO_TRAY_EVENT_MINIMIZE)) {
-            WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
+        checkRadioButtonSafe(
+            dialogHwnd,
+            IDC_AUTO_TRAY_EVENT_OPEN,
+            IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
+            IDC_AUTO_TRAY_EVENT_MINIMIZE);
         autoTrayListViewActiveItem_ = -1;
     } else {
-        const std::string windowClass =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowClass));
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowClass.c_str())) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-
-        const std::string executable =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::Executable));
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, executable.c_str())) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-
-        const std::string windowTitle =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowTitle));
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowTitle.c_str())) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
+        setDlgItemTextSafe(
+            dialogHwnd,
+            IDC_AUTO_TRAY_EDIT_WINDOWCLASS,
+            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowClass)));
+        setDlgItemTextSafe(
+            dialogHwnd,
+            IDC_AUTO_TRAY_EDIT_EXECUTABLE,
+            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::Executable)));
+        setDlgItemTextSafe(
+            dialogHwnd,
+            IDC_AUTO_TRAY_EDIT_WINDOWTITLE,
+            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowTitle)));
 
         const std::string trayEventStr =
             getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::TrayEvent));
-
         int checkButtonId = IDC_AUTO_TRAY_EVENT_MINIMIZE;
         if (trayEventStr == getResourceString(IDS_TRAY_EVENT_OPEN)) {
             checkButtonId = IDC_AUTO_TRAY_EVENT_OPEN;
@@ -772,9 +719,7 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
         } else {
             WARNING_PRINTF("Unknown tray event %s\n", trayEventStr.c_str());
         }
-        if (!CheckRadioButton(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE, checkButtonId)) {
-            WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
+        checkRadioButtonSafe(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE, checkButtonId);
 
         autoTrayListViewActiveItem_ = item;
     }
@@ -890,15 +835,9 @@ void spyBegin(HWND dialogHwnd)
 
     spyDisableIcon(dialogHwnd);
 
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
 
     SetCapture(dialogHwnd);
 }
@@ -965,15 +904,9 @@ void spyUpdate(HWND dialogHwnd)
 
     if (rootHwnd == dialogHwnd) {
         DEBUG_PRINTF("Spy mode: own window, clearing\n");
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "")) {
-            WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
+        setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
         return;
     }
 
@@ -984,15 +917,9 @@ void spyUpdate(HWND dialogHwnd)
     DEBUG_PRINTF("Executable full path: '%s'\n", windowInfo.executable().c_str());
     DEBUG_PRINTF("Title: '%s'\n", windowInfo.title().c_str());
 
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowInfo.className().c_str())) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, windowInfo.executable().c_str())) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-    if (!SetDlgItemTextA(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowInfo.title().c_str())) {
-        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, windowInfo.className());
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, windowInfo.executable());
+    setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, windowInfo.title());
 }
 
 std::string getDialogItemText(HWND dialogHwnd, int id)
@@ -1037,6 +964,36 @@ std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
     }
 
     return text;
+}
+
+bool setDlgItemTextSafe(HWND dialogHwnd, int id, const std::string & text)
+{
+    if (!SetDlgItemTextA(dialogHwnd, id, text.c_str())) {
+        WARNING_PRINTF("SetDlgItemTextA failed: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool checkDlgButtonSafe(HWND dialogHwnd, int id, bool check)
+{
+    if (!CheckDlgButton(dialogHwnd, id, check ? BST_CHECKED : BST_UNCHECKED)) {
+        WARNING_PRINTF("CheckDlgButton failed: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool checkRadioButtonSafe(HWND dialogHwnd, int firstId, int lastId, int checkId)
+{
+    if (!CheckRadioButton(dialogHwnd, firstId, lastId, checkId)) {
+        WARNING_PRINTF("CheckRadioButton failed: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
+    }
+
+    return true;
 }
 
 TrayEvent resourceStringToTrayEvent(const std::string & str)
