@@ -88,7 +88,7 @@ std::string getExecutableDir()
 
 std::string getStartupDir()
 {
-    CHAR dir[MAX_PATH];
+    CHAR dir[MAX_PATH] = {};
 
     HRESULT const hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, dir);
     if (FAILED(hresult)) {

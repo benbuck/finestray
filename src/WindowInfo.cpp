@@ -48,7 +48,7 @@ WindowInfo::WindowInfo(HWND hwnd)
         if (!process) {
             WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
-            if (!GetModuleFileNameExA(static_cast<HANDLE>(process), nullptr, executableFullPath, MAX_PATH)) {
+            if (!GetModuleFileNameExA(static_cast<HANDLE>(process), nullptr, executableFullPath, sizeof(executableFullPath))) {
                 WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 executable_ = executableFullPath;
