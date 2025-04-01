@@ -781,9 +781,10 @@ void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
-    auto it = std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
-        return item.hwnd_ == hwnd;
-    });
+    const std::vector<AutoTrayItem>::const_iterator it =
+        std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+            return item.hwnd_ == hwnd;
+        });
     if (it != autoTrayedWindows_.end()) {
         DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
         return;
@@ -805,9 +806,10 @@ void onRemoveWindow(HWND hwnd)
 {
     DEBUG_PRINTF("removed window: %#x\n", hwnd);
 
-    auto it = std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
-        return item.hwnd_ == hwnd;
-    });
+    const std::vector<AutoTrayItem>::const_iterator it =
+        std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+            return item.hwnd_ == hwnd;
+        });
     if (it == autoTrayedWindows_.end()) {
         DEBUG_PRINTF("\tignoring, not auto-trayed\n");
         return;

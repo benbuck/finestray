@@ -126,13 +126,13 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
     }
 
     for (const std::string & modifier : parseResult.modifiers) {
-        const auto & mit = modifierMap_.find(modifier);
+        const std::map<std::string, UINT>::const_iterator & mit = modifierMap_.find(modifier);
         modifiers |= mit->second;
     }
 
     if (!parseResult.keys.empty()) {
         std::string vkey = parseResult.keys.at(0);
-        const auto & vkit = vkeyMap_.find(vkey);
+        const std::map<std::string, UINT>::const_iterator & vkit = vkeyMap_.find(vkey);
         if (vkit != vkeyMap_.end()) {
             key = vkit->second;
         } else {
@@ -161,14 +161,14 @@ Hotkey::ParseResult Hotkey::parseInternal(const std::string & hotkeyStr)
         }
 
         // look for modifier string
-        const auto & mit = modifierMap_.find(token);
+        const std::map<std::string, UINT>::const_iterator & mit = modifierMap_.find(token);
         if (mit != modifierMap_.end()) {
             parseResult.modifiers.push_back(token);
             continue;
         }
 
         // look for vkey string
-        const auto & vkit = vkeyMap_.find(token);
+        const std::map<std::string, UINT>::const_iterator & vkit = vkeyMap_.find(token);
         if (vkit != vkeyMap_.end()) {
             parseResult.keys.push_back(token);
             continue;

@@ -43,7 +43,7 @@ using MinimizedWindows = std::vector<MinimizedWindowData>;
 
 MinimizedWindows minimizedWindows_;
 
-MinimizedWindows::iterator findMinimizedWindow(HWND hwnd);
+MinimizedWindows::const_iterator findMinimizedWindow(HWND hwnd);
 
 } // anonymous namespace
 
@@ -54,7 +54,7 @@ bool minimize(HWND hwnd, HWND messageHwnd, MinimizePlacement minimizePlacement)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
 
-    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::const_iterator it = findMinimizedWindow(hwnd);
     if (it != minimizedWindows_.end()) {
         DEBUG_PRINTF("not minimizing already minimized window %#x\n", hwnd);
         return false;
@@ -98,7 +98,7 @@ void restore(HWND hwnd)
 
 void remove(HWND hwnd)
 {
-    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::const_iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
         WARNING_PRINTF("failed to remove minimized window %#x, not found\n", hwnd);
         return;
@@ -155,7 +155,7 @@ void updatePlacement(MinimizePlacement minimizePlacement)
 
 void updateTitle(HWND hwnd, const std::string & title)
 {
-    const MinimizedWindows::iterator it = findMinimizedWindow(hwnd);
+    const MinimizedWindows::const_iterator it = findMinimizedWindow(hwnd);
     if (it == minimizedWindows_.end()) {
         WARNING_PRINTF("failed to update title for minimized window %#x, not found\n", hwnd);
     } else {
@@ -166,7 +166,7 @@ void updateTitle(HWND hwnd, const std::string & title)
 
 HWND getFromID(UINT id)
 {
-    const MinimizedWindows::iterator it = std::find_if(
+    const MinimizedWindows::const_iterator it = std::find_if(
         minimizedWindows_.begin(),
         minimizedWindows_.end(),
         [id](const MinimizedWindowData & minimizedWindow) {
@@ -220,7 +220,7 @@ bool exists(HWND hwnd)
 namespace
 {
 
-MinimizedWindows::iterator findMinimizedWindow(HWND hwnd)
+MinimizedWindows::const_iterator findMinimizedWindow(HWND hwnd)
 {
     return std::find_if(
         minimizedWindows_.begin(),

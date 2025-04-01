@@ -150,7 +150,7 @@ VOID timerProc(
     // check for changed window titles or visibility
     if (changeWindowTitleCallback_ || changeWindowVisibilityCallback_) {
         for (const std::pair<HWND, WindowData> window : newWindowList) {
-            auto it = windowList_.find(window.first);
+            const std::map<HWND, WindowData>::const_iterator it = windowList_.find(window.first);
             if (it != windowList_.end()) {
                 // existing window found
                 if (it->second.title != window.second.title) {

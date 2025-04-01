@@ -338,7 +338,7 @@ void Settings::normalize()
     hotkeyMenu_ = Hotkey::normalize(hotkeyMenu_);
     modifiersOverride_ = Hotkey::normalize(modifiersOverride_);
 
-    for (auto it = autoTrays_.begin(); it != autoTrays_.end();) {
+    for (std::vector<Settings::AutoTray>::iterator it = autoTrays_.begin(); it != autoTrays_.end();) {
         AutoTray & autoTray = *it;
         if (autoTray.executable_.empty() && autoTray.windowClass_.empty() && autoTray.windowTitle_.empty()) {
             DEBUG_PRINTF("Removing empty auto-tray item\n");

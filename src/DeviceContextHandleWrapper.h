@@ -47,7 +47,7 @@ public:
     ~DeviceContextHandleWrapper()
     {
         if (hdc_) {
-            for (auto it = objects_.rbegin(); it != objects_.rend(); ++it) {
+            for (std::vector<HGDIOBJ>::reverse_iterator it = objects_.rbegin(); it != objects_.rend(); ++it) {
                 SelectObject(hdc_, *it);
             }
 
