@@ -24,8 +24,8 @@ set(ENABLE_TARGET_EXPORT OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     cJSON
-    GIT_REPOSITORY https://github.com/DaveGamble/cJSON.git
-    GIT_TAG        v1.7.18
+    GIT_REPOSITORY https://github.com/benbuck/cJSON.git
+    GIT_TAG        v1.7.18-cmake-3.5
     EXCLUDE_FROM_ALL
 )
 
