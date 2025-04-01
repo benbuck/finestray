@@ -446,7 +446,7 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
         return defaultValue;
     }
 
-    return cJSON_IsTrue(item) == cJSON_True; // NOLINT
+    return cJSON_IsTrue(item) == 1;
 }
 
 double getNumber(const cJSON * cjson, const char * key, double defaultValue)
