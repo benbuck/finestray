@@ -168,7 +168,7 @@ HWND getFromID(UINT id)
     const MinimizedWindows::const_iterator it = std::find_if(
         minimizedWindows_.begin(),
         minimizedWindows_.end(),
-        [id](const MinimizedWindowData & minimizedWindow) {
+        [id](const MinimizedWindowData & minimizedWindow) noexcept {
             return minimizedWindow.trayIcon_ && (minimizedWindow.trayIcon_->id() == id);
         });
     if (it == minimizedWindows_.end()) {
@@ -187,7 +187,7 @@ HWND getFromIndex(UINT index)
     return minimizedWindows_.at(index).hwnd_;
 }
 
-HWND getLast()
+HWND getLast() noexcept
 {
     if (minimizedWindows_.empty()) {
         return nullptr;

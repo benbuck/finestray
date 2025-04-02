@@ -76,15 +76,13 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleW
     return {};
 }
 
-void TrayIcon::destroy()
+void TrayIcon::destroy() noexcept
 {
     if (nid_.uID) {
         DEBUG_PRINTF("destroying tray icon %u\n", nid_.uID);
 
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
-            WARNING_PRINTF(
-                "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %lu\n", GetLastError());
         }
 
         ZeroMemory(&nid_, sizeof(nid_));

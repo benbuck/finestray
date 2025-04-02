@@ -118,11 +118,17 @@ void printf(Level level, const char * fmt, ...) noexcept
     int len = vsnprintf(buffer, bufferSize, fmt, ap);
     if (len >= static_cast<int>(bufferSize)) {
         bufferSize = static_cast<size_t>(len) + 1;
-        buffer = new char[bufferSize];
-        len = vsnprintf(buffer, bufferSize, fmt, ap);
-        assert(len < static_cast<int>(bufferSize));
+        buffer = new (std::nothrow) char[bufferSize];
+        if (!buffer) {
+            len = vsnprintf(buffer, bufferSize, fmt, ap);
+            assert(len < static_cast<int>(bufferSize));
+        }
     }
     va_end(ap);
+
+    if (!buffer) {
+        return;
+    }
 
     print(level, buffer);
 

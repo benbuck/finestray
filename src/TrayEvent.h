@@ -25,8 +25,8 @@ enum class TrayEvent
     OpenAndMinimize
 };
 
-const char * trayEventToCString(TrayEvent trayEvent);
-TrayEvent trayEventFromCString(const char * trayEventString);
+const char * trayEventToCString(TrayEvent trayEvent) noexcept;
+TrayEvent trayEventFromCString(const char * trayEventString) noexcept;
 
 inline constexpr bool trayEventIncludesOpen(TrayEvent trayEvent)
 {

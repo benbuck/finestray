@@ -27,11 +27,13 @@ struct cJSON;
 class Settings
 {
 public:
-    Settings();
+    Settings() = default;
     ~Settings() = default;
 
     bool operator==(const Settings & rhs) const = default;
     bool operator!=(const Settings & rhs) const = default;
+
+    void initDefaults();
 
     bool fromJSON(const std::string & json);
     std::string toJSON() const;
@@ -39,7 +41,7 @@ public:
     bool valid() const;
 
     void normalize();
-    void dump() const;
+    void dump() const noexcept;
 
     struct AutoTray
     {

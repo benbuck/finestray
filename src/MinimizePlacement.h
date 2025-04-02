@@ -25,8 +25,8 @@ enum class MinimizePlacement
     TrayAndMenu
 };
 
-const char * minimizePlacementToCString(MinimizePlacement minimizePlacement);
-MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString);
+const char * minimizePlacementToCString(MinimizePlacement minimizePlacement) noexcept;
+MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString) noexcept;
 
 inline constexpr bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
 {

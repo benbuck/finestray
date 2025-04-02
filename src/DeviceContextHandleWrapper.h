@@ -35,7 +35,7 @@ public:
 
     DeviceContextHandleWrapper() = delete;
 
-    DeviceContextHandleWrapper(HDC hdc, Mode mode)
+    DeviceContextHandleWrapper(HDC hdc, Mode mode) noexcept
         : hdc_(hdc)
         , mode_(mode)
     {
@@ -54,13 +54,13 @@ public:
             switch (mode_) {
                 case Created: {
                     if (!DeleteDC(hdc_)) {
-                        WARNING_PRINTF("DeleteDC() failed: %s\n", StringUtility::lastErrorString().c_str());
+                        WARNING_PRINTF("DeleteDC() failed: %lu\n", GetLastError());
                     }
                     break;
                 }
                 case Referenced: {
                     if (!ReleaseDC(HWND_DESKTOP, hdc_)) {
-                        WARNING_PRINTF("ReleaseDC() failed: %s\n", StringUtility::lastErrorString().c_str());
+                        WARNING_PRINTF("ReleaseDC() failed: %lu\n", GetLastError());
                     }
                     break;
                 }
@@ -77,9 +77,9 @@ public:
     DeviceContextHandleWrapper & operator=(const DeviceContextHandleWrapper &) = delete;
     DeviceContextHandleWrapper & operator=(DeviceContextHandleWrapper &&) = delete;
 
-    operator HDC() const { return hdc_; }
+    operator HDC() const noexcept { return hdc_; }
 
-    operator bool() const { return hdc_ != nullptr; }
+    operator bool() const noexcept { return hdc_ != nullptr; }
 
     bool selectObject(HGDIOBJ object)
     {

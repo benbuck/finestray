@@ -35,10 +35,10 @@ namespace
 {
 
 bool autoTrayItemCallback(const cJSON * cjson, void * userData);
-bool getBool(const cJSON * cjson, const char * key, bool defaultValue);
-double getNumber(const cJSON * cjson, const char * key, double defaultValue);
-const char * getString(const cJSON * cjson, const char * key, const char * defaultValue);
-void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData);
+bool getBool(const cJSON * cjson, const char * key, bool defaultValue) noexcept;
+double getNumber(const cJSON * cjson, const char * key, double defaultValue) noexcept;
+const char * getString(const cJSON * cjson, const char * key, const char * defaultValue) noexcept;
+void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData) noexcept;
 
 enum SettingKeys : unsigned int
 {
@@ -95,20 +95,21 @@ const char * settingKeys_[SK_Count] = { "version",
 
 } // anonymous namespace
 
-Settings::Settings()
-    : version_(versionCurrent_)
-    , startWithWindows_(startWithWindowsDefault_)
-    , showWindowsInMenu_(showWindowsInMenuDefault_)
-    , logToFile_(logToFileDefault_)
-    , minimizePlacement_(minimizePlacementDefault_)
-    , hotkeyMinimize_(hotkeyMinimizeDefault_)
-    , hotkeyMinimizeAll_(hotkeyMinimizeAllDefault_)
-    , hotkeyRestore_(hotkeyRestoreDefault_)
-    , hotkeyRestoreAll_(hotkeyRestoreAllDefault_)
-    , hotkeyMenu_(hotkeyMenuDefault_)
-    , modifiersOverride_(modifiersOverrideDefault_)
-    , pollInterval_(pollIntervalDefault_)
+void Settings::initDefaults()
 {
+    version_ = versionCurrent_;
+    startWithWindows_ = startWithWindowsDefault_;
+    showWindowsInMenu_ = showWindowsInMenuDefault_;
+    logToFile_ = logToFileDefault_;
+    minimizePlacement_ = minimizePlacementDefault_;
+    hotkeyMinimize_ = hotkeyMinimizeDefault_;
+    hotkeyMinimizeAll_ = hotkeyMinimizeAllDefault_;
+    hotkeyRestore_ = hotkeyRestoreDefault_;
+    hotkeyRestoreAll_ = hotkeyRestoreAllDefault_;
+    hotkeyMenu_ = hotkeyMenuDefault_;
+    modifiersOverride_ = modifiersOverrideDefault_;
+    pollInterval_ = pollIntervalDefault_;
+    autoTrays_.clear();
 }
 
 bool Settings::fromJSON(const std::string & json)
@@ -354,7 +355,7 @@ void Settings::normalize()
     }
 }
 
-void Settings::dump() const
+void Settings::dump() const noexcept
 {
 #if !defined(NDEBUG)
     DEBUG_PRINTF("Settings:\n");
@@ -433,7 +434,7 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData)
     return true;
 }
 
-bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
+bool getBool(const cJSON * cjson, const char * key, bool defaultValue) noexcept
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {
@@ -448,7 +449,7 @@ bool getBool(const cJSON * cjson, const char * key, bool defaultValue)
     return cJSON_IsTrue(item) == 1;
 }
 
-double getNumber(const cJSON * cjson, const char * key, double defaultValue)
+double getNumber(const cJSON * cjson, const char * key, double defaultValue) noexcept
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {
@@ -463,7 +464,7 @@ double getNumber(const cJSON * cjson, const char * key, double defaultValue)
     return cJSON_GetNumberValue(item);
 }
 
-const char * getString(const cJSON * cjson, const char * key, const char * defaultValue)
+const char * getString(const cJSON * cjson, const char * key, const char * defaultValue) noexcept
 {
     const cJSON * item = cJSON_GetObjectItemCaseSensitive(cjson, key);
     if (!item) {
@@ -479,7 +480,7 @@ const char * getString(const cJSON * cjson, const char * key, const char * defau
     return str;
 }
 
-void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData)
+void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData) noexcept
 {
     if (!cjson) {
         WARNING_PRINTF("null cjson\n");

@@ -35,7 +35,7 @@ public:
     COMLibraryWrapper & operator=(const COMLibraryWrapper &) = delete;
     COMLibraryWrapper & operator=(COMLibraryWrapper &&) = delete;
 
-    bool initialized() const { return initialized_; }
+    bool initialized() const noexcept { return initialized_; }
 
 private:
     bool initialized_ {};

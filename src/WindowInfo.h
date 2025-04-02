@@ -27,11 +27,11 @@ public:
     explicit WindowInfo(HWND hwnd);
     ~WindowInfo() = default;
 
-    const std::string & className() const { return className_; }
+    const std::string & className() const noexcept { return className_; }
 
-    const std::string & executable() const { return executable_; }
+    const std::string & executable() const noexcept { return executable_; }
 
-    const std::string & title() const { return title_; }
+    const std::string & title() const noexcept { return title_; }
 
 private:
     HWND hwnd_ {};

@@ -25,7 +25,7 @@ class CJsonWrapper
 public:
     CJsonWrapper() = delete;
 
-    explicit CJsonWrapper(cJSON * cjson)
+    explicit CJsonWrapper(cJSON * cjson) noexcept
         : cjson_(cjson)
     {
     }
@@ -42,7 +42,7 @@ public:
     CJsonWrapper & operator=(const CJsonWrapper &) = delete;
     CJsonWrapper & operator=(CJsonWrapper &&) = delete;
 
-    operator cJSON *() const { return cjson_; }
+    operator cJSON *() const noexcept { return cjson_; }
 
 #if defined(_MSC_VER)
 #pragma warning(push)

@@ -16,7 +16,7 @@
 #include "Modifiers.h"
 #include "Log.h"
 
-bool modifiersActive(UINT modifiers)
+bool modifiersActive(UINT modifiers) noexcept
 {
     if (!modifiers) {
         return false;

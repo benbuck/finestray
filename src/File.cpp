@@ -94,7 +94,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     return true;
 }
 
-bool fileExists(const std::string & fileName)
+bool fileExists(const std::string & fileName) noexcept
 {
     const DWORD attrib = GetFileAttributesA(fileName.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -113,7 +113,7 @@ bool fileDelete(const std::string & fileName)
     return true;
 }
 
-bool directoryExists(const std::string & directory)
+bool directoryExists(const std::string & directory) noexcept
 {
     const DWORD attrib = GetFileAttributesA(directory.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY));

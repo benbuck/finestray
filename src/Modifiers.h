@@ -17,4 +17,4 @@
 // Windows
 #include <Windows.h>
 
-bool modifiersActive(UINT modifiers);
+bool modifiersActive(UINT modifiers) noexcept;

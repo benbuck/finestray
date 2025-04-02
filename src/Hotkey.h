@@ -34,7 +34,7 @@ public:
     Hotkey & operator=(Hotkey &&) = delete;
 
     bool create(int id, HWND hwnd, UINT hotkey, UINT hotkeyModifiers);
-    void destroy();
+    void destroy() noexcept;
 
     static bool valid(const std::string & hotkeyStr);
     static std::string normalize(const std::string & hotkeyStr);

@@ -26,7 +26,7 @@ class WindowHandleWrapper
 public:
     WindowHandleWrapper() = default;
 
-    explicit WindowHandleWrapper(HWND hwnd)
+    explicit WindowHandleWrapper(HWND hwnd) noexcept
         : hwnd_(hwnd)
     {
     }
@@ -38,19 +38,19 @@ public:
     WindowHandleWrapper & operator=(const WindowHandleWrapper &) = delete;
     WindowHandleWrapper & operator=(WindowHandleWrapper &&) = delete;
 
-    void operator=(HWND hwnd)
+    void operator=(HWND hwnd) noexcept
     {
         destroy();
 
         hwnd_ = hwnd;
     }
 
-    void destroy()
+    void destroy() noexcept
     {
         if (hwnd_) {
             DEBUG_PRINTF("destroying window %#x\n", hwnd_);
             if (!DestroyWindow(hwnd_)) {
-                WARNING_PRINTF("DestroyWindow() failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("DestroyWindow() failed: %lu\n", GetLastError());
                 return;
             }
 
@@ -58,7 +58,7 @@ public:
         }
     }
 
-    operator HWND() const { return hwnd_; }
+    operator HWND() const noexcept { return hwnd_; }
 
 private:
     HWND hwnd_ {};

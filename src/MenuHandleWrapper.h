@@ -26,7 +26,7 @@ class MenuHandleWrapper
 public:
     MenuHandleWrapper() = delete;
 
-    explicit MenuHandleWrapper(HMENU hmenu)
+    explicit MenuHandleWrapper(HMENU hmenu) noexcept
         : hmenu_(hmenu)
     {
     }
@@ -35,7 +35,7 @@ public:
     {
         if (hmenu_) {
             if (!DestroyMenu(hmenu_)) {
-                WARNING_PRINTF("failed to destroy menu %#x: %s\n", hmenu_, StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("failed to destroy menu %#x: %lu\n", hmenu_, GetLastError());
             }
         }
     }
@@ -45,9 +45,9 @@ public:
     MenuHandleWrapper & operator=(const MenuHandleWrapper &) = delete;
     MenuHandleWrapper & operator=(MenuHandleWrapper &&) = delete;
 
-    operator HMENU() const { return hmenu_; }
+    operator HMENU() const noexcept { return hmenu_; }
 
-    operator bool() const { return hmenu_ != nullptr; }
+    operator bool() const noexcept { return hmenu_ != nullptr; }
 
 private:
     HMENU hmenu_ {};

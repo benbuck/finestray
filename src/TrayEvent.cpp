@@ -16,7 +16,7 @@
 #include "TrayEvent.h"
 #include "Log.h"
 
-const char * trayEventToCString(TrayEvent trayEvent)
+const char * trayEventToCString(TrayEvent trayEvent) noexcept
 {
     switch (trayEvent) {
         case TrayEvent::None: return "none";
@@ -31,7 +31,7 @@ const char * trayEventToCString(TrayEvent trayEvent)
     }
 }
 
-TrayEvent trayEventFromCString(const char * trayEventString)
+TrayEvent trayEventFromCString(const char * trayEventString) noexcept
 {
     if (!strcmp(trayEventString, "none")) {
         return TrayEvent::None;

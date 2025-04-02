@@ -21,6 +21,6 @@
 
 std::string fileRead(const std::string & fileName);
 bool fileWrite(const std::string & fileName, const std::string & contents);
-bool fileExists(const std::string & fileName);
+bool fileExists(const std::string & fileName) noexcept;
 bool fileDelete(const std::string & fileName);
-bool directoryExists(const std::string & directory);
+bool directoryExists(const std::string & directory) noexcept;

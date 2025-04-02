@@ -35,7 +35,7 @@ void updatePlacement(MinimizePlacement minimizePlacement);
 void updateTitle(HWND hwnd, const std::string & title);
 HWND getFromID(UINT id);
 HWND getFromIndex(UINT index);
-HWND getLast();
+HWND getLast() noexcept;
 std::vector<HWND> getAll();
 bool exists(HWND hwnd);
 

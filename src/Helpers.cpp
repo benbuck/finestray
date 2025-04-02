@@ -24,13 +24,13 @@
 namespace
 {
 
-bool isAltTabWindow(HWND hwnd);
-bool isToolWindow(HWND hwnd);
-bool isCloakedWindow(HWND hwnd);
+bool isAltTabWindow(HWND hwnd) noexcept;
+bool isToolWindow(HWND hwnd) noexcept;
+bool isCloakedWindow(HWND hwnd) noexcept;
 
 } // anonymous namespace
 
-HINSTANCE getInstance()
+HINSTANCE getInstance() noexcept
 {
     return GetModuleHandle(nullptr);
 }
@@ -75,7 +75,7 @@ std::string getWindowText(HWND hwnd)
     return text;
 }
 
-bool isWindowUserVisible(HWND hwnd)
+bool isWindowUserVisible(HWND hwnd) noexcept
 {
     return IsWindowVisible(hwnd) && isAltTabWindow(hwnd) && !isToolWindow(hwnd) && !isCloakedWindow(hwnd);
 }
@@ -114,7 +114,7 @@ namespace
 {
 
 // from https://devblogs.microsoft.com/oldnewthing/20071008-00/?p=24863
-bool isAltTabWindow(HWND hwnd)
+bool isAltTabWindow(HWND hwnd) noexcept
 {
     // Start at the root owner
     HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
@@ -134,14 +134,14 @@ bool isAltTabWindow(HWND hwnd)
     return hwndWalk == hwnd;
 }
 
-bool isToolWindow(HWND hwnd)
+bool isToolWindow(HWND hwnd) noexcept
 {
     LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
     return (exStyle & WS_EX_TOOLWINDOW) != 0; // NOLINT
 }
 
 // from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
-bool isCloakedWindow(HWND hwnd)
+bool isCloakedWindow(HWND hwnd) noexcept
 {
     BOOL isCloaked = FALSE;
     HRESULT const hr = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked));

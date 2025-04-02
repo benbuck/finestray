@@ -16,7 +16,7 @@
 #include "MinimizePlacement.h"
 #include "Log.h"
 
-const char * minimizePlacementToCString(MinimizePlacement minimizePlacement)
+const char * minimizePlacementToCString(MinimizePlacement minimizePlacement) noexcept
 {
     switch (minimizePlacement) {
         case MinimizePlacement::None: return "none";
@@ -31,7 +31,7 @@ const char * minimizePlacementToCString(MinimizePlacement minimizePlacement)
     }
 }
 
-MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString)
+MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString) noexcept
 {
     if (!strcmp(minimizePlacementString, "none")) {
         return MinimizePlacement::None;

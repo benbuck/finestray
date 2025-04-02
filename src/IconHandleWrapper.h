@@ -32,7 +32,7 @@ public:
 
     IconHandleWrapper() = default;
 
-    IconHandleWrapper(HICON hicon, Mode mode)
+    IconHandleWrapper(HICON hicon, Mode mode) noexcept
         : hicon_(hicon)
         , mode_(mode)
     {
@@ -45,7 +45,7 @@ public:
     {
         if (hicon_ && (mode_ == Mode::Created)) {
             if (!DestroyIcon(hicon_)) {
-                WARNING_PRINTF("DestroyIcon() failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("DestroyIcon() failed: %lu\n", GetLastError());
             }
         }
     }
@@ -63,9 +63,9 @@ public:
         return *this;
     }
 
-    operator HICON() const { return hicon_; }
+    operator HICON() const noexcept { return hicon_; }
 
-    operator bool() const { return hicon_ != nullptr; }
+    operator bool() const noexcept { return hicon_ != nullptr; }
 
 private:
     HICON hicon_ {};

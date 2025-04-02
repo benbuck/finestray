@@ -26,7 +26,7 @@ class BrushHandleWrapper
 public:
     BrushHandleWrapper() = default;
 
-    explicit BrushHandleWrapper(HBRUSH hbrush)
+    explicit BrushHandleWrapper(HBRUSH hbrush) noexcept
         : hbrush_(hbrush)
     {
     }
@@ -45,9 +45,9 @@ public:
     BrushHandleWrapper & operator=(const BrushHandleWrapper &) = delete;
     BrushHandleWrapper & operator=(BrushHandleWrapper &&) = delete;
 
-    operator HBRUSH() const { return hbrush_; }
+    operator HBRUSH() const noexcept { return hbrush_; }
 
-    operator bool() const { return hbrush_ != nullptr; }
+    operator bool() const noexcept { return hbrush_ != nullptr; }
 
 private:
     HBRUSH hbrush_ {};

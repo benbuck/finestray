@@ -24,7 +24,7 @@
 namespace WindowIcon
 {
 
-IconHandleWrapper get(HWND hwnd)
+IconHandleWrapper get(HWND hwnd) noexcept
 {
     HICON hicon = reinterpret_cast<HICON>(SendMessage(hwnd, WM_GETICON, ICON_SMALL, 0));
     if (hicon) {

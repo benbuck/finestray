@@ -22,7 +22,7 @@ class ErrorContext
 public:
     ErrorContext() = default;
 
-    inline explicit ErrorContext(unsigned int errorId)
+    inline explicit ErrorContext(unsigned int errorId) noexcept
         : errorId_(errorId)
     {
     }
@@ -33,11 +33,11 @@ public:
     {
     }
 
-    inline operator bool() const { return (errorId_ != 0) || !errorString_.empty(); }
+    inline operator bool() const noexcept { return (errorId_ != 0) || !errorString_.empty(); }
 
-    inline unsigned int errorId() const { return errorId_; }
+    inline unsigned int errorId() const noexcept { return errorId_; }
 
-    inline const std::string & errorString() const { return errorString_; }
+    inline const std::string & errorString() const noexcept { return errorString_; }
 
 private:
     unsigned int errorId_ {};

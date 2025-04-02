@@ -26,7 +26,7 @@ class BitmapHandleWrapper
 public:
     BitmapHandleWrapper() = default;
 
-    explicit BitmapHandleWrapper(HBITMAP hbitmap)
+    explicit BitmapHandleWrapper(HBITMAP hbitmap) noexcept
         : hbitmap_(hbitmap)
     {
     }
@@ -61,9 +61,9 @@ public:
         }
     }
 
-    operator HBITMAP() const { return hbitmap_; }
+    operator HBITMAP() const noexcept { return hbitmap_; }
 
-    operator bool() const { return hbitmap_ != nullptr; }
+    operator bool() const noexcept { return hbitmap_ != nullptr; }
 
     HBITMAP release() noexcept
     {

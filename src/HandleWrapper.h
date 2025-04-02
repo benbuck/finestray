@@ -26,7 +26,7 @@ class HandleWrapper
 public:
     HandleWrapper() = default;
 
-    explicit HandleWrapper(HANDLE handle)
+    explicit HandleWrapper(HANDLE handle) noexcept
         : handle_(handle)
     {
     }
@@ -47,11 +47,11 @@ public:
     HandleWrapper(HandleWrapper &&) = delete;
     HandleWrapper & operator=(const HandleWrapper &) = delete;
 
-    void close()
+    void close() noexcept
     {
         if (handle_ != INVALID_HANDLE_VALUE) {
             if (!CloseHandle((HANDLE)handle_)) {
-                WARNING_PRINTF("failed to close handle %#x: %s\n", handle_, StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("failed to close handle %#x: %lu\n", handle_, GetLastError());
                 return;
             }
 
@@ -59,9 +59,9 @@ public:
         }
     }
 
-    operator HANDLE() const { return handle_; }
+    operator HANDLE() const noexcept { return handle_; }
 
-    operator bool() const { return handle_ != INVALID_HANDLE_VALUE; }
+    operator bool() const noexcept { return handle_ != INVALID_HANDLE_VALUE; }
 
 private:
     HANDLE handle_ { INVALID_HANDLE_VALUE };

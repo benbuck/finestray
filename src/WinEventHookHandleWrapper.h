@@ -26,7 +26,7 @@ class WinEventHookHandleWrapper
 public:
     WinEventHookHandleWrapper() = delete;
 
-    explicit WinEventHookHandleWrapper(HWINEVENTHOOK hwineventhook)
+    explicit WinEventHookHandleWrapper(HWINEVENTHOOK hwineventhook) noexcept
         : hwineventhook_(hwineventhook)
     {
     }
@@ -38,15 +38,15 @@ public:
     WinEventHookHandleWrapper & operator=(const WinEventHookHandleWrapper &) = delete;
     WinEventHookHandleWrapper & operator=(WinEventHookHandleWrapper &&) = delete;
 
-    void destroy()
+    void destroy() noexcept
     {
         if (hwineventhook_) {
             DEBUG_PRINTF("destroying win event hook %#x\n", hwineventhook_);
             if (!UnhookWinEvent(hwineventhook_)) {
                 WARNING_PRINTF(
-                    "failed to unhook win event %#x, UnhookWinEvent() failed: %s\n",
+                    "failed to unhook win event %#x, UnhookWinEvent() failed: %lu\n",
                     hwineventhook_,
-                    StringUtility::lastErrorString().c_str());
+                    GetLastError());
                 return;
             }
 
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    operator HWINEVENTHOOK() const { return hwineventhook_; }
+    operator HWINEVENTHOOK() const noexcept { return hwineventhook_; }
 
 private:
     HWINEVENTHOOK hwineventhook_ {};

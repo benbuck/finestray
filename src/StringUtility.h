@@ -21,7 +21,7 @@
 namespace StringUtility
 {
 
-inline const char * boolToCString(bool b)
+inline const char * boolToCString(bool b) noexcept
 {
     return b ? "true" : "false";
 }

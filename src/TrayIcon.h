@@ -39,11 +39,11 @@ public:
     TrayIcon & operator=(TrayIcon &&) = delete;
 
     ErrorContext create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleWrapper && icon);
-    void destroy();
+    void destroy() noexcept;
 
     void updateTip(const std::string & tip);
 
-    inline UINT id() const { return nid_.uID; }
+    inline UINT id() const noexcept { return nid_.uID; }
 
 private:
     NOTIFYICONDATAA nid_ {};

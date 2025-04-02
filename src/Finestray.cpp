@@ -165,6 +165,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
 
     // get settings from file
+    settings_.initDefaults();
     const std::string settingsFile = getSettingsFileName();
     if (readSettingsFromFile(settingsFile, settings_)) {
         DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());

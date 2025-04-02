@@ -24,7 +24,7 @@
 namespace WindowIcon
 {
 
-IconHandleWrapper get(HWND hwnd);
+IconHandleWrapper get(HWND hwnd) noexcept;
 BitmapHandleWrapper bitmap(HWND hwnd);
 
 } // namespace WindowIcon

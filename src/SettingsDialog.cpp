@@ -60,7 +60,7 @@ void autoTrayListViewItemAdd(HWND dialogHwnd);
 void autoTrayListViewItemUpdate(HWND dialogHwnd, int item);
 void autoTrayListViewItemDelete(HWND dialogHwnd, int item);
 void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
-void autoTrayListViewUpdateButtons(HWND dialogHwnd);
+void autoTrayListViewUpdateButtons(HWND dialogHwnd) noexcept;
 void autoTrayListViewUpdateSelected(HWND dialogHwnd);
 void spyBegin(HWND dialogHwnd);
 void spyEnd(HWND dialogHwnd);
@@ -726,7 +726,7 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
     autoTrayListViewUpdateButtons(dialogHwnd);
 }
 
-void autoTrayListViewUpdateButtons(HWND dialogHwnd)
+void autoTrayListViewUpdateButtons(HWND dialogHwnd) noexcept
 {
     DEBUG_PRINTF("Updating buttons\n");
 
