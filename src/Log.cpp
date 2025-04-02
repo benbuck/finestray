@@ -102,7 +102,7 @@ void start(bool enable, const std::string & fileName)
 
 #if defined(_MSC_VER)
 #pragma warning(push, 4)
-#pragma warning(disable : 26400 26401 26409)
+#pragma warning(disable : 26400 26401 26409 26826)
 #endif
 
 // NOLINTBEGIN

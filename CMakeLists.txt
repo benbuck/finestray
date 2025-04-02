@@ -37,7 +37,6 @@ set(COMPILE_CONFIG_OPTIONS
         /WX # treat warnings as errors
         /analyze # enable static code analysis
         /wd26472 # Don't use a static_cast for arithmetic conversions
-        /wd26826 # Don't use C-style variable arguments
         /wd26485 # No array to pointer decay
         /wd26490 # Don't use reinterpret_cast
         /wd26492 # Don't use const_cast
