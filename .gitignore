@@ -13,7 +13,7 @@
 # limitations under the License.
 
 /.vs
-/build
+/build*
 /icon/unused.*
 Finestray.json
 /Finestray-cppcheck-build-dir
