@@ -40,6 +40,11 @@ double getNumber(const cJSON * cjson, const char * key, double defaultValue) noe
 const char * getString(const cJSON * cjson, const char * key, const char * defaultValue) noexcept;
 void iterateArray(const cJSON * cjson, bool (*callback)(const cJSON *, void *), void * userData) noexcept;
 
+inline constexpr unsigned int narrowDoubleToUInt(double value) noexcept
+{
+    return static_cast<unsigned int>(std::forward<double>(value));
+}
+
 enum SettingKeys : unsigned int
 {
     SK_Version,
@@ -122,7 +127,7 @@ bool Settings::fromJSON(const std::string & json)
 
     DEBUG_PRINTF("parsed settings JSON:\n%s\n", cjson.print().c_str());
 
-    version_ = static_cast<unsigned int>(getNumber(cjson, settingKeys_[SK_Version], static_cast<double>(versionCurrent_)));
+    version_ = narrowDoubleToUInt(getNumber(cjson, settingKeys_[SK_Version], static_cast<double>(versionCurrent_)));
     startWithWindows_ = getBool(cjson, settingKeys_[SK_StartWithWindows], startWithWindows_);
     showWindowsInMenu_ = getBool(cjson, settingKeys_[SK_ShowWindowsInMenu], showWindowsInMenu_);
     logToFile_ = getBool(cjson, settingKeys_[SK_LogToFile], logToFile_);
@@ -140,7 +145,7 @@ bool Settings::fromJSON(const std::string & json)
     hotkeyRestoreAll_ = getString(cjson, settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
     hotkeyMenu_ = getString(cjson, settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
-    pollInterval_ = static_cast<unsigned int>(
+    pollInterval_ = narrowDoubleToUInt(
         getNumber(cjson, settingKeys_[SK_PollInterval], static_cast<double>(pollInterval_)));
 
     const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);

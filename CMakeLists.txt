@@ -33,11 +33,9 @@ set(COMPILE_CONFIG_OPTIONS
         /GR- # disable run-time type information (RTTI)
         /GS # enable security checks
         /guard:cf # control flow guard
-        #/MP # build with multiple processes
         /W4 # maximum warning levels
         /WX # treat warnings as errors
         /analyze # enable static code analysis
-        /wd26467 # Converting from floating point to unsigned integral types results in non-portable code if the double/float has a negative value.
         /wd26472 # Don't use a static_cast for arithmetic conversions
         /wd26826 # Don't use C-style variable arguments
         /wd26485 # No array to pointer decay
