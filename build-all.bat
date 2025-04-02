@@ -28,6 +28,12 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
+call ninja-build.bat Analyze
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
 call vstudio-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
@@ -35,6 +41,12 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 call vstudio-build.bat Release
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
+call vstudio-build.bat Analyze
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%

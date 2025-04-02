@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CONFIGURATION_TYPES Debug Release)
+set(CMAKE_CONFIGURATION_TYPES Debug Release Analyze)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -35,9 +35,6 @@ set(COMPILE_CONFIG_OPTIONS
         /guard:cf # control flow guard
         /W4 # maximum warning levels
         /WX # treat warnings as errors
-        /analyze # enable static code analysis
-        /wd26485 # No array to pointer decay
-        /wd26490 # Don't use reinterpret_cast
 
         # Debug compile options
         $<$<CONFIG:Debug>:
@@ -52,6 +49,15 @@ set(COMPILE_CONFIG_OPTIONS
             /Ot # favor fast code
             /GL # enable whole program optimization
             /Gw # enable global data optimization
+        >
+
+        # Analyze compile options
+        $<$<CONFIG:Analyze>:
+            /Od # don't optimize
+            /analyze # enable static analysis
+            /wd26485 # No array to pointer decay
+            /wd26490 # Don't use reinterpret_cast
+            /Zi # enable debug info in pdb format
         >
     >
 
@@ -71,6 +77,15 @@ set(COMPILE_CONFIG_OPTIONS
         $<$<CONFIG:Release>:
             -O3 # enable maximum speed optimizations
             -flto # enable link time optimization
+        >
+
+        # Analyze compile options
+        $<$<CONFIG:Analyze>:
+            -O0 # don't optimize
+            -g # enable debug info
+            -fsanitize=address # enable address sanitizer
+            -fsanitize=integer # enable integer sanitizer
+            -fsanitize=undefined # enable undefined behavior sanitizer
         >
     >
 )
@@ -184,8 +199,10 @@ target_link_libraries(Finestray
 
 set_target_properties(Finestray
     PROPERTIES
-        CXX_CLANG_TIDY "clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
-        VS_USER_PROPS "${CMAKE_CURRENT_SOURCE_DIR}/analysis.props"
+        $<$<CONFIG:Analyze>:
+            CXX_CLANG_TIDY "clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
+            VS_USER_PROPS "${CMAKE_CURRENT_SOURCE_DIR}/analysis.props"
+        >
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

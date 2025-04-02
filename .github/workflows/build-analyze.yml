@@ -1,0 +1,44 @@
+# Copyright 2020 Benbuck Nason
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Build Analyze
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to path
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build VStudio
+        run: .\vstudio-build.bat Analyze
+
+      - name: Build Ninja
+        run: .\ninja-build.bat Analyze
+
+      - name: Create portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable
+          path: build/vstudio/Analyze/Finestray.exe
