@@ -67,14 +67,14 @@ std::string getExecutableFullPath()
     return executableFullPath_;
 }
 
-std::string getExecutableFileName()
-{
-    if (executableFileName_.empty() && !getExecutablePathComponents()) {
-        return {};
-    }
-
-    return executableFileName_;
-}
+// std::string getExecutableFileName()
+//{
+//     if (executableFileName_.empty() && !getExecutablePathComponents()) {
+//         return {};
+//     }
+//
+//     return executableFileName_;
+// }
 
 std::string getExecutableDir()
 {

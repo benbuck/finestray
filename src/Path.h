@@ -24,7 +24,7 @@
 
 std::string getAppDataDir();
 std::string getExecutableFullPath();
-std::string getExecutableFileName();
+// std::string getExecutableFileName();
 std::string getExecutableDir();
 std::string getStartupDir();
 std::string getWriteableDir();

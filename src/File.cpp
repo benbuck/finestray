@@ -19,7 +19,7 @@
 #include "StringUtility.h"
 
 // Windows
-#include "Windows.h"
+#include <Windows.h>
 
 std::string fileRead(const std::string & fileName)
 {
