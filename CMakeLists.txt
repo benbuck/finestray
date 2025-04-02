@@ -39,7 +39,6 @@ set(COMPILE_CONFIG_OPTIONS
         /wd26472 # Don't use a static_cast for arithmetic conversions
         /wd26485 # No array to pointer decay
         /wd26490 # Don't use reinterpret_cast
-        /wd26492 # Don't use const_cast
 
         # Debug compile options
         $<$<CONFIG:Debug>:

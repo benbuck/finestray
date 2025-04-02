@@ -1,7 +1,6 @@
 # To do list
 
 - Mimic Win10 taskbar (get icon of shortcut)
-- Clean up / simplify SettingsDialog auto-tray listview code
 - Get windows error reporting (WER) working
 - Investigate VirusTotal results for installer
 - Add option to make tray icons persistent even when window is restored
