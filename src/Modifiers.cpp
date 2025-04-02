@@ -37,9 +37,9 @@ bool modifiersActive(UINT modifiers) noexcept
     }
 
     if (modifiers & static_cast<UINT>(MOD_CONTROL)) {
-        if (!(static_cast<UINT>(GetKeyState(VK_MENU)) & 0x8000U) &&
-            !(static_cast<UINT>(GetKeyState(VK_LMENU)) & 0x8000U) &&
-            !(static_cast<UINT>(GetKeyState(VK_RMENU)) & 0x8000U)) {
+        if (!(static_cast<UINT>(GetKeyState(VK_CONTROL)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_LCONTROL)) & 0x8000U) &&
+            !(static_cast<UINT>(GetKeyState(VK_RCONTROL)) & 0x8000U)) {
             DEBUG_PRINTF("\tctrl modifier not down\n");
             return false;
         }
