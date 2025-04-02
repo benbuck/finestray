@@ -15,8 +15,10 @@
 // App
 #include "File.h"
 #include "HandleWrapper.h"
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
+
 
 // Windows
 #include <Windows.h>
@@ -77,7 +79,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
     }
 
     DWORD bytesWritten = 0;
-    if (!WriteFile(file, contents.c_str(), static_cast<DWORD>(contents.size()), &bytesWritten, nullptr)) {
+    if (!WriteFile(file, contents.c_str(), narrow_cast<DWORD>(contents.size()), &bytesWritten, nullptr)) {
         WARNING_PRINTF(
             "could not write %d bytes to '%s', WriteFile() failed: %s\n",
             contents.size(),

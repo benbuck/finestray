@@ -62,7 +62,7 @@ std::string getWindowText(HWND hwnd)
     }
 
     text.resize(static_cast<size_t>(len) + 1);
-    const int res = GetWindowTextA(hwnd, text.data(), static_cast<int>(text.size()));
+    const int res = GetWindowTextA(hwnd, text.data(), narrow_cast<int>(text.size()));
     if (!res && (GetLastError() != ERROR_SUCCESS)) {
         WARNING_PRINTF(
             "failed to get window text, GetWindowTextA() failed: %s\n",

@@ -15,6 +15,7 @@
 // App
 #include "Log.h"
 #include "HandleWrapper.h"
+#include "Helpers.h"
 #include "Path.h"
 #include "StringUtility.h"
 
@@ -94,7 +95,7 @@ void start(bool enable, const std::string & fileName)
 
     for (const std::string & pendingLog : pendingLogs_) {
         DWORD bytesWritten = 0;
-        WriteFile(fileHandle_, pendingLog.c_str(), static_cast<DWORD>(pendingLog.size()), &bytesWritten, nullptr);
+        WriteFile(fileHandle_, pendingLog.c_str(), narrow_cast<DWORD>(pendingLog.size()), &bytesWritten, nullptr);
         assert(bytesWritten == pendingLog.size());
     }
     pendingLogs_.clear();
@@ -116,7 +117,7 @@ void printf(Level level, const char * fmt, ...) noexcept
     va_list ap;
     va_start(ap, fmt);
     int len = vsnprintf(buffer, bufferSize, fmt, ap);
-    if (len >= static_cast<int>(bufferSize)) {
+    if (len >= narrow_cast<int>(bufferSize)) {
         bufferSize = static_cast<size_t>(len) + 1;
         buffer = new (std::nothrow) char[bufferSize];
         if (!buffer) {
@@ -178,7 +179,7 @@ void print(Level level, const char * str) noexcept
 
     if (enableLogging_ && (fileHandle_ != INVALID_HANDLE_VALUE)) {
         DWORD bytesWritten = 0;
-        WriteFile(fileHandle_, line.c_str(), static_cast<DWORD>(line.size()), &bytesWritten, nullptr);
+        WriteFile(fileHandle_, line.c_str(), narrow_cast<DWORD>(line.size()), &bytesWritten, nullptr);
         assert(bytesWritten == line.size());
     }
 

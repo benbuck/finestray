@@ -40,13 +40,13 @@
 namespace
 {
 
-enum class AutoTrayListViewColumn : unsigned int
+enum AutoTrayListViewColumn
 {
-    WindowClass,
-    Executable,
-    WindowTitle,
-    TrayEvent,
-    Count
+    AutoTrayListViewColumn_WindowClass,
+    AutoTrayListViewColumn_Executable,
+    AutoTrayListViewColumn_WindowTitle,
+    AutoTrayListViewColumn_TrayEvent,
+    AutoTrayListViewColumn_Count
 };
 
 INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -57,9 +57,9 @@ void autoTrayListViewNotify(HWND dialogHwnd, const NMHDR * nmhdr);
 int autoTrayListViewCompare(LPARAM, LPARAM, LPARAM);
 #endif
 void autoTrayListViewItemAdd(HWND dialogHwnd);
-void autoTrayListViewItemUpdate(HWND dialogHwnd, int item);
-void autoTrayListViewItemDelete(HWND dialogHwnd, int item);
-void autoTrayListViewItemEdit(HWND dialogHwnd, int item);
+void autoTrayListViewItemUpdate(HWND dialogHwnd, unsigned int item);
+void autoTrayListViewItemDelete(HWND dialogHwnd, unsigned int item);
+void autoTrayListViewItemEdit(HWND dialogHwnd, unsigned int item);
 void autoTrayListViewUpdateButtons(HWND dialogHwnd) noexcept;
 void autoTrayListViewUpdateSelected(HWND dialogHwnd);
 void spyBegin(HWND dialogHwnd);
@@ -68,21 +68,21 @@ void spyEnableIcon(HWND dialogHwnd);
 void spyDisableIcon(HWND dialogHwnd);
 void spyUpdate(HWND dialogHwnd);
 std::string getDialogItemText(HWND dialogHwnd, int id);
-std::string getListViewItemText(HWND listViewHwnd, int item, int subItem);
+std::string getListViewItemText(HWND listViewHwnd, unsigned int item, int subItem);
 void setDlgItemTextSafe(HWND dialogHwnd, int id, const std::string & text);
 void checkDlgButtonSafe(HWND dialogHwnd, int id, bool check);
 void checkRadioButtonSafe(HWND dialogHwnd, int firstId, int lastId, int checkId);
-void insertColumnSafe(HWND listViewHwnd, int columnIndex, int width, const char * text);
-void insertItemSafe(HWND listViewHwnd, int item, int subItem, const char * text);
-void setItemTextSafe(HWND listViewHwnd, int item, int subItem, const char * text);
-void setItemStateSafe(HWND listViewHwnd, int item, UINT state, UINT stateMask);
+void insertColumnSafe(HWND listViewHwnd, unsigned int columnIndex, int width, const char * text);
+void insertItemSafe(HWND listViewHwnd, unsigned int item, int subItem, const char * text);
+void setItemTextSafe(HWND listViewHwnd, unsigned int item, int subItem, const char * text);
+void setItemStateSafe(HWND listViewHwnd, unsigned int item, UINT state, UINT stateMask);
 TrayEvent resourceStringToTrayEvent(const std::string & str);
 std::string trayEventToResourceString(TrayEvent trayEvent);
 
 Settings settings_;
 SettingsDialog::CompletionCallback completionCallback_;
 HWND autoTrayListViewHwnd_;
-int autoTrayListViewActiveItem_;
+unsigned int autoTrayListViewActiveItem_;
 #ifdef SORT_ENABLED
 bool autoTrayListViewSortAscending_;
 int autoTrayListViewSortColumn_;
@@ -300,7 +300,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         settings_.pollInterval_ = std::stoul(getDialogItemText(dialogHwnd, IDC_POLL_INTERVAL));
                         settings_.autoTrays_ = autoTrayListViewGetItems(dialogHwnd);
 
-                        EndDialog(dialogHwnd, static_cast<INT_PTR>(wParam));
+                        EndDialog(dialogHwnd, narrow_cast<INT_PTR>(wParam));
 
                         if (completionCallback_) {
                             completionCallback_(true, settings_);
@@ -316,7 +316,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                     case IDCANCEL: {
                         INFO_PRINTF("Settings dialog cancelled\n");
 
-                        EndDialog(dialogHwnd, static_cast<INT_PTR>(wParam));
+                        EndDialog(dialogHwnd, narrow_cast<INT_PTR>(wParam));
 
                         if (completionCallback_) {
                             completionCallback_(false, settings_);
@@ -347,12 +347,12 @@ void autoTrayListViewInit(HWND dialogHwnd)
 {
     autoTrayListViewHwnd_ = GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_LIST);
 
-    const int columnWeights[static_cast<size_t>(AutoTrayListViewColumn::Count)] = { 100, 150, 75, 75 };
+    const int columnWeights[AutoTrayListViewColumn_Count] = { 100, 150, 75, 75 };
     const int totalColumnWeight = std::accumulate(std::begin(columnWeights), std::end(columnWeights), 0);
 
     HWND hWndHdr = reinterpret_cast<HWND>(SendMessage(autoTrayListViewHwnd_, LVM_GETHEADER, 0, 0));
-    const int count = static_cast<int>(SendMessage(hWndHdr, HDM_GETITEMCOUNT, 0, 0L));
-    if (count < static_cast<int>(AutoTrayListViewColumn::Count)) {
+    const unsigned int count = narrow_cast<unsigned int>(SendMessage(hWndHdr, HDM_GETITEMCOUNT, 0, 0L));
+    if (count < AutoTrayListViewColumn_Count) {
         constexpr unsigned int styles = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_ONECLICKACTIVATE |
             LVS_EX_GRIDLINES;
         if (SendMessageA(autoTrayListViewHwnd_, LVM_SETEXTENDEDLISTVIEWSTYLE, styles, styles) == -1) {
@@ -363,30 +363,34 @@ void autoTrayListViewInit(HWND dialogHwnd)
 
         RECT rect;
         GetWindowRect(autoTrayListViewHwnd_, &rect);
-        const int width = rect.right - rect.left;
+        const int listViewWidth = rect.right - rect.left;
 
+        int width = (listViewWidth * columnWeights[AutoTrayListViewColumn_WindowClass]) / totalColumnWeight;
         insertColumnSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(AutoTrayListViewColumn::WindowClass),
-            (width * columnWeights[static_cast<unsigned int>(AutoTrayListViewColumn::WindowClass)]) / totalColumnWeight,
+            AutoTrayListViewColumn_WindowClass,
+            width,
             getResourceString(IDS_COLUMN_WINDOW_CLASS).c_str());
 
+        width = (listViewWidth * columnWeights[AutoTrayListViewColumn_Executable]) / totalColumnWeight;
         insertColumnSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(AutoTrayListViewColumn::Executable),
-            (width * columnWeights[static_cast<unsigned int>(AutoTrayListViewColumn::Executable)]) / totalColumnWeight,
+            AutoTrayListViewColumn_Executable,
+            width,
             getResourceString(IDS_COLUMN_EXECUTABLE).c_str());
 
+        width = (listViewWidth * columnWeights[AutoTrayListViewColumn_WindowTitle]) / totalColumnWeight;
         insertColumnSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(AutoTrayListViewColumn::WindowTitle),
-            (width * columnWeights[static_cast<unsigned int>(AutoTrayListViewColumn::WindowTitle)]) / totalColumnWeight,
+            AutoTrayListViewColumn_WindowTitle,
+            width,
             getResourceString(IDS_COLUMN_WINDOW_TITLE).c_str());
 
+        width = (listViewWidth * columnWeights[AutoTrayListViewColumn_TrayEvent]) / totalColumnWeight;
         insertColumnSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(AutoTrayListViewColumn::TrayEvent),
-            (width * columnWeights[static_cast<unsigned int>(AutoTrayListViewColumn::TrayEvent)]) / totalColumnWeight,
+            AutoTrayListViewColumn_TrayEvent,
+            width,
             getResourceString(IDS_COLUMN_TRAY_EVENT).c_str());
     }
 
@@ -394,7 +398,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
         WARNING_PRINTF("SendMessage LVM_DELETEALLITEMS failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
-    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMCOUNT, static_cast<WPARAM>(settings_.autoTrays_.size()), 0) == -1) {
+    if (SendMessageA(autoTrayListViewHwnd_, LVM_SETITEMCOUNT, narrow_cast<WPARAM>(settings_.autoTrays_.size()), 0) == -1) {
         WARNING_PRINTF("SendMessage LVM_SETITEMCOUNT failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
@@ -402,36 +406,36 @@ void autoTrayListViewInit(HWND dialogHwnd)
     memset(&listViewItem, 0, sizeof(listViewItem));
 
     for (size_t a = 0; a < settings_.autoTrays_.size(); ++a) {
-        listViewItem.iItem = static_cast<int>(a);
-        listViewItem.lParam = static_cast<LPARAM>(a);
+        listViewItem.iItem = narrow_cast<int>(a);
+        listViewItem.lParam = narrow_cast<LPARAM>(a);
         listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
 
         insertItemSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(a),
-            static_cast<int>(AutoTrayListViewColumn::WindowClass),
+            narrow_cast<int>(a),
+            AutoTrayListViewColumn_WindowClass,
             settings_.autoTrays_.at(a).windowClass_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(a),
-            static_cast<int>(AutoTrayListViewColumn::Executable),
+            narrow_cast<int>(a),
+            AutoTrayListViewColumn_Executable,
             settings_.autoTrays_.at(a).executable_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(a),
-            static_cast<int>(AutoTrayListViewColumn::WindowTitle),
+            narrow_cast<int>(a),
+            AutoTrayListViewColumn_WindowTitle,
             settings_.autoTrays_.at(a).windowTitle_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            static_cast<int>(a),
-            static_cast<int>(AutoTrayListViewColumn::TrayEvent),
+            narrow_cast<int>(a),
+            AutoTrayListViewColumn_TrayEvent,
             trayEventToResourceString(settings_.autoTrays_.at(a).trayEvent_).c_str());
     }
 
-    autoTrayListViewActiveItem_ = -1;
+    autoTrayListViewActiveItem_ = ~0U;
 #ifdef SORT_ENABLED
     autoTrayListViewSortAscending_ = true;
     autoTrayListViewSortColumn_ = 0;
@@ -444,20 +448,17 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* dialogHwnd */)
 {
     std::vector<Settings::AutoTray> autoTrays;
 
-    const int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    const unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
-    for (int item = 0; item < itemCount; ++item) {
+    for (unsigned int item = 0; item < itemCount; ++item) {
         Settings::AutoTray autoTray;
 
-        autoTray.windowClass_ =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowClass));
-        autoTray.executable_ =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::Executable));
-        autoTray.windowTitle_ =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowTitle));
+        autoTray.windowClass_ = getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_WindowClass);
+        autoTray.executable_ = getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_Executable);
+        autoTray.windowTitle_ = getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_WindowTitle);
 
         const std::string trayEventStr =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::TrayEvent));
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_TrayEvent);
         autoTray.trayEvent_ = resourceStringToTrayEvent(trayEventStr);
 
         if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
@@ -496,7 +497,7 @@ void autoTrayListViewNotify(HWND dialogHwnd, const NMHDR * nmhdr)
                 if (nmListView->uNewState & LVIS_SELECTED) {
                     autoTrayListViewItemEdit(dialogHwnd, nmListView->iItem);
                 } else {
-                    autoTrayListViewItemEdit(dialogHwnd, -1);
+                    autoTrayListViewItemEdit(dialogHwnd, ~0U);
                 }
             }
             break;
@@ -540,13 +541,13 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
 {
     DEBUG_PRINTF("Adding auto tray item\n");
 
-    const int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    const unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
     // create the row so that the update can fill it in correctly
     insertItemSafe(
         autoTrayListViewHwnd_,
         itemCount,
-        static_cast<int>(AutoTrayListViewColumn::WindowClass),
+        AutoTrayListViewColumn_WindowClass,
         getDialogItemText(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS).c_str());
 
     autoTrayListViewItemUpdate(dialogHwnd, itemCount);
@@ -557,13 +558,13 @@ void autoTrayListViewItemAdd(HWND dialogHwnd)
     autoTrayListViewUpdateSelected(dialogHwnd);
 }
 
-void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
+void autoTrayListViewItemUpdate(HWND dialogHwnd, unsigned int item)
 {
     DEBUG_PRINTF("Updating auto tray item %d\n", item);
 
-    const int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    const int unsigned itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
-    if ((item < 0) || (item >= itemCount)) {
+    if (item >= itemCount) {
         WARNING_PRINTF("Item %d out of range\n", item);
         return;
     }
@@ -571,19 +572,19 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     setItemTextSafe(
         autoTrayListViewHwnd_,
         item,
-        static_cast<int>(AutoTrayListViewColumn::WindowClass),
+        AutoTrayListViewColumn_WindowClass,
         getDialogItemText(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS).c_str());
 
     setItemTextSafe(
         autoTrayListViewHwnd_,
         item,
-        static_cast<int>(AutoTrayListViewColumn::Executable),
+        AutoTrayListViewColumn_Executable,
         getDialogItemText(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE).c_str());
 
     setItemTextSafe(
         autoTrayListViewHwnd_,
         item,
-        static_cast<int>(AutoTrayListViewColumn::WindowTitle),
+        AutoTrayListViewColumn_WindowTitle,
         getDialogItemText(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE).c_str());
 
     TrayEvent trayEvent = TrayEvent::None;
@@ -600,17 +601,17 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, int item)
     setItemTextSafe(
         autoTrayListViewHwnd_,
         item,
-        static_cast<int>(AutoTrayListViewColumn::TrayEvent),
+        AutoTrayListViewColumn_TrayEvent,
         trayEventToResourceString(trayEvent).c_str());
 }
 
-void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
+void autoTrayListViewItemDelete(HWND dialogHwnd, unsigned int item)
 {
     DEBUG_PRINTF("Deleting auto tray item %d\n", item);
 
-    int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
-    if ((item < 0) || (item >= itemCount)) {
+    if (item >= itemCount) {
         WARNING_PRINTF("Item %d out of range\n", item);
         return;
     }
@@ -619,7 +620,7 @@ void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
         WARNING_PRINTF("SendMessage LVM_DELETEITEM failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
-    itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
     if (autoTrayListViewActiveItem_ >= itemCount) {
         autoTrayListViewActiveItem_ = itemCount - 1;
@@ -628,13 +629,13 @@ void autoTrayListViewItemDelete(HWND dialogHwnd, int item)
     autoTrayListViewUpdateSelected(dialogHwnd);
 }
 
-void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
+void autoTrayListViewItemEdit(HWND dialogHwnd, unsigned int item)
 {
     DEBUG_PRINTF("Editing auto tray item %d\n", item);
 
-    const int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    const unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
-    if ((item < 0) || (item >= itemCount)) {
+    if (item >= itemCount) {
         WARNING_PRINTF("Item %d out of range\n", item);
         setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
         setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
@@ -644,23 +645,23 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, int item)
             IDC_AUTO_TRAY_EVENT_OPEN,
             IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
             IDC_AUTO_TRAY_EVENT_MINIMIZE);
-        autoTrayListViewActiveItem_ = -1;
+        autoTrayListViewActiveItem_ = ~0U;
     } else {
         setDlgItemTextSafe(
             dialogHwnd,
             IDC_AUTO_TRAY_EDIT_WINDOWCLASS,
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowClass)));
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_WindowClass));
         setDlgItemTextSafe(
             dialogHwnd,
             IDC_AUTO_TRAY_EDIT_EXECUTABLE,
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::Executable)));
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_Executable));
         setDlgItemTextSafe(
             dialogHwnd,
             IDC_AUTO_TRAY_EDIT_WINDOWTITLE,
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::WindowTitle)));
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_WindowTitle));
 
         const std::string trayEventStr =
-            getListViewItemText(autoTrayListViewHwnd_, item, static_cast<int>(AutoTrayListViewColumn::TrayEvent));
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_TrayEvent);
         int checkButtonId = IDC_AUTO_TRAY_EVENT_MINIMIZE;
         if (trayEventStr == getResourceString(IDS_TRAY_EVENT_OPEN)) {
             checkButtonId = IDC_AUTO_TRAY_EVENT_OPEN;
@@ -683,7 +684,7 @@ void autoTrayListViewUpdateButtons(HWND dialogHwnd) noexcept
 {
     DEBUG_PRINTF("Updating buttons\n");
 
-    const int itemCount = static_cast<int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
+    const unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
     const bool hasActiveItem = (autoTrayListViewActiveItem_ >= 0) && (autoTrayListViewActiveItem_ < itemCount);
     EnableWindow(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_ITEM_DELETE), hasActiveItem);
@@ -694,7 +695,7 @@ void autoTrayListViewUpdateSelected(HWND /*dialogHwnd*/)
     DEBUG_PRINTF("Updating selected %d\n", autoTrayListViewActiveItem_);
 
     if (autoTrayListViewActiveItem_ == -1) {
-        setItemStateSafe(autoTrayListViewHwnd_, -1, 0, LVIS_FOCUSED | LVIS_SELECTED);
+        setItemStateSafe(autoTrayListViewHwnd_, ~0U, 0, LVIS_FOCUSED | LVIS_SELECTED);
     } else {
         if (!SetFocus(autoTrayListViewHwnd_)) {
             WARNING_PRINTF("SetFocus failed: %s\n", StringUtility::lastErrorString().c_str());
@@ -862,7 +863,7 @@ std::string getDialogItemText(HWND dialogHwnd, int id)
     const int textLength = GetWindowTextLengthA(GetDlgItem(dialogHwnd, id));
     if (textLength > 0) {
         text.resize(static_cast<size_t>(textLength) + 1);
-        if (!GetDlgItemTextA(dialogHwnd, id, text.data(), static_cast<int>(text.size()))) {
+        if (!GetDlgItemTextA(dialogHwnd, id, text.data(), narrow_cast<int>(text.size()))) {
             WARNING_PRINTF("GetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             text.clear();
         } else {
@@ -872,26 +873,26 @@ std::string getDialogItemText(HWND dialogHwnd, int id)
     return text;
 }
 
-std::string getListViewItemText(HWND listViewHwnd, int item, int subItem)
+std::string getListViewItemText(HWND listViewHwnd, unsigned int item, int subItem)
 {
     std::string text;
 
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
     listViewItem.mask = LVIF_TEXT;
-    listViewItem.iItem = item;
+    listViewItem.iItem = narrow_cast<int>(item);
     listViewItem.iSubItem = subItem;
 
     while (true) {
         text.resize(std::max<size_t>(256, text.size() * 2));
         listViewItem.pszText = text.data();
-        listViewItem.cchTextMax = static_cast<int>(text.size());
+        listViewItem.cchTextMax = narrow_cast<int>(text.size());
         LRESULT const res = SendMessageA(listViewHwnd, LVM_GETITEMTEXTA, item, reinterpret_cast<LPARAM>(&listViewItem));
         if (res == -1) {
             WARNING_PRINTF("SendMessage LVM_GETITEMTEXTA failed: %s\n", StringUtility::lastErrorString().c_str());
             return {};
         }
-        if ((static_cast<int>(text.size()) - 1) > res) {
+        if (narrow_cast<int>(text.size() - 1) > res) {
             text.resize(res); // don't include nul terminator
             break;
         }
@@ -926,13 +927,13 @@ void checkRadioButtonSafe(HWND dialogHwnd, int firstId, int lastId, int checkId)
 #pragma warning(disable : 26492) // Don't use const_cast to cast away const or volatile
 #endif
 
-void insertColumnSafe(HWND listViewHwnd, int columnIndex, int width, const char * text)
+void insertColumnSafe(HWND listViewHwnd, unsigned int columnIndex, int width, const char * text)
 {
     LVCOLUMNA listViewColumn;
     memset(&listViewColumn, 0, sizeof(listViewColumn));
     listViewColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     listViewColumn.fmt = LVCFMT_LEFT;
-    listViewColumn.iSubItem = columnIndex;
+    listViewColumn.iSubItem = narrow_cast<int>(columnIndex);
     listViewColumn.cx = width;
     listViewColumn.pszText = const_cast<LPSTR>(text);
     if (SendMessageA(listViewHwnd, LVM_INSERTCOLUMNA, columnIndex, reinterpret_cast<LPARAM>(&listViewColumn)) == -1) {
@@ -940,11 +941,11 @@ void insertColumnSafe(HWND listViewHwnd, int columnIndex, int width, const char 
     }
 }
 
-void insertItemSafe(HWND listViewHwnd, int item, int subItem, const char * text)
+void insertItemSafe(HWND listViewHwnd, unsigned int item, int subItem, const char * text)
 {
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
-    listViewItem.iItem = item;
+    listViewItem.iItem = narrow_cast<int>(item);
     listViewItem.lParam = static_cast<LPARAM>(item);
     listViewItem.iSubItem = subItem;
     listViewItem.pszText = const_cast<LPSTR>(text);
@@ -955,11 +956,11 @@ void insertItemSafe(HWND listViewHwnd, int item, int subItem, const char * text)
     }
 }
 
-void setItemTextSafe(HWND listViewHwnd, int item, int subItem, const char * text)
+void setItemTextSafe(HWND listViewHwnd, unsigned int item, int subItem, const char * text)
 {
     LVITEMA listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));
-    listViewItem.iItem = item;
+    listViewItem.iItem = narrow_cast<int>(item);
     listViewItem.lParam = static_cast<LPARAM>(item);
     listViewItem.iSubItem = subItem;
     listViewItem.pszText = const_cast<LPSTR>(text);
@@ -974,7 +975,7 @@ void setItemTextSafe(HWND listViewHwnd, int item, int subItem, const char * text
 #pragma warning(pop)
 #endif
 
-void setItemStateSafe(HWND listViewHwnd, int item, UINT state, UINT stateMask)
+void setItemStateSafe(HWND listViewHwnd, unsigned int item, UINT state, UINT stateMask)
 {
     LVITEM listViewItem;
     memset(&listViewItem, 0, sizeof(listViewItem));

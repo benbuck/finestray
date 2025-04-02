@@ -14,6 +14,7 @@
 
 // App
 #include "TrayIcon.h"
+#include "Helpers.h"
 #include "IconHandleWrapper.h"
 #include "Log.h"
 #include "Resource.h"
@@ -40,7 +41,7 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleW
     ZeroMemory(&nid_, sizeof(nid_));
     nid_.cbSize = NOTIFYICONDATA_V3_SIZE;
     nid_.hWnd = messageHwnd;
-    nid_.uID = static_cast<UINT>(gid);
+    nid_.uID = narrow_cast<UINT>(gid);
     nid_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_GUID;
     nid_.uCallbackMessage = msg;
     nid_.hIcon = icon_ ? icon_ : LoadIcon(nullptr, IDI_APPLICATION);

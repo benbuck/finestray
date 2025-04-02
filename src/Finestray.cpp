@@ -476,7 +476,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // user selected and activated icon
                 case NIN_SELECT: {
                     INFO_PRINTF("tray icon selected\n");
-                    HWND hwndTray = MinimizedWindow::getFromID(static_cast<UINT>(wParam));
+                    HWND hwndTray = MinimizedWindow::getFromID(narrow_cast<UINT>(wParam));
                     if (hwndTray) {
                         INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
                         restoreWindow(hwndTray);

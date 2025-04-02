@@ -15,6 +15,7 @@
 // Finestray
 #include "WindowInfo.h"
 #include "HandleWrapper.h"
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
 
@@ -28,7 +29,7 @@ WindowInfo::WindowInfo(HWND hwnd)
     : hwnd_(hwnd)
 {
     className_.resize(256);
-    int res = GetClassNameA(hwnd, className_.data(), static_cast<int>(className_.size()));
+    int res = GetClassNameA(hwnd, className_.data(), narrow_cast<int>(className_.size()));
     if (!res) {
         WARNING_PRINTF(
             "failed to get window class name, GetClassNameA() failed: %s\n",
@@ -66,7 +67,7 @@ WindowInfo::WindowInfo(HWND hwnd)
         }
     } else {
         title_.resize(static_cast<size_t>(len) + 1);
-        res = GetWindowTextA(hwnd, title_.data(), static_cast<int>(title_.size()));
+        res = GetWindowTextA(hwnd, title_.data(), narrow_cast<int>(title_.size()));
         if (!res && (GetLastError() != ERROR_SUCCESS)) {
             WARNING_PRINTF(
                 "failed to get window text, GetWindowTextA() failed: %s\n",

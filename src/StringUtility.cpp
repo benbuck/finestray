@@ -14,6 +14,7 @@
 
 // App
 #include "StringUtility.h"
+#include "Helpers.h"
 #include "Log.h"
 
 // Windows
@@ -29,7 +30,7 @@ std::string toLower(const std::string & s)
 {
     std::string lower(s);
     std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) noexcept {
-        return static_cast<char>(std::tolower(c));
+        return narrow_cast<char>(std::tolower(c));
     });
     return lower;
 }
@@ -82,7 +83,7 @@ std::string wideStringToString(const std::wstring & ws)
     std::string s;
     s.resize(ret);
 
-    ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, s.data(), static_cast<int>(s.size()), nullptr, nullptr);
+    ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, s.data(), narrow_cast<int>(s.size()), nullptr, nullptr);
     if (ret <= 0) {
         WARNING_PRINTF("WideCharToMultiByte() failed: %s\n", lastErrorString().c_str());
         return {};
@@ -104,7 +105,7 @@ std::wstring stringToWideString(const std::string & s)
     std::wstring ws;
     ws.resize(ret);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, ws.data(), static_cast<int>(ws.size()));
+    ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, ws.data(), narrow_cast<int>(ws.size()));
     if (ret <= 0) {
         WARNING_PRINTF("MultiByteToWideChar() failed: %s\n", lastErrorString().c_str());
         return {};
