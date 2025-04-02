@@ -1,0 +1,8 @@
+diff --git i/CMakeLists.txt w/CMakeLists.txt
+index 36a6cb5..9428da5 100644
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -1,2 +1,2 @@
+ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+-cmake_minimum_required(VERSION 3.0)
++cmake_minimum_required(VERSION 3.10)
