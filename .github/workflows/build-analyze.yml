@@ -36,9 +36,3 @@ jobs:
 
       - name: Build Ninja
         run: .\ninja-build.bat Analyze
-
-      - name: Create portable artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: portable
-          path: build/vstudio/Analyze/Finestray.exe
