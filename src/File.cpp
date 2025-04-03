@@ -19,7 +19,6 @@
 #include "Log.h"
 #include "StringUtility.h"
 
-
 // Windows
 #include <Windows.h>
 
@@ -45,21 +44,21 @@ std::string fileRead(const std::string & fileName)
     }
 
     std::string buffer;
-    buffer.resize(fileSize.QuadPart + 1);
+    buffer.resize(narrow_cast<size_t>(fileSize.QuadPart + 1));
     buffer.at(buffer.size() - 1) = '\0';
 
     DWORD bytesRead = 0;
     if (!ReadFile(file, buffer.data(), fileSize.LowPart, &bytesRead, nullptr)) {
         WARNING_PRINTF(
-            "could not read %d bytes from '%s', ReadFile() failed: %s\n",
-            fileSize,
+            "could not read %lld bytes from '%s', ReadFile() failed: %s\n",
+            fileSize.QuadPart,
             fileName.c_str(),
             GetLastError());
         return {};
     }
 
     if (bytesRead != fileSize.LowPart) {
-        WARNING_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize);
+        WARNING_PRINTF("read %d bytes from '%s', expected %d\n", bytesRead, fileName.c_str(), fileSize.QuadPart);
         return {};
     }
 

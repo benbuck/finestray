@@ -50,7 +50,7 @@ public:
     void close() noexcept
     {
         if (handle_ != INVALID_HANDLE_VALUE) {
-            if (!CloseHandle((HANDLE)handle_)) {
+            if (!CloseHandle(handle_)) {
                 WARNING_PRINTF("failed to close handle %#x: %lu\n", handle_, GetLastError());
                 return;
             }

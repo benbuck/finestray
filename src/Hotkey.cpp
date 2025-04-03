@@ -14,6 +14,7 @@
 
 // App
 #include "Hotkey.h"
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
 
@@ -132,7 +133,7 @@ bool Hotkey::parse(const std::string & hotkeyStr, UINT & key, UINT & modifiers)
         if (vkit != vkeyMap_.end()) {
             key = vkit->second;
         } else {
-            key = VkKeyScanA(vkey.at(0));
+            key = narrow_cast<UINT>(VkKeyScanA(vkey.at(0)));
         }
     }
 

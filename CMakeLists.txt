@@ -62,30 +62,51 @@ set(COMPILE_CONFIG_OPTIONS
     >
 
     $<$<CXX_COMPILER_ID:Clang>:
-        -fno-rtti # disable run-time type information (RTTI)
+        /GR- #-fno-rtti # disable run-time type information (RTTI)
         -Wall # enable all warnings
         -Wextra # enable extra warnings
+        -Weverything # enable all warnings
+        -Wno-c++98-compat
+        -Wno-c++98-compat-pedantic
+        -Wno-covered-switch-default
+        -Wno-exit-time-destructors
+        -Wno-global-constructors
+        -Wno-gnu-zero-variadic-macro-arguments
+        -Wno-unsafe-buffer-usage
         -Werror # treat warnings as errors
 
         # Debug compile options
         $<$<CONFIG:Debug>:
-            -O0 # don't optimize
+            /Od #-O0 # don't optimize
             -g # enable debug info
         >
 
         # Release compile options
         $<$<CONFIG:Release>:
-            -O3 # enable maximum speed optimizations
+            /Os #-O3 # enable maximum speed optimizations
             -flto # enable link time optimization
         >
 
         # Analyze compile options
         $<$<CONFIG:Analyze>:
-            -O0 # don't optimize
+            /Od #-O0 # don't optimize
             -g # enable debug info
-            -fsanitize=address # enable address sanitizer
-            -fsanitize=integer # enable integer sanitizer
-            -fsanitize=undefined # enable undefined behavior sanitizer
+            --analyze # enable static analysis
+            -Xclang=-analyzer-checker=core
+            -Xclang=-analyzer-checker=cplusplus
+            -Xclang=-analyzer-checker=deadcode
+            #-Xclang=-analyzer-checker=llvm
+            -Xclang=-analyzer-checker=nullability
+            -Xclang=-analyzer-checker=optin.core
+            -Xclang=-analyzer-checker=optin.cplusplus
+            #-Xclang=-analyzer-checker=optin.performance
+            -Xclang=-analyzer-checker=optin.portability
+            -Xclang=-analyzer-checker=optin.taint
+            -Xclang=-analyzer-checker=security
+            -Xclang=-analyzer-checker=unix
+            #-fsanitize=address # enable address sanitizer
+            #-fsanitize=integer # enable integer sanitizer
+            #-fsanitize=undefined # enable undefined behavior sanitizer
         >
     >
 )
@@ -99,12 +120,18 @@ set(LINK_CONFIG_OPTIONS
         >
     >
 
-    $<$<CXX_COMPILER_ID:Clang>:
-        # Release link options
-        $<$<CONFIG:Release>:
-            -flto # link time optimization
-        >
-    >
+    #$<$<CXX_COMPILER_ID:Clang>:
+    #    # Release link options
+    #    $<$<CONFIG:Release>:
+    #        #-flto # link time optimization
+    #    >
+    #
+    #    $<$<CONFIG:Analyze>:
+    #        #-fsanitize=address # enable address sanitizer
+    #        #-fsanitize=integer # enable integer sanitizer
+    #        #-fsanitize=undefined # enable undefined behavior sanitizer
+    #    >
+    #>
 )
 
 include(cJSON.cmake)

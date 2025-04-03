@@ -255,7 +255,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         const std::string lastErrorString = StringUtility::lastErrorString();
         ERROR_PRINTF(
             "failed to hook minimize win event %#x, SetWinEventHook() failed: %s\n",
-            (HWND)appWindow_,
+            appWindow_.hwnd(),
             lastErrorString.c_str());
         errorMessage(ErrorContext(IDS_ERROR_REGISTER_EVENTHOOK, lastErrorString));
         return IDS_ERROR_REGISTER_EVENTHOOK;
@@ -733,6 +733,8 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
         switch (trayEvent) {
             case TrayEvent::Open: shouldAutoTray = trayEventIncludesOpen(autoTray.trayEvent_); break;
             case TrayEvent::Minimize: shouldAutoTray = trayEventIncludesMinimize(autoTray.trayEvent_); break;
+            case TrayEvent::OpenAndMinimize: shouldAutoTray = (autoTray.trayEvent_ != TrayEvent::None); break;
+            case TrayEvent::None:
             default: {
                 ERROR_PRINTF("invalid auto-tray action\n");
                 break;

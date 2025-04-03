@@ -81,7 +81,7 @@ std::string wideStringToString(const std::wstring & ws)
     }
 
     std::string s;
-    s.resize(ret);
+    s.resize(narrow_cast<size_t>(ret));
 
     ret = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, s.data(), narrow_cast<int>(s.size()), nullptr, nullptr);
     if (ret <= 0) {
@@ -89,7 +89,9 @@ std::string wideStringToString(const std::wstring & ws)
         return {};
     }
 
-    s.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
+    if (ret > 1) {
+        s.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
+    }
 
     return s;
 }
@@ -103,7 +105,7 @@ std::wstring stringToWideString(const std::string & s)
     }
 
     std::wstring ws;
-    ws.resize(ret);
+    ws.resize(narrow_cast<size_t>(ret));
 
     ret = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, ws.data(), narrow_cast<int>(ws.size()));
     if (ret <= 0) {
@@ -111,7 +113,9 @@ std::wstring stringToWideString(const std::string & s)
         return {};
     }
 
-    ws.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
+    if (ret > 1) {
+        ws.resize(static_cast<size_t>(ret) - 1); // remove nul terminator
+    }
 
     return ws;
 }

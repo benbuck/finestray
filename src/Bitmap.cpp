@@ -15,6 +15,7 @@
 // App
 #include "Bitmap.h"
 #include "DeviceContextHandleWrapper.h"
+#include "Helpers.h"
 #include "Log.h"
 #include "StringUtility.h"
 
@@ -62,7 +63,7 @@ bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORRE
     bitmapInfo.bmiHeader.biBitCount = 32;
 
     std::vector<COLORREF> pixels(static_cast<size_t>(bm.bmWidth) * static_cast<size_t>(bm.bmHeight));
-    if (!GetDIBits(desktopDC, bitmap, 0, bm.bmHeight, pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
+    if (!GetDIBits(desktopDC, bitmap, 0, narrow_cast<UINT>(bm.bmHeight), pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to get bitmap bits, GetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
@@ -75,7 +76,7 @@ bool replaceColor(const BitmapHandleWrapper & bitmap, COLORREF oldColor, COLORRE
         }
     }
 
-    if (!SetDIBits(desktopDC, bitmap, 0, bm.bmHeight, pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
+    if (!SetDIBits(desktopDC, bitmap, 0, narrow_cast<UINT>(bm.bmHeight), pixels.data(), &bitmapInfo, DIB_RGB_COLORS)) {
         WARNING_PRINTF("failed to set bitmap bits, SetDIBits() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 

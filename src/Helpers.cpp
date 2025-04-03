@@ -49,7 +49,7 @@ std::string getResourceString(unsigned int id)
         return "Error ID: " + std::to_string(id);
     }
 
-    const std::wstring wstr(str, strLength);
+    const std::wstring wstr(str, narrow_cast<size_t>(strLength));
     return StringUtility::wideStringToString(wstr);
 }
 
@@ -70,7 +70,7 @@ std::string getWindowText(HWND hwnd)
         return {};
     }
 
-    text.resize(res); // remove nul terminator
+    text.resize(narrow_cast<size_t>(res)); // remove nul terminator
 
     return text;
 }

@@ -19,7 +19,7 @@ set BUILD_CONFIG=%1
 if "%BUILD_CONFIG%"=="" set BUILD_CONFIG=Debug
 
 :: set up build dir
-set BUILD_DIR=build\vstudio
+set BUILD_DIR=build\vstudio-msvc
 if not exist %BUILD_DIR% mkdir %BUILD_DIR%
 pushd %BUILD_DIR%
 

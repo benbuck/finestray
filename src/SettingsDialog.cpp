@@ -412,25 +412,25 @@ void autoTrayListViewInit(HWND dialogHwnd)
 
         insertItemSafe(
             autoTrayListViewHwnd_,
-            narrow_cast<int>(a),
+            narrow_cast<unsigned int>(a),
             AutoTrayListViewColumn_WindowClass,
             settings_.autoTrays_.at(a).windowClass_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            narrow_cast<int>(a),
+            narrow_cast<unsigned int>(a),
             AutoTrayListViewColumn_Executable,
             settings_.autoTrays_.at(a).executable_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            narrow_cast<int>(a),
+            narrow_cast<unsigned int>(a),
             AutoTrayListViewColumn_WindowTitle,
             settings_.autoTrays_.at(a).windowTitle_.c_str());
 
         setItemTextSafe(
             autoTrayListViewHwnd_,
-            narrow_cast<int>(a),
+            narrow_cast<unsigned int>(a),
             AutoTrayListViewColumn_TrayEvent,
             trayEventToResourceString(settings_.autoTrays_.at(a).trayEvent_).c_str());
     }
@@ -495,7 +495,7 @@ void autoTrayListViewNotify(HWND dialogHwnd, const NMHDR * nmhdr)
             const NMLISTVIEW * nmListView = reinterpret_cast<const NMLISTVIEW *>(nmhdr);
             if (nmListView->uChanged & LVIF_STATE) {
                 if (nmListView->uNewState & LVIS_SELECTED) {
-                    autoTrayListViewItemEdit(dialogHwnd, nmListView->iItem);
+                    autoTrayListViewItemEdit(dialogHwnd, narrow_cast<unsigned int>(nmListView->iItem));
                 } else {
                     autoTrayListViewItemEdit(dialogHwnd, ~0U);
                 }
@@ -686,7 +686,7 @@ void autoTrayListViewUpdateButtons(HWND dialogHwnd) noexcept
 
     const unsigned int itemCount = narrow_cast<unsigned int>(SendMessageA(autoTrayListViewHwnd_, LVM_GETITEMCOUNT, 0, 0));
 
-    const bool hasActiveItem = (autoTrayListViewActiveItem_ >= 0) && (autoTrayListViewActiveItem_ < itemCount);
+    const bool hasActiveItem = (autoTrayListViewActiveItem_ < itemCount);
     EnableWindow(GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_ITEM_DELETE), hasActiveItem);
 }
 
@@ -694,7 +694,7 @@ void autoTrayListViewUpdateSelected(HWND /*dialogHwnd*/)
 {
     DEBUG_PRINTF("Updating selected %d\n", autoTrayListViewActiveItem_);
 
-    if (autoTrayListViewActiveItem_ == -1) {
+    if (autoTrayListViewActiveItem_ == ~0U) {
         setItemStateSafe(autoTrayListViewHwnd_, ~0U, 0, LVIS_FOCUSED | LVIS_SELECTED);
     } else {
         if (!SetFocus(autoTrayListViewHwnd_)) {
@@ -867,7 +867,7 @@ std::string getDialogItemText(HWND dialogHwnd, int id)
             WARNING_PRINTF("GetDlgItemText failed: %s\n", StringUtility::lastErrorString().c_str());
             text.clear();
         } else {
-            text.resize(textLength); // remove nul terminator
+            text.resize(narrow_cast<size_t>(textLength)); // remove nul terminator
         }
     }
     return text;
@@ -893,7 +893,7 @@ std::string getListViewItemText(HWND listViewHwnd, unsigned int item, int subIte
             return {};
         }
         if (narrow_cast<int>(text.size() - 1) > res) {
-            text.resize(res); // don't include nul terminator
+            text.resize(narrow_cast<size_t>(res)); // don't include nul terminator
             break;
         }
     }
@@ -1011,8 +1011,9 @@ std::string trayEventToResourceString(TrayEvent trayEvent)
         case TrayEvent::Open: return getResourceString(IDS_TRAY_EVENT_OPEN);
         case TrayEvent::Minimize: return getResourceString(IDS_TRAY_EVENT_MINIMIZE);
         case TrayEvent::OpenAndMinimize: return getResourceString(IDS_TRAY_EVENT_OPEN_AND_MINIMIZE);
+        case TrayEvent::None:
         default: {
-            WARNING_PRINTF("Unknown tray event %d\n", (int)trayEvent);
+            WARNING_PRINTF("Unknown tray event %d\n", narrow_cast<int>(trayEvent));
             return "";
         }
     }

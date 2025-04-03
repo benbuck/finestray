@@ -34,22 +34,40 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
-call vstudio-build.bat Debug
+call vstudio-msvc-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call vstudio-build.bat Release
+call vstudio-msvc-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call vstudio-build.bat Analyze
+call vstudio-msvc-build.bat Analyze
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
+
+call vstudio-clang-build.bat Debug
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
+call vstudio-clang-build.bat Release
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
+::call vstudio-clang-build.bat Analyze
+::if %ERRORLEVEL% NEQ 0 (
+::    echo Build failed
+::    exit /b %ERRORLEVEL%
+::)
 
 popd

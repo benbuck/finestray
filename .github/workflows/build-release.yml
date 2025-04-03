@@ -33,10 +33,10 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build
-        run: .\vstudio-build.bat Release
+        run: .\vstudio-msvc-build.bat Release
 
       - name: Create portable artifact digest
-        run: $files = Get-ChildItem -Path .\build\vstudio\Release -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
+        run: $files = Get-ChildItem -Path .\build\vstudio-msvc\Release -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
 
       - name: Create portable artifact
         uses: actions/upload-artifact@v4
@@ -45,7 +45,7 @@ jobs:
           path: build/vstudio/Release/Finestray.exe*
 
       - name: Create installer artifact digest
-        run: $files = Get-ChildItem -Path .\build\vstudio -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
+        run: $files = Get-ChildItem -Path .\build\vstudio-msvc -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
 
       - name: Create installer artifact
         uses: actions/upload-artifact@v4

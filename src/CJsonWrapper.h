@@ -15,7 +15,14 @@
 #pragma once
 
 // cJSON
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-macro-identifier"
+#endif
 #include <cJSON.h>
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 // Standard library
 #include <string>

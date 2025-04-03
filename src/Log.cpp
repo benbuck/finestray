@@ -101,7 +101,10 @@ void start(bool enable, const std::string & fileName)
     pendingLogs_.clear();
 }
 
-#if defined(_MSC_VER)
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#elif defined(_MSC_VER)
 #pragma warning(push, 4)
 #pragma warning(disable : 26400 26401 26409 26826)
 #endif
@@ -152,7 +155,7 @@ void print(Level level, const char * str) noexcept
         systemTime.wMinute,
         systemTime.wSecond,
         systemTime.wMilliseconds);
-    assert(printed < (int)sizeof(timeStr));
+    assert(printed < narrow_cast<int>(sizeof(timeStr)));
     static_cast<void>(printed);
 
     const char * levelString = nullptr;
@@ -192,7 +195,9 @@ void print(Level level, const char * str) noexcept
 
 // NOLINTEND
 
-#if defined(_MSC_VER)
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 

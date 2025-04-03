@@ -32,10 +32,10 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build
-        run: .\vstudio-build.bat Debug
+        run: .\vstudio-msvc-build.bat Debug
 
       - name: Create portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable
-          path: build/vstudio/Debug/Finestray.exe
+          path: build/vstudio-msvc/Debug/Finestray.exe

@@ -26,7 +26,6 @@
 #include <shellapi.h>
 
 WindowInfo::WindowInfo(HWND hwnd)
-    : hwnd_(hwnd)
 {
     className_.resize(256);
     int res = GetClassNameA(hwnd, className_.data(), narrow_cast<int>(className_.size()));
@@ -36,7 +35,7 @@ WindowInfo::WindowInfo(HWND hwnd)
             StringUtility::lastErrorString().c_str());
         className_.clear();
     } else {
-        className_.resize(res); // remove nul terminator
+        className_.resize(narrow_cast<size_t>(res)); // remove nul terminator
     }
 
     char executableFullPath[MAX_PATH] = {};
@@ -74,7 +73,7 @@ WindowInfo::WindowInfo(HWND hwnd)
                 StringUtility::lastErrorString().c_str());
             title_.clear();
         } else {
-            title_.resize(res); // remove nul terminator
+            title_.resize(narrow_cast<size_t>(res)); // remove nul terminator
         }
     }
 }

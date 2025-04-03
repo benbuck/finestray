@@ -58,6 +58,8 @@ public:
         }
     }
 
+    HWND hwnd() const noexcept { return hwnd_; }
+
     operator HWND() const noexcept { return hwnd_; }
 
 private:

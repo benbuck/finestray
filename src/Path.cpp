@@ -51,7 +51,7 @@ std::string getAppDataDir()
     if (FAILED(hresult)) {
         WARNING_PRINTF(
             "could not get app data dir, SHGetFolderPath() failed: %s\n",
-            StringUtility::errorToString(hresult).c_str());
+            StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return {};
     }
 
@@ -93,7 +93,7 @@ std::string getStartupDir()
     if (FAILED(hresult)) {
         WARNING_PRINTF(
             "could not get startup dir, SHGetFolderPath() failed: %s\n",
-            StringUtility::errorToString(hresult).c_str());
+            StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return {};
     }
 
@@ -179,13 +179,13 @@ bool createShortcut(const std::string & shortcutFullPath, const std::string & ex
         IID_IShellLinkA,
         reinterpret_cast<LPVOID *>(shellLink.ReleaseAndGetAddressOf()));
     if (FAILED(hresult)) {
-        WARNING_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to create shell link: %s\n", StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return false;
     }
 
     hresult = shellLink->SetPath(executableFullPath.c_str());
     if (FAILED(hresult)) {
-        WARNING_PRINTF("failed to set path: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to set path: %s\n", StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return false;
     }
 
@@ -193,14 +193,14 @@ bool createShortcut(const std::string & shortcutFullPath, const std::string & ex
     hresult =
         shellLink->QueryInterface(IID_IPersistFile, reinterpret_cast<LPVOID *>(persistFile.ReleaseAndGetAddressOf()));
     if (FAILED(hresult)) {
-        WARNING_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to get persist file: %s\n", StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return false;
     }
 
     const std::wstring shortcutPathW = StringUtility::stringToWideString(shortcutFullPath);
     hresult = persistFile->Save(shortcutPathW.c_str(), TRUE);
     if (FAILED(hresult)) {
-        WARNING_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(hresult).c_str());
+        WARNING_PRINTF("failed to save shortcut: %s\n", StringUtility::errorToString(HRESULT_CODE(hresult)).c_str());
         return false;
     }
 

@@ -28,7 +28,6 @@ class Settings
 {
 public:
     Settings() = default;
-    ~Settings() = default;
 
     bool operator==(const Settings & rhs) const = default;
     bool operator!=(const Settings & rhs) const = default;

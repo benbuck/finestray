@@ -34,7 +34,6 @@ public:
     const std::string & title() const noexcept { return title_; }
 
 private:
-    HWND hwnd_ {};
     std::string className_;
     std::string executable_;
     std::string title_;

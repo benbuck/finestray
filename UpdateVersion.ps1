@@ -68,15 +68,15 @@ Write-Output "Building"
 .\build-all.bat
 
 Write-Output "Starting new version, please exit when done testing"
-.\build\vstudio\Release\Finestray.exe
+.\build\vstudio-msvc\Release\Finestray.exe
 Start-Sleep -Seconds 2
 # invoke twice to display the settings dialog
-.\build\vstudio\Release\Finestray.exe
+.\build\vstudio-msvc\Release\Finestray.exe
 Start-Sleep -Seconds 2
 
 # note that this is not the final installer, the real one will be built by github actions
 Write-Output "Starting new installer, please exit when done installing"
-$out = Invoke-Expression ".\build\vstudio\Finestray-$newVersion-win64.exe" | Out-String
+$out = Invoke-Expression ".\build\vstudio-msvc\Finestray-$newVersion-win64.exe" | Out-String
 Write-Output $out
 
 Write-Output "Updating version in git"
