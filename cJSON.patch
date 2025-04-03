@@ -6,3 +6,11 @@ index 36a6cb5..9428da5 100644
  set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 -cmake_minimum_required(VERSION 3.0)
 +cmake_minimum_required(VERSION 3.10)
+@@ -54,7 +54,6 @@ if (ENABLE_CUSTOM_COMPILER_FLAGS)
+             /GS
+             /Za
+             /sdl
+-            /W4
+             /wd4001
+             /D_CRT_SECURE_NO_WARNINGS
+         )
