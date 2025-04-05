@@ -19,7 +19,7 @@ set BUILD_CONFIG=%1
 if "%BUILD_CONFIG%"=="" set BUILD_CONFIG=Debug
 
 :: set up build dir
-set BUILD_DIR=build\ninja\%BUILD_CONFIG%
+set BUILD_DIR=build\ninja-clang\%BUILD_CONFIG%
 if not exist %BUILD_DIR% mkdir %BUILD_DIR%
 pushd %BUILD_DIR%
 
@@ -34,10 +34,16 @@ if not defined VCINSTALLDIR (
 )
 
 :: configure build with cmake
-cmake ..\..\.. -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
+cmake ..\..\.. -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_CONFIG% -DCMAKE_CXX_COMPILER=clang -DCMAKE_C_COMPILER=clang -DCMAKE_LINKER=lld-link
 
 :: build
 cmake --build .
+
+rem :: for analyze builds, also make the analyze target
+rem if "%BUILD_CONFIG%"=="Analyze" (
+rem     analyze-build --cdb compile_commands.json --use-analyzer clang --output .
+rem     ::cmake --build . --config %BUILD_CONFIG% --target analyze
+rem )
 
 :: for release builds, also make the package
 if "%BUILD_CONFIG%"=="Release" (

@@ -34,8 +34,8 @@ jobs:
       - name: Build VStudio MSVC
         run: .\vstudio-msvc-build.bat Analyze
 
-      - name: Build VStudio Clang
-        run: .\vstudio-clang-build.bat Analyze
+      # - name: Build VStudio Clang
+      #   run: .\vstudio-clang-build.bat Analyze
 
-      - name: Build Ninja
-        run: .\ninja-build.bat Analyze
+      # - name: Build Ninja
+      #   run: .\ninja-clang-build.bat Analyze

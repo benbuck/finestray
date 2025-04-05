@@ -62,7 +62,10 @@ set(COMPILE_CONFIG_OPTIONS
     >
 
     $<$<CXX_COMPILER_ID:Clang>:
-        /GR- #-fno-rtti # disable run-time type information (RTTI)
+        # disable run-time type information (RTTI)
+        $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -fno-rtti >
+        $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /GR- >
+
         -Wall # enable all warnings
         -Wextra # enable extra warnings
         -Weverything # enable all warnings
@@ -77,19 +80,28 @@ set(COMPILE_CONFIG_OPTIONS
 
         # Debug compile options
         $<$<CONFIG:Debug>:
-            /Od #-O0 # don't optimize
+            # don't optimize
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O0 >
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Od >
+
             -g # enable debug info
         >
 
         # Release compile options
         $<$<CONFIG:Release>:
-            /Os #-O3 # enable maximum speed optimizations
+            # enable maximum speed optimizations
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O3 >
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Os >
+
             -flto # enable link time optimization
         >
 
         # Analyze compile options
         $<$<CONFIG:Analyze>:
-            /Od #-O0 # don't optimize
+            # don't optimize
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O0 >
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Od >
+
             -g # enable debug info
             --analyze # enable static analysis
             -Xclang=-analyzer-checker=core

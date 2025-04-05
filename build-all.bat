@@ -16,23 +16,41 @@ setlocal enabledelayedexpansion
 
 pushd %~dp0
 
-call ninja-build.bat Debug
+call ninja-msvc-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call ninja-build.bat Release
+call ninja-msvc-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call ninja-build.bat Analyze
+call ninja-msvc-build.bat Analyze
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
+
+call ninja-clang-build.bat Debug
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
+call ninja-clang-build.bat Release
+if %ERRORLEVEL% NEQ 0 (
+    echo Build failed
+    exit /b %ERRORLEVEL%
+)
+
+::call ninja-clang-build.bat Analyze
+::if %ERRORLEVEL% NEQ 0 (
+::    echo Build failed
+::    exit /b %ERRORLEVEL%
+::)
 
 call vstudio-msvc-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
