@@ -28,8 +28,8 @@
 #include <shellapi.h>
 
 // Standard library
-#include <algorithm>
 #include <cstdlib>
+#include <ranges>
 #include <regex>
 
 namespace
@@ -297,12 +297,13 @@ bool Settings::valid() const
 
     // nothing to validate for poll interval
 
-    if (std::any_of(autoTrays_.begin(), autoTrays_.end(), [](const AutoTray & autoTray) {
+    if (std::ranges::any_of(autoTrays_, [](const AutoTray & autoTray) {
             try {
                 const std::regex re(autoTray.windowTitle_);
                 static_cast<void>(re);
                 return false;
-            } catch (const std::regex_error &) {
+            } catch (const std::regex_error & e) {
+                WARNING_PRINTF("regex error: %s\n", e.what());
                 return true;
             }
         })) {

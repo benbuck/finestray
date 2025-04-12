@@ -27,6 +27,7 @@
 #include <iterator>
 #include <list>
 #include <memory>
+#include <ranges>
 
 namespace
 {
@@ -165,10 +166,8 @@ void updateTitle(HWND hwnd, const std::string & title)
 
 HWND getFromID(UINT id)
 {
-    const MinimizedWindows::const_iterator it = std::find_if(
-        minimizedWindows_.begin(),
-        minimizedWindows_.end(),
-        [id](const MinimizedWindowData & minimizedWindow) noexcept {
+    const MinimizedWindows::const_iterator it =
+        std::ranges::find_if(minimizedWindows_, [id](const MinimizedWindowData & minimizedWindow) noexcept {
             return minimizedWindow.trayIcon_ && (minimizedWindow.trayIcon_->id() == id);
         });
     if (it == minimizedWindows_.end()) {
@@ -199,6 +198,8 @@ HWND getLast() noexcept
 std::vector<HWND> getAll()
 {
     std::vector<HWND> minimizedWindows;
+
+    // NOLINTNEXTLINE(modernize-use-ranges)
     std::transform(
         minimizedWindows_.begin(),
         minimizedWindows_.end(),
@@ -221,12 +222,9 @@ namespace
 
 MinimizedWindows::const_iterator findMinimizedWindow(HWND hwnd)
 {
-    return std::find_if(
-        minimizedWindows_.begin(),
-        minimizedWindows_.end(),
-        [hwnd](const MinimizedWindowData & minimizedWindow) {
-            return minimizedWindow.hwnd_ == hwnd;
-        });
+    return std::ranges::find_if(minimizedWindows_, [hwnd](const MinimizedWindowData & minimizedWindow) {
+        return minimizedWindow.hwnd_ == hwnd;
+    });
 }
 
 } // anonymous namespace

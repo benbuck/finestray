@@ -28,126 +28,6 @@ project(Finestray
     VERSION 0.3
 )
 
-set(COMPILE_CONFIG_OPTIONS
-    $<$<CXX_COMPILER_ID:MSVC>:
-        /GR- # disable run-time type information (RTTI)
-        /GS # enable security checks
-        /guard:cf # control flow guard
-        /W4 # maximum warning levels
-        /WX # treat warnings as errors
-
-        # Debug compile options
-        $<$<CONFIG:Debug>:
-            /Od # don't optimize
-            /RTC1 # enable basic run-time checks
-            /Zi # enable debug info in pdb format
-        >
-
-        # Release compile options
-        $<$<CONFIG:Release>:
-            /O2 # enable maximum speed optimizations
-            /Ot # favor fast code
-            /GL # enable whole program optimization
-            /Gw # enable global data optimization
-        >
-
-        # Analyze compile options
-        $<$<CONFIG:Analyze>:
-            /Od # don't optimize
-            /analyze # enable static analysis
-            /wd26485 # No array to pointer decay
-            /wd26490 # Don't use reinterpret_cast
-            /Zi # enable debug info in pdb format
-        >
-    >
-
-    $<$<CXX_COMPILER_ID:Clang>:
-        # disable run-time type information (RTTI)
-        $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -fno-rtti >
-        $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /GR- >
-
-        -Wall # enable all warnings
-        -Wextra # enable extra warnings
-        -Weverything # enable all warnings
-        -Wno-c++98-compat
-        -Wno-c++98-compat-pedantic
-        -Wno-covered-switch-default
-        -Wno-exit-time-destructors
-        -Wno-global-constructors
-        -Wno-gnu-zero-variadic-macro-arguments
-        -Wno-unsafe-buffer-usage
-        -Werror # treat warnings as errors
-
-        # Debug compile options
-        $<$<CONFIG:Debug>:
-            # don't optimize
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O0 >
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Od >
-
-            -g # enable debug info
-        >
-
-        # Release compile options
-        $<$<CONFIG:Release>:
-            # enable maximum speed optimizations
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O3 >
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Os >
-
-            -flto # enable link time optimization
-        >
-
-        # Analyze compile options
-        $<$<CONFIG:Analyze>:
-            # don't optimize
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O0 >
-            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Od >
-
-            -g # enable debug info
-            --analyze # enable static analysis
-            -Xclang=-analyzer-checker=core
-            -Xclang=-analyzer-checker=cplusplus
-            -Xclang=-analyzer-checker=deadcode
-            #-Xclang=-analyzer-checker=llvm
-            -Xclang=-analyzer-checker=nullability
-            -Xclang=-analyzer-checker=optin.core
-            -Xclang=-analyzer-checker=optin.cplusplus
-            #-Xclang=-analyzer-checker=optin.performance
-            -Xclang=-analyzer-checker=optin.portability
-            -Xclang=-analyzer-checker=optin.taint
-            -Xclang=-analyzer-checker=security
-            -Xclang=-analyzer-checker=unix
-            #-fsanitize=address # enable address sanitizer
-            #-fsanitize=integer # enable integer sanitizer
-            #-fsanitize=undefined # enable undefined behavior sanitizer
-        >
-    >
-)
-
-set(LINK_CONFIG_OPTIONS
-    $<$<CXX_COMPILER_ID:MSVC>:
-        /GUARD:CF # control flow guard
-        # Release link options
-        $<$<CONFIG:Release>:
-            /LTCG # link time code generation
-        >
-    >
-
-    #$<$<CXX_COMPILER_ID:Clang>:
-    #    # Release link options
-    #    $<$<CONFIG:Release>:
-    #        #-flto # link time optimization
-    #    >
-    #
-    #    $<$<CONFIG:Analyze>:
-    #        #-fsanitize=address # enable address sanitizer
-    #        #-fsanitize=integer # enable integer sanitizer
-    #        #-fsanitize=undefined # enable undefined behavior sanitizer
-    #    >
-    #>
-)
-
-include(cJSON.cmake)
-
 add_executable(Finestray WIN32
     src/AboutDialog.cpp
     src/AboutDialog.h
@@ -205,9 +85,105 @@ add_executable(Finestray WIN32
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
 
+set_target_properties(Finestray
+    PROPERTIES
+        VS_USER_PROPS ${CMAKE_CURRENT_SOURCE_DIR}/analysis.props
+        $<$<CONFIG:Analyze>:
+            CXX_CLANG_TIDY "$clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
+        >
+)
+
+#set_property(TARGET Finestray PROPERTY CXX_CLANG_TIDY $<$<CONFIG:Analyze>:"clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors">)
+#set_property(TARGET Finestray PROPERTY VS_USER_PROPS $<$<CONFIG:Analyze>:"${CMAKE_CURRENT_SOURCE_DIR}/analysis.props">)
+
 target_compile_options(Finestray
     PRIVATE
-        ${COMPILE_CONFIG_OPTIONS}
+        $<$<CXX_COMPILER_ID:MSVC>:
+            /GR- # disable run-time type information (RTTI)
+            /GS # enable security checks
+            /guard:cf # control flow guard
+            /W4 # maximum warning levels
+            /WX # treat warnings as errors
+
+            # Debug compile options
+            $<$<CONFIG:Debug>:
+                /Od # don't optimize
+                /RTC1 # enable basic run-time checks
+                /Zi # enable debug info in pdb format
+            >
+
+            # Release compile options
+            $<$<CONFIG:Release>:
+                /O2 # enable maximum speed optimizations
+                /Ot # favor fast code
+                /GL # enable whole program optimization
+                /Gw # enable global data optimization
+            >
+
+            # Analyze compile options
+            $<$<CONFIG:Analyze>:
+                /analyze # enable static analysis
+                /wd26485 # No array to pointer decay
+                /wd26490 # Don't use reinterpret_cast
+            >
+        >
+
+        $<$<CXX_COMPILER_ID:Clang>:
+            # disable run-time type information (RTTI)
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -fno-rtti >
+            $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /GR- >
+
+            -Wall # enable all warnings
+            -Wextra # enable extra warnings
+            -Weverything # enable all warnings
+            -Wno-c++98-compat
+            -Wno-c++98-compat-pedantic
+            -Wno-covered-switch-default
+            -Wno-exit-time-destructors
+            -Wno-global-constructors
+            -Wno-gnu-zero-variadic-macro-arguments
+            -Wno-unsafe-buffer-usage
+            -Werror # treat warnings as errors
+
+            # Debug compile options
+            $<$<CONFIG:Debug>:
+                # don't optimize
+                $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O0 >
+                $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Od >
+
+                -g # enable debug info
+
+                #-fsanitize=address # enable address sanitizer
+                #-fsanitize=integer # enable integer sanitizer
+                #-fsanitize=undefined # enable undefined behavior sanitizer
+            >
+
+            # Release compile options
+            $<$<CONFIG:Release>:
+                # enable maximum speed optimizations
+                $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -O3 >
+                $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /Os >
+
+                -flto # enable link time optimization
+            >
+
+            # Analyze compile options
+            $<$<CONFIG:Analyze>:
+                #--analyze # enable static analysis
+                -Xclang=-analyzer-output=text
+                -Xclang=-analyzer-checker=core
+                -Xclang=-analyzer-checker=cplusplus
+                -Xclang=-analyzer-checker=deadcode
+                -Xclang=-analyzer-checker=nullability
+                -Xclang=-analyzer-checker=optin.core
+                -Xclang=-analyzer-checker=optin.cplusplus
+                -Xclang=-analyzer-checker=optin.performance
+                -Xclang=-analyzer-checker=optin.portability
+                -Xclang=-analyzer-checker=security
+                -Xclang=-analyzer-checker=unix
+                -Xclang=-analyzer-checker=valist
+            >
+        >
 )
 
 target_compile_definitions(Finestray
@@ -224,8 +200,35 @@ target_compile_features(Finestray
 
 target_link_options(Finestray
     PRIVATE
-        ${LINK_CONFIG_OPTIONS}
+        $<$<CXX_COMPILER_ID:MSVC>:
+            /GUARD:CF # control flow guard
+
+            # Release link options
+            $<$<CONFIG:Release>:
+                /LTCG # link time code generation
+            >
+        >
+
+        $<$<CXX_COMPILER_ID:Clang>:
+            # Debug link options
+            $<$<CONFIG:Debug>:
+                #-fsanitize=address # enable address sanitizer
+                #-fsanitize=integer # enable integer sanitizer
+                #-fsanitize=undefined # enable undefined behavior sanitizer
+            >
+
+            # Release link options
+            $<$<CONFIG:Release>:
+                #-flto # link time optimization
+            >
+
+            # Analyze link options
+            $<$<CONFIG:Analyze>:
+            >
+        >
 )
+
+include(cJSON.cmake)
 
 target_link_libraries(Finestray
     PRIVATE
@@ -234,14 +237,6 @@ target_link_libraries(Finestray
         Comctl32.lib
         ShLwApi.lib
         dwmapi.lib
-)
-
-set_target_properties(Finestray
-    PROPERTIES
-        $<$<CONFIG:Analyze>:
-            CXX_CLANG_TIDY "clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
-            VS_USER_PROPS "${CMAKE_CURRENT_SOURCE_DIR}/analysis.props"
-        >
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

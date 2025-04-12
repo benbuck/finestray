@@ -16,7 +16,7 @@ limitations under the License.
 -->
 <Project>
     <PropertyGroup>
-        <RunCodeAnalysis>true</RunCodeAnalysis>
-        <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+        <RunCodeAnalysis Condition="'$(Configuration)'=='Analyze'">true</RunCodeAnalysis>
+        <CodeAnalysisRuleSet Condition="'$(Configuration)'=='Analyze'">AllRules.ruleset</CodeAnalysisRuleSet>
     </PropertyGroup>
 </Project>

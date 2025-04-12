@@ -137,7 +137,7 @@ bool isAltTabWindow(HWND hwnd) noexcept
 bool isToolWindow(HWND hwnd) noexcept
 {
     LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    return (exStyle & WS_EX_TOOLWINDOW) != 0; // NOLINT
+    return (exStyle & WS_EX_TOOLWINDOW) != 0;
 }
 
 // from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507

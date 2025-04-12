@@ -29,6 +29,7 @@ namespace StringUtility
 std::string toLower(const std::string & s)
 {
     std::string lower(s);
+    // NOLINTNEXTLINE(modernize-use-ranges)
     std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) noexcept {
         return narrow_cast<char>(std::tolower(c));
     });

@@ -48,6 +48,7 @@
 #include <Windows.h>
 
 // Standard library
+#include <ranges>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -120,7 +121,6 @@ UINT taskbarCreatedMessage_;
 #pragma warning(push)
 #pragma warning(disable : 26461)
 #endif
-// NOLINTNEXTLINE
 int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nShowCmd)
 #if defined(_MSC_VER)
 #pragma warning(pop)
@@ -396,7 +396,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     } else {
                         // only minimize windows that have a minimize button
                         LONG const windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
-                        if (windowStyle & WS_MINIMIZEBOX) { // NOLINT
+                        if (windowStyle & WS_MINIMIZEBOX) {
 #if !defined(NDEBUG)
                             const WindowInfo windowInfo(foregroundHwnd);
                             DEBUG_PRINTF("\twindow executable '%s'\n", windowInfo.executable().c_str());
@@ -785,7 +785,7 @@ void onAddWindow(HWND hwnd)
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
     const std::vector<AutoTrayItem>::const_iterator it =
-        std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+        std::ranges::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
             return item.hwnd_ == hwnd;
         });
     if (it != autoTrayedWindows_.end()) {
@@ -810,7 +810,7 @@ void onRemoveWindow(HWND hwnd)
     DEBUG_PRINTF("removed window: %#x\n", hwnd);
 
     const std::vector<AutoTrayItem>::const_iterator it =
-        std::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
+        std::ranges::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
             return item.hwnd_ == hwnd;
         });
     if (it == autoTrayedWindows_.end()) {
