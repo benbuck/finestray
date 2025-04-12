@@ -19,6 +19,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CONFIGURATION_TYPES Debug Release Analyze)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_CHECKS "$<$<CONFIG:Debug>:PossibleDataLoss;UninitializedVariable>")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     cmake_policy(set CMP0117 NEW) # /GR (RTTI) is not added to CMAKE_CXX_FLAGS by default
@@ -191,6 +192,9 @@ target_compile_definitions(Finestray
         UNICODE # Windows headers use wide character by default
         NOMINMAX # Windows headers define min and max macros
         WIN32_LEAN_AND_MEAN # Exclude rarely-used stuff from Windows headers
+
+        $<$<CONFIG:Debug>:_ITERATOR_DEBUG_LEVEL=1> # enable iterator debugging
+        $<$<CONFIG:Release>:_ITERATOR_DEBUG_LEVEL=0> # disable iterator debugging
 )
 
 target_compile_features(Finestray
