@@ -74,6 +74,8 @@ struct AutoTrayItem
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 ErrorContext start();
 void stop();
+std::vector<HWND> getContextMenuVisibleWindows();
+std::vector<HWND> getContextMenuMinimizedWindows();
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent);
 void minimizeAllWindows();
 bool minimizeWindow(HWND hwnd);
@@ -432,7 +434,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
                     } else {
-                        if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
+                        if (!showContextMenu(
+                                hwnd,
+                                std::move(getContextMenuVisibleWindows()),
+                                std::move(getContextMenuMinimizedWindows()))) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }
@@ -456,7 +461,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring\n");
                     } else {
-                        if (!showContextMenu(hwnd, settings_.minimizePlacement_, settings_.showWindowsInMenu_)) {
+                        if (!showContextMenu(
+                                hwnd,
+                                std::move(getContextMenuVisibleWindows()),
+                                std::move(getContextMenuMinimizedWindows()))) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }
@@ -667,6 +675,33 @@ void stop()
     hotkeyMinimize_.destroy();
     hotkeyMinimizeAll_.destroy();
     hotkeyMenu_.destroy();
+}
+
+std::vector<HWND> getContextMenuVisibleWindows()
+{
+    if (!settings_.showWindowsInMenu_) {
+        return {};
+    }
+
+    std::vector<HWND> visibleWindows;
+
+    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
+    for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
+        if (window.second.visible) {
+            visibleWindows.push_back(window.first);
+        }
+    }
+
+    return visibleWindows;
+}
+
+std::vector<HWND> getContextMenuMinimizedWindows()
+{
+    if (!minimizePlacementIncludesMenu(settings_.minimizePlacement_)) {
+        return {};
+    }
+
+    return MinimizedWindow::getAll();
 }
 
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)

@@ -20,6 +20,9 @@
 // Windows
 #include <Windows.h>
 
+// Standard library
+#include <vector>
+
 constexpr WORD IDM_APP = 0x1001;
 constexpr WORD IDM_SETTINGS = 0x1002;
 constexpr WORD IDM_ABOUT = 0x1003;
@@ -31,4 +34,4 @@ constexpr WORD IDM_VISIBLEWINDOW_MAX = 0x2FFF;
 constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x3000;
 constexpr WORD IDM_MINIMIZEDWINDOW_MAX = 0x3FFF;
 
-bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWindows);
+bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const std::vector<HWND> && minimizedWindows);

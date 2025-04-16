@@ -14,18 +14,16 @@
 
 // App
 #include "ContextMenu.h"
+
 #include "AppName.h"
 #include "Bitmap.h"
 #include "BitmapHandleWrapper.h"
 #include "Helpers.h"
 #include "Log.h"
 #include "MenuHandleWrapper.h"
-#include "MinimizePlacement.h"
-#include "MinimizedWindow.h"
 #include "Resource.h"
 #include "StringUtility.h"
 #include "WindowIcon.h"
-#include "WindowList.h"
 
 namespace
 {
@@ -34,7 +32,7 @@ bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHa
 
 } // anonymous namespace
 
-bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWindows)
+bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const std::vector<HWND> && minimizedWindows)
 {
     // create popup menu
     const MenuHandleWrapper menu(CreatePopupMenu());
@@ -57,65 +55,61 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
 
     std::vector<BitmapHandleWrapper> bitmaps;
 
-    const std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-    if (showWindows) {
-        unsigned int visibleCount = 0;
-        for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
-            if (window.second.visible) {
-                bitmaps.emplace_back(WindowIcon::bitmap(window.first));
-                if (!addMenuItemForWindow(menu, window.first, IDM_VISIBLEWINDOW_BASE + visibleCount, bitmaps.back())) {
-                    return false;
-                }
-
-                ++visibleCount;
-            }
-        }
-
-        if (visibleCount) {
-            if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZE_ALL, getResourceString(IDS_MENU_MINIMIZE_ALL).c_str())) {
-                WARNING_PRINTF(
-                    "failed to create menu entry, AppendMenuA() failed: %s\n",
-                    StringUtility::lastErrorString().c_str());
-                return false;
-            }
-            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-                WARNING_PRINTF(
-                    "failed to create menu entry, AppendMenuA() failed: %s\n",
-                    StringUtility::lastErrorString().c_str());
+    if (!visibleWindows.empty()) {
+        for (size_t i = 0; i < visibleWindows.size(); ++i) {
+            HWND visibleHwnd = visibleWindows.at(i);
+            bitmaps.emplace_back(WindowIcon::bitmap(visibleHwnd));
+            if (!addMenuItemForWindow(
+                    menu,
+                    visibleHwnd,
+                    IDM_VISIBLEWINDOW_BASE + narrow_cast<unsigned int>(i),
+                    bitmaps.back())) {
                 return false;
             }
         }
-    }
 
-    const std::vector<HWND> minimizedWindows = MinimizedWindow::getAll();
-
-    if (minimizePlacementIncludesMenu(minimizePlacement)) {
-        unsigned int minimizedCount = 0;
-        for (HWND minimizedWindow : minimizedWindows) {
-            bitmaps.emplace_back(WindowIcon::bitmap(minimizedWindow));
-            if (!addMenuItemForWindow(menu, minimizedWindow, IDM_MINIMIZEDWINDOW_BASE + minimizedCount, bitmaps.back())) {
-                return false;
-            }
-
-            ++minimizedCount;
+        if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZE_ALL, getResourceString(IDS_MENU_MINIMIZE_ALL).c_str())) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
         }
-        if (minimizedCount) {
-            if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
-                WARNING_PRINTF(
-                    "failed to create menu entry, AppendMenuA() failed: %s\n",
-                    StringUtility::lastErrorString().c_str());
-                return false;
-            }
+
+        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
         }
     }
 
     if (!minimizedWindows.empty()) {
+        for (size_t i = 0; i < minimizedWindows.size(); ++i) {
+            HWND minimizedHwnd = minimizedWindows.at(i);
+            bitmaps.emplace_back(WindowIcon::bitmap(minimizedHwnd));
+            if (!addMenuItemForWindow(
+                    menu,
+                    minimizedHwnd,
+                    IDM_MINIMIZEDWINDOW_BASE + narrow_cast<unsigned int>(i),
+                    bitmaps.back())) {
+                return false;
+            }
+        }
+
+        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+
         if (!AppendMenuA(menu, MF_STRING, IDM_RESTORE_ALL, getResourceString(IDS_MENU_RESTORE_ALL).c_str())) {
             WARNING_PRINTF(
                 "failed to create menu entry, AppendMenuA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
             return false;
         }
+
         if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
             WARNING_PRINTF(
                 "failed to create menu entry, AppendMenuA() failed: %s\n",
@@ -172,7 +166,7 @@ bool showContextMenu(HWND hwnd, MinimizePlacement minimizePlacement, bool showWi
                 StringUtility::lastErrorString().c_str());
         }
 
-        if (!windowList.empty()) {
+        if (!visibleWindows.empty()) {
             menuItemInfo.hbmpItem = minimizeBitmap;
             if (!SetMenuItemInfoA(menu, IDM_MINIMIZE_ALL, FALSE, &menuItemInfo)) {
                 WARNING_PRINTF(
