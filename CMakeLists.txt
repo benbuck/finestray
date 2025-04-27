@@ -55,8 +55,6 @@ add_executable(Finestray WIN32
     src/Log.cpp
     src/Log.h
     src/MenuHandleWrapper.h
-    src/MinimizedWindow.cpp
-    src/MinimizedWindow.h
     src/MinimizePlacement.cpp
     src/MinimizePlacement.h
     src/Modifiers.cpp
@@ -79,8 +77,8 @@ add_executable(Finestray WIN32
     src/WindowIcon.h
     src/WindowInfo.cpp
     src/WindowInfo.h
-    src/WindowList.cpp
-    src/WindowList.h
+    src/WindowTracker.cpp
+    src/WindowTracker.h
     src/WindowMessage.h
     src/WinEventHookHandleWrapper.h
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico

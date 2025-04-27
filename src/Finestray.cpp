@@ -26,7 +26,6 @@
 #include "IconHandleWrapper.h"
 #include "Log.h"
 #include "MenuHandleWrapper.h"
-#include "MinimizedWindow.h"
 #include "Modifiers.h"
 #include "Path.h"
 #include "Resource.h"
@@ -38,8 +37,8 @@
 #include "WindowHandleWrapper.h"
 #include "WindowIcon.h"
 #include "WindowInfo.h"
-#include "WindowList.h"
 #include "WindowMessage.h"
+#include "WindowTracker.h"
 
 // Windows
 #include <CommCtrl.h>
@@ -66,11 +65,6 @@ enum class HotkeyID : unsigned int
     Menu
 };
 
-struct AutoTrayItem
-{
-    HWND hwnd_ {};
-};
-
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 ErrorContext start();
 void stop();
@@ -78,14 +72,11 @@ std::vector<HWND> getContextMenuVisibleWindows();
 std::vector<HWND> getContextMenuMinimizedWindows();
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent);
 void minimizeAllWindows();
-bool minimizeWindow(HWND hwnd);
+void minimizeWindow(HWND hwnd);
 void restoreAllWindows();
 void restoreWindow(HWND hwnd);
 void restoreLastWindow();
 void onAddWindow(HWND hwnd);
-void onRemoveWindow(HWND hwnd);
-void onChangeWindowTitle(HWND hwnd, const std::string & title);
-void onChangeVisibility(HWND hwnd, bool visible);
 void onMinimizeEvent(
     HWINEVENTHOOK hwineventhook,
     DWORD event,
@@ -108,7 +99,6 @@ TrayIcon trayIcon_;
 WindowHandleWrapper settingsDialogWindow_;
 bool contextMenuActive_;
 Settings settings_;
-std::vector<AutoTrayItem> autoTrayedWindows_;
 Hotkey hotkeyMinimize_;
 Hotkey hotkeyMinimizeAll_;
 Hotkey hotkeyRestore_;
@@ -290,12 +280,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     DEBUG_PRINTF("exiting\n");
 
     // if there are any minimized windows, restore them
-    MinimizedWindow::restoreAll();
+    restoreAllWindows();
 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
-    autoTrayedWindows_.clear();
     settingsDialogWindow_.destroy();
     appWindow_.destroy();
 
@@ -349,7 +338,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id <= IDM_MINIMIZEDWINDOW_MAX)) {
                         const unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
                         INFO_PRINTF("menu restore minimized window index %u\n", index);
-                        HWND minimizedWindow = MinimizedWindow::getFromIndex(index);
+                        HWND minimizedWindow = WindowTracker::getMinimizedIndex(index);
                         if (!minimizedWindow) {
                             WARNING_PRINTF("no minimized window at index %u\n", index);
                         } else {
@@ -358,7 +347,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     } else if ((id >= IDM_VISIBLEWINDOW_BASE) && (id <= IDM_VISIBLEWINDOW_MAX)) {
                         const unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
                         INFO_PRINTF("menu minimize visible window index %u\n", index);
-                        HWND visibleWindow = WindowList::getVisibleIndex(index);
+                        HWND visibleWindow = WindowTracker::getVisibleIndex(index);
                         if (!visibleWindow) {
                             WARNING_PRINTF("no visible window at index %u\n", index);
                         } else {
@@ -484,7 +473,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // user selected and activated icon
                 case NIN_SELECT: {
                     INFO_PRINTF("tray icon selected\n");
-                    HWND hwndTray = MinimizedWindow::getFromID(narrow_cast<UINT>(wParam));
+                    HWND hwndTray = WindowTracker::getFromID(narrow_cast<UINT>(wParam));
                     if (hwndTray) {
                         INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
                         restoreWindow(hwndTray);
@@ -498,7 +487,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
 
                 default: {
-                    WARNING_PRINTF("unhandled MinimizedWindow message %x\n", lParam);
+                    WARNING_PRINTF("unhandled WM_TRAYWINDOW message %x\n", lParam);
                     break;
                 }
             }
@@ -533,7 +522,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 if (err) {
                     ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
                 }
-                MinimizedWindow::addAll(settings_.minimizePlacement_);
+                WindowTracker::addAllMinimizedToTray(settings_.minimizePlacement_);
             }
             break;
         }
@@ -659,7 +648,7 @@ ErrorContext start()
         }
     }
 
-    WindowList::start(appWindow_, settings_.pollInterval_, onAddWindow, onRemoveWindow, onChangeWindowTitle, onChangeVisibility);
+    WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow);
 
     return {};
 }
@@ -668,7 +657,7 @@ void stop()
 {
     DEBUG_PRINTF("stopping\n");
 
-    WindowList::stop();
+    WindowTracker::stop();
 
     hotkeyRestore_.destroy();
     hotkeyRestoreAll_.destroy();
@@ -683,16 +672,7 @@ std::vector<HWND> getContextMenuVisibleWindows()
         return {};
     }
 
-    std::vector<HWND> visibleWindows;
-
-    std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-    for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
-        if (window.second.visible) {
-            visibleWindows.push_back(window.first);
-        }
-    }
-
-    return visibleWindows;
+    return WindowTracker::getAllVisible();
 }
 
 std::vector<HWND> getContextMenuMinimizedWindows()
@@ -701,7 +681,7 @@ std::vector<HWND> getContextMenuMinimizedWindows()
         return {};
     }
 
-    return MinimizedWindow::getAll();
+    return WindowTracker::getAllMinimized();
 }
 
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
@@ -786,96 +766,49 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 
 void minimizeAllWindows()
 {
-    const std::map<HWND, WindowList::WindowData> windowList = WindowList::getAll();
-    for (const std::pair<HWND, WindowList::WindowData> window : windowList) {
-        if (window.second.visible) {
-            MinimizedWindow::minimize(window.first, appWindow_, settings_.minimizePlacement_);
+    const WindowTracker::Items & items = WindowTracker::getAll();
+    for (const auto & item : items) {
+        if (item.visible_) {
+            WindowTracker::minimize(item.hwnd_, settings_.minimizePlacement_);
         }
     }
 }
 
-bool minimizeWindow(HWND hwnd)
+void minimizeWindow(HWND hwnd)
 {
-    return MinimizedWindow::minimize(hwnd, appWindow_, settings_.minimizePlacement_);
+    WindowTracker::minimize(hwnd, settings_.minimizePlacement_);
 }
 
 void restoreAllWindows()
 {
-    MinimizedWindow::restoreAll();
+    while (HWND hwnd = WindowTracker::getLastMinimized()) {
+        DEBUG_PRINTF("restoring window: %#x\n", hwnd);
+        WindowTracker::restore(hwnd);
+    }
 }
 
 void restoreWindow(HWND hwnd)
 {
-    MinimizedWindow::restore(hwnd);
+    WindowTracker::restore(hwnd);
 }
 
 void restoreLastWindow()
 {
-    HWND minimizedWindow = MinimizedWindow::getLast();
-    MinimizedWindow::restore(minimizedWindow);
+    HWND minimizedWindow = WindowTracker::getLastMinimized();
+    WindowTracker::restore(minimizedWindow);
 }
 
 void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
-    const std::vector<AutoTrayItem>::const_iterator it =
-        std::ranges::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
-            return item.hwnd_ == hwnd;
-        });
-    if (it != autoTrayedWindows_.end()) {
-        DEBUG_PRINTF("\tignoring, previously auto-trayed\n");
-        return;
-    }
-
     if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            if (minimizeWindow(hwnd)) {
-                autoTrayedWindows_.emplace_back(hwnd);
-            }
+            minimizeWindow(hwnd);
         }
-    }
-}
-
-void onRemoveWindow(HWND hwnd)
-{
-    DEBUG_PRINTF("removed window: %#x\n", hwnd);
-
-    const std::vector<AutoTrayItem>::const_iterator it =
-        std::ranges::find_if(autoTrayedWindows_.begin(), autoTrayedWindows_.end(), [hwnd](const AutoTrayItem & item) {
-            return item.hwnd_ == hwnd;
-        });
-    if (it == autoTrayedWindows_.end()) {
-        DEBUG_PRINTF("\tignoring, not auto-trayed\n");
-        return;
-    }
-
-    if (!MinimizedWindow::exists(hwnd)) {
-        DEBUG_PRINTF("\tcleaning up\n");
-        MinimizedWindow::remove(hwnd);
-        autoTrayedWindows_.erase(it);
-    }
-}
-
-void onChangeWindowTitle(HWND hwnd, const std::string & title)
-{
-    DEBUG_PRINTF("changed window title: %#x, to '%s'\n", hwnd, title.c_str());
-
-    if (MinimizedWindow::exists(hwnd)) {
-        DEBUG_PRINTF("\tupdating title\n");
-        MinimizedWindow::updateTitle(hwnd, title);
-    }
-}
-
-void onChangeVisibility(HWND hwnd, bool visible)
-{
-    DEBUG_PRINTF("changed window visibility: %#x to %s\n", hwnd, StringUtility::boolToCString(visible));
-
-    if (visible && MinimizedWindow::exists(hwnd)) {
-        MinimizedWindow::remove(hwnd);
     }
 }
 
@@ -909,9 +842,7 @@ void onMinimizeEvent(
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            if (minimizeWindow(hwnd)) {
-                autoTrayedWindows_.emplace_back(hwnd);
-            }
+            minimizeWindow(hwnd);
         }
     }
 }
@@ -1025,7 +956,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             if (settingsChanged) {
                 updateStartWithWindowsShortcut();
 
-                MinimizedWindow::updatePlacement(settings_.minimizePlacement_);
+                WindowTracker::updateMinimizePlacement(settings_.minimizePlacement_);
             }
         }
     }
