@@ -33,6 +33,8 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
 
+std::string appDataDir_;
+std::string startupDir_;
 std::string writeableDir_;
 std::string executableFullPath_;
 std::string executableFileName_;
@@ -45,6 +47,10 @@ bool checkWriteableDir(const std::string & dir);
 
 std::string getAppDataDir()
 {
+    if (!appDataDir_.empty()) {
+        return appDataDir_;
+    }
+
     CHAR dir[MAX_PATH] = {};
 
     HRESULT const hresult = SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, dir);
@@ -55,7 +61,8 @@ std::string getAppDataDir()
         return {};
     }
 
-    return dir;
+    appDataDir_ = dir;
+    return appDataDir_;
 }
 
 std::string getExecutableFullPath()
@@ -87,6 +94,10 @@ std::string getExecutableDir()
 
 std::string getStartupDir()
 {
+    if (!startupDir_.empty()) {
+        return startupDir_;
+    }
+
     CHAR dir[MAX_PATH] = {};
 
     HRESULT const hresult = SHGetFolderPathA(nullptr, CSIDL_STARTUP, nullptr, 0, dir);
@@ -97,7 +108,8 @@ std::string getStartupDir()
         return {};
     }
 
-    return dir;
+    startupDir_ = dir;
+    return startupDir_;
 }
 
 std::string pathJoin(const std::string & path1, const std::string & path2)
