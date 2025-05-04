@@ -75,9 +75,14 @@ std::string getWindowText(HWND hwnd)
     return text;
 }
 
+bool isWindowStealth(HWND hwnd) noexcept
+{
+    return !isAltTabWindow(hwnd) || isToolWindow(hwnd) || isCloakedWindow(hwnd);
+}
+
 bool isWindowUserVisible(HWND hwnd) noexcept
 {
-    return IsWindowVisible(hwnd) && isAltTabWindow(hwnd) && !isToolWindow(hwnd) && !isCloakedWindow(hwnd);
+    return IsWindowVisible(hwnd) && !isWindowStealth(hwnd);
 }
 
 void errorMessage(unsigned int id)

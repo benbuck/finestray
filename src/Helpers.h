@@ -33,6 +33,7 @@ constexpr T narrow_cast(U && u) noexcept
 HINSTANCE getInstance() noexcept;
 std::string getResourceString(unsigned int id);
 std::string getWindowText(HWND hwnd);
+bool isWindowStealth(HWND hwnd) noexcept;
 bool isWindowUserVisible(HWND hwnd) noexcept;
 void errorMessage(unsigned int id);
 void errorMessage(const ErrorContext & errorContext);
