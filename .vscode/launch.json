@@ -28,7 +28,16 @@
       "cwd": "${workspaceFolder}/build/Debug",
       "environment": [],
       "externalConsole": false,
-      "preLaunchTask": "CMake: build"
+      "preLaunchTask": "CMake: build",
+      "symbolOptions": {
+        "searchPaths": [],
+        "searchMicrosoftSymbolServer": false,
+        "cachePath": "%TEMP%\\SymbolCache",
+        "moduleFilter": {
+          "mode": "loadAllButExcluded",
+          "excludedModules": []
+        }
+      }
     }
   ]
 }
