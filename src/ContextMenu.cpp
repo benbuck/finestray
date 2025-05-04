@@ -68,6 +68,13 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
             }
         }
 
+        if (!AppendMenuA(menu, MF_SEPARATOR, 0, nullptr)) {
+            WARNING_PRINTF(
+                "failed to create menu entry, AppendMenuA() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
+            return false;
+        }
+
         if (!AppendMenuA(menu, MF_STRING, IDM_MINIMIZE_ALL, getResourceString(IDS_MENU_MINIMIZE_ALL).c_str())) {
             WARNING_PRINTF(
                 "failed to create menu entry, AppendMenuA() failed: %s\n",

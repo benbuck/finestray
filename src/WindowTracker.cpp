@@ -356,7 +356,9 @@ VOID timerProc(
         if (item.title_ != title) {
             DEBUG_PRINTF("changed window title: %#x to %s\n", item.hwnd_, title.c_str());
             item.title_ = title;
-            item.trayIcon_->updateTip(item.title_);
+            if (item.trayIcon_) {
+                item.trayIcon_->updateTip(item.title_);
+            }
         }
 
         // window visibility changed

@@ -21,7 +21,7 @@
 class COMLibraryWrapper
 {
 public:
-    explicit COMLibraryWrapper() noexcept { initialized_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
+    COMLibraryWrapper() noexcept { initialized_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
 
     ~COMLibraryWrapper()
     {
