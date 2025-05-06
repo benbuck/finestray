@@ -15,7 +15,6 @@
 // App
 #include "WindowTracker.h"
 #include "Helpers.h"
-#include "IconHandleWrapper.h"
 #include "Log.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
@@ -23,49 +22,41 @@
 #include "WindowMessage.h"
 
 // Standard library
-#include <algorithm>
-#include <iterator>
-#include <list>
 #include <memory>
 #include <ranges>
-
-using WindowTracker::Item;
-using WindowTracker::Items;
+#include <string>
+#include <vector>
 
 namespace
 {
 
+struct Item
+{
+    HWND hwnd_ {};
+    std::string title_;
+    bool visible_ {};
+    bool minimized_ {};
+    std::shared_ptr<TrayIcon> trayIcon_;
+};
+
+typedef std::vector<Item> Items;
+
 HWND hwnd_;
-UINT pollMillis_;
-void (*addWindowCallback_)(HWND);
-UINT_PTR timer_;
 Items items_;
 
 Items::iterator findWindow(HWND hwnd);
 Items::const_iterator findMinimizedWindow(HWND hwnd);
-VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
-BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 } // anonymous namespace
 
 namespace WindowTracker
 {
 
-void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
+void start(HWND hwnd)
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
     hwnd_ = hwnd;
-    pollMillis_ = pollMillis;
-    addWindowCallback_ = addWindowCallback;
-
-    if (pollMillis_ > 0) {
-        DEBUG_PRINTF("WindowTracker setting poll timer to %u\n", pollMillis_);
-        timer_ = SetTimer(hwnd_, 1, pollMillis_, timerProc);
-        if (!timer_) {
-            ERROR_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-    }
 }
 
 void stop()
@@ -74,21 +65,62 @@ void stop()
 
     items_.clear();
 
-    if (timer_) {
-        if (!KillTimer(hwnd_, timer_)) {
-            ERROR_PRINTF("KillTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
-        }
-        timer_ = 0;
-    }
-
-    addWindowCallback_ = nullptr;
-    pollMillis_ = 0;
     hwnd_ = nullptr;
 }
 
-const Items & getAll()
+void windowAdded(HWND hwnd)
 {
-    return items_;
+    if (findWindow(hwnd) != items_.end()) {
+        WARNING_PRINTF("window already tracked: %#x\n", hwnd);
+        return;
+    }
+
+    Item item;
+    item.hwnd_ = hwnd;
+    item.title_ = getWindowText(hwnd);
+    item.visible_ = isWindowUserVisible(hwnd);
+    items_.push_back(item);
+
+    DEBUG_PRINTF("window added: %zu items\n", items_.size());
+}
+
+void windowDestroyed(HWND hwnd)
+{
+    Items::iterator it = findWindow(hwnd);
+    if (it == items_.end()) {
+        WARNING_PRINTF("window not tracked: %#x\n", hwnd);
+        return;
+    }
+
+    items_.erase(it);
+
+    DEBUG_PRINTF("window destroyed: %zu items\n", items_.size());
+}
+
+void windowChanged(HWND hwnd)
+{
+    Items::iterator it = findWindow(hwnd);
+    if (it == items_.end()) {
+        WARNING_PRINTF("window not tracked: %#x\n", hwnd);
+        return;
+    }
+
+    Item & item = *it;
+
+    bool visible = isWindowUserVisible(hwnd);
+    if (item.visible_ != visible) {
+        DEBUG_PRINTF("changed window visibility: %#x to %s\n", item.hwnd_, StringUtility::boolToCString(visible));
+        item.visible_ = visible;
+    }
+
+    const std::string title = getWindowText(hwnd);
+    if (item.title_ != title) {
+        DEBUG_PRINTF("changed window title: %#x to %s\n", item.hwnd_, title.c_str());
+        item.title_ = title;
+        if (item.trayIcon_) {
+            item.trayIcon_->updateTip(item.title_);
+        }
+    }
 }
 
 HWND getVisibleIndex(unsigned int index)
@@ -130,6 +162,9 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
     ShowWindow(hwnd, SW_MINIMIZE);
     ShowWindow(hwnd, SW_HIDE);
 
+    if (isWindowUserVisible(hwnd)) {
+        ERROR_PRINTF("window is not visible after minimize: %#x\n", hwnd);
+    }
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         trayIcon = std::make_unique<TrayIcon>();
@@ -143,6 +178,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
     }
 
     it->minimized_ = true;
+    it->visible_ = false;
     it->trayIcon_ = std::move(trayIcon);
 }
 
@@ -169,6 +205,7 @@ void restore(HWND hwnd)
     }
 
     it->minimized_ = false;
+    it->visible_ = true;
     it->trayIcon_.reset();
 }
 
@@ -259,8 +296,7 @@ std::vector<HWND> getAllMinimized()
         if (item.minimized_) {
             if (item.visible_) {
                 // window is visible, but minimized
-                DEBUG_PRINTF("window is visible and minimized: %#x\n", item.hwnd_);
-                __debugbreak();
+                ERROR_PRINTF("window is visible and minimized: %#x\n", item.hwnd_);
             }
             minimizedWindows.push_back(item.hwnd_);
         }
@@ -304,82 +340,6 @@ Items::const_iterator findMinimizedWindow(HWND hwnd)
     return std::ranges::find_if(items_, [hwnd](const Item & item) {
         return (item.hwnd_ == hwnd) && item.minimized_;
     });
-}
-
-VOID timerProc(
-    HWND /* unnamedParam1 */,
-    UINT /* unnamedParam2 */,
-    UINT_PTR /* unnamedParam3 */,
-    DWORD /* unnamedParam4 */)
-{
-    std::vector<HWND> newWindows;
-    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&newWindows))) {
-        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-
-    // check for removed windows
-    for (Items::iterator it = items_.begin(); it != items_.end();) {
-        std::vector<HWND>::const_iterator nit = std::find(newWindows.begin(), newWindows.end(), it->hwnd_);
-        if (nit != newWindows.end()) {
-            ++it;
-        } else {
-            it = items_.erase(it);
-        }
-    }
-
-    // check for added windows
-    for (HWND hwnd : newWindows) {
-        Items::iterator it = findWindow(hwnd);
-        if (it == items_.end()) {
-            Item item;
-            item.hwnd_ = hwnd;
-            item.title_ = getWindowText(hwnd);
-            item.visible_ = isWindowUserVisible(hwnd);
-            items_.push_back(item);
-
-            if (addWindowCallback_) {
-                addWindowCallback_(hwnd);
-            }
-        }
-    }
-
-    if (items_.size() != newWindows.size()) {
-        __debugbreak();
-    }
-
-    // check for changed window titles or visibility
-    for (auto & item : items_) {
-        // existing window found
-
-        // window title changed
-        const std::string title = getWindowText(item.hwnd_);
-        if (item.title_ != title) {
-            DEBUG_PRINTF("changed window title: %#x to %s\n", item.hwnd_, title.c_str());
-            item.title_ = title;
-            if (item.trayIcon_) {
-                item.trayIcon_->updateTip(item.title_);
-            }
-        }
-
-        // window visibility changed
-        bool visible = isWindowUserVisible(item.hwnd_);
-        if (item.visible_ != visible) {
-            DEBUG_PRINTF("changed window visibility: %#x to %s\n", item.hwnd_, StringUtility::boolToCString(visible));
-            item.visible_ = visible;
-        }
-    }
-}
-
-BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
-{
-    // ignore windows that can't be visible to the user
-    if (isWindowStealth(hwnd)) {
-        return TRUE;
-    }
-
-    std::vector<HWND> & windows = *reinterpret_cast<std::vector<HWND> *>(lParam);
-    windows.push_back(hwnd);
-    return TRUE;
 }
 
 } // anonymous namespace

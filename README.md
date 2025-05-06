@@ -136,13 +136,6 @@ The available settings correspond to some of the above features. The settings ar
 - **Override modifier**:
   This lets you configure the modifier that is used to override some Finestray behavior. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
-- **Poll interval**:
-  Finestray needs to periodically check all the open windows for the auto-tray feature to work. This setting controls
-  how frequently that check is done. The value is in milliseconds, so `1000` means one thousand milliseconds, which is
-  one second, and with that setting Finestray would scan the windows once every second. You can increase the value if
-  you think Finestray is checking too often and slowing down your system. You can decrease the value if want the
-  auto-tray behavior to happen more rapidly. You can also set this to zero to disable scanning, but that will disable
-  the auto-tray behavior when a window first opens.
 - **Auto-trays**:
   This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
   windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing the

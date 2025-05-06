@@ -21,28 +21,15 @@
 #include <Windows.h>
 
 // Standard library
-#include <memory>
 #include <vector>
-
-class TrayIcon;
 
 namespace WindowTracker
 {
-struct Item
-{
-    HWND hwnd_ {};
-    std::string title_;
-    bool visible_ {};
-    bool minimized_ {};
-    std::shared_ptr<TrayIcon> trayIcon_;
-};
-
-typedef std::vector<Item> Items;
-
-void start(HWND hwnd, UINT pollMillis, void (*addWindowCallback)(HWND));
+void start(HWND hwnd);
 void stop();
-
-const Items & getAll();
+void windowAdded(HWND hwnd);
+void windowDestroyed(HWND hwnd);
+void windowChanged(HWND hwnd);
 HWND getVisibleIndex(unsigned int index);
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement);
 void restore(HWND hwnd);

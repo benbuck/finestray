@@ -106,6 +106,7 @@ Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
+UINT shellHookMsg_;
 
 } // anonymous namespace
 
@@ -266,6 +267,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
+    RegisterShellHookWindow(appWindow_);
+    shellHookMsg_ = RegisterWindowMessage(L"SHELLHOOK");
+
     DEBUG_PRINTF("running message loop\n");
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
@@ -282,6 +286,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     // if there are any minimized windows, restore them
     restoreAllWindows();
 
+    DeregisterShellHookWindow(appWindow_);
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
@@ -523,6 +528,51 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
                 }
                 WindowTracker::addAllMinimizedToTray(settings_.minimizePlacement_);
+            } else if (uMsg == shellHookMsg_) {
+                HWND shellHwnd = reinterpret_cast<HWND>(lParam);
+                switch (wParam) {
+                    case HSHELL_WINDOWCREATED: {
+                        INFO_PRINTF("shell hook window created %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
+                        WindowTracker::windowAdded(shellHwnd);
+                        break;
+                    }
+
+                    case HSHELL_WINDOWDESTROYED: {
+                        INFO_PRINTF("shell hook destroyed %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
+                        if (IsWindow(shellHwnd)) {
+                            WindowTracker::windowChanged(shellHwnd);
+                        } else {
+                            WindowTracker::windowDestroyed(shellHwnd);
+                        }
+                        break;
+                    }
+
+                    case HSHELL_REDRAW: {
+                        DEBUG_PRINTF("HSHELL_REDRAW: %#x\n", lParam);
+                        WindowTracker::windowChanged(shellHwnd);
+                        break;
+                    }
+
+                    case HSHELL_ACTIVATESHELLWINDOW: DEBUG_PRINTF("HSHELL_ACTIVATESHELLWINDOW: %#x\n", lParam); break;
+                    case HSHELL_WINDOWACTIVATED: DEBUG_PRINTF("HSHELL_WINDOWACTIVATED: %#x\n", lParam); break;
+                    case HSHELL_GETMINRECT: DEBUG_PRINTF("HSHELL_GETMINRECT: %#x\n", lParam); break;
+                    case HSHELL_TASKMAN: DEBUG_PRINTF("HSHELL_TASKMAN: %#x\n", lParam); break;
+                    case HSHELL_LANGUAGE: DEBUG_PRINTF("HSHELL_LANGUAGE: %#x\n", lParam); break;
+                    case HSHELL_SYSMENU: DEBUG_PRINTF("HSHELL_SYSMENU: %#x\n", lParam); break;
+                    case HSHELL_ENDTASK: DEBUG_PRINTF("HSHELL_ENDTASK: %#x\n", lParam); break;
+                    case HSHELL_ACCESSIBILITYSTATE: DEBUG_PRINTF("HSHELL_ACCESSIBILITYSTATE: %#x\n", lParam); break;
+                    case HSHELL_APPCOMMAND: DEBUG_PRINTF("HSHELL_APPCOMMAND: %#x\n", lParam); break;
+                    case HSHELL_WINDOWREPLACED: DEBUG_PRINTF("HSHELL_WINDOWREPLACED: %#x\n", lParam); break;
+                    case HSHELL_WINDOWREPLACING: DEBUG_PRINTF("HSHELL_WINDOWREPLACING: %#x\n", lParam); break;
+                    case HSHELL_MONITORCHANGED: DEBUG_PRINTF("HSHELL_MONITORCHANGED: %#x\n", lParam); break;
+                    case HSHELL_FLASH: DEBUG_PRINTF("HSHELL_FLASH: %#x\n", lParam); break;
+                    case HSHELL_RUDEAPPACTIVATED: DEBUG_PRINTF("HSHELL_RUDEAPPACTIVATED: %#x\n", lParam); break;
+
+                    default: {
+                        DEBUG_PRINTF("unknown shell hook message %x\n", wParam);
+                        break;
+                    }
+                }
             }
             break;
         }
@@ -648,7 +698,15 @@ ErrorContext start()
         }
     }
 
-    WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow);
+    WindowTracker::start(appWindow_);
+    if (!EnumWindows(
+            [](HWND hwnd, LPARAM /*lParam*/) -> BOOL {
+                onAddWindow(hwnd);
+                return TRUE;
+            },
+            0)) {
+        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
 
     return {};
 }
@@ -766,11 +824,9 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 
 void minimizeAllWindows()
 {
-    const WindowTracker::Items & items = WindowTracker::getAll();
-    for (const auto & item : items) {
-        if (item.visible_) {
-            WindowTracker::minimize(item.hwnd_, settings_.minimizePlacement_);
-        }
+    const std::vector<HWND> visibleWindows = WindowTracker::getAllVisible();
+    for (HWND hwnd : visibleWindows) {
+        WindowTracker::minimize(hwnd, settings_.minimizePlacement_);
     }
 }
 
@@ -801,6 +857,8 @@ void restoreLastWindow()
 void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
+
+    WindowTracker::windowAdded(hwnd);
 
     if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
         if (modifiersActive(modifiersOverride_)) {

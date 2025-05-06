@@ -180,7 +180,6 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
             setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_RESTORE_ALL, settings_.hotkeyRestoreAll_);
             setDlgItemTextSafe(dialogHwnd, IDC_HOTKEY_MENU, settings_.hotkeyMenu_);
             setDlgItemTextSafe(dialogHwnd, IDC_MODIFIER_OVERRIDE, settings_.modifiersOverride_);
-            setDlgItemTextSafe(dialogHwnd, IDC_POLL_INTERVAL, std::to_string(settings_.pollInterval_));
             setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWCLASS, "");
             setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_EXECUTABLE, "");
             setDlgItemTextSafe(dialogHwnd, IDC_AUTO_TRAY_EDIT_WINDOWTITLE, "");
@@ -297,7 +296,6 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         settings_.hotkeyRestoreAll_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_RESTORE_ALL);
                         settings_.hotkeyMenu_ = getDialogItemText(dialogHwnd, IDC_HOTKEY_MENU);
                         settings_.modifiersOverride_ = getDialogItemText(dialogHwnd, IDC_MODIFIER_OVERRIDE);
-                        settings_.pollInterval_ = std::stoul(getDialogItemText(dialogHwnd, IDC_POLL_INTERVAL));
                         settings_.autoTrays_ = autoTrayListViewGetItems(dialogHwnd);
 
                         EndDialog(dialogHwnd, narrow_cast<INT_PTR>(wParam));

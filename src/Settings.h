@@ -69,6 +69,5 @@ public:
     std::string hotkeyRestoreAll_;
     std::string hotkeyMenu_;
     std::string modifiersOverride_;
-    unsigned int pollInterval_ {}; // zero to disable
     std::vector<AutoTray> autoTrays_;
 };
