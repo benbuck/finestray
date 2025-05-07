@@ -22,10 +22,10 @@
 #include "WindowMessage.h"
 
 // Standard library
+#include <list>
 #include <memory>
 #include <ranges>
 #include <string>
-#include <vector>
 
 namespace
 {
@@ -39,7 +39,7 @@ struct Item
     std::shared_ptr<TrayIcon> trayIcon_;
 };
 
-typedef std::vector<Item> Items;
+typedef std::list<Item> Items;
 
 HWND hwnd_;
 Items items_;
@@ -109,13 +109,13 @@ void windowChanged(HWND hwnd)
 
     bool visible = isWindowUserVisible(hwnd);
     if (item.visible_ != visible) {
-        DEBUG_PRINTF("changed window visibility: %#x to %s\n", item.hwnd_, StringUtility::boolToCString(visible));
+        DEBUG_PRINTF("changed window visibility: %#x to %s\n", hwnd, StringUtility::boolToCString(visible));
         item.visible_ = visible;
     }
 
     const std::string title = getWindowText(hwnd);
     if (item.title_ != title) {
-        DEBUG_PRINTF("changed window title: %#x to %s\n", item.hwnd_, title.c_str());
+        DEBUG_PRINTF("changed window title: %#x to %s\n", hwnd, title.c_str());
         item.title_ = title;
         if (item.trayIcon_) {
             item.trayIcon_->updateTip(item.title_);
@@ -152,7 +152,9 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
         return;
     }
 
-    if (it->minimized_) {
+    Item & item = *it;
+
+    if (item.minimized_) {
         DEBUG_PRINTF("not minimizing already minimized window %#x\n", hwnd);
         return;
     }
@@ -178,9 +180,13 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
         }
     }
 
-    it->minimized_ = true;
-    it->visible_ = false;
-    it->trayIcon_ = std::move(trayIcon);
+    item.minimized_ = true;
+    item.visible_ = false;
+    item.trayIcon_ = std::move(trayIcon);
+
+    // move item to end of list so restore order is reverse of minimize order
+    items_.push_back(item);
+    items_.erase(it);
 }
 
 void restore(HWND hwnd)
@@ -205,9 +211,15 @@ void restore(HWND hwnd)
         return;
     }
 
-    it->minimized_ = false;
-    it->visible_ = true;
-    it->trayIcon_.reset();
+    Item & item = *it;
+
+    item.minimized_ = false;
+    item.visible_ = true;
+    item.trayIcon_.reset();
+
+    // move item to front of list so next restore is in reverse order of minimize
+    items_.push_front(item);
+    items_.erase(it);
 }
 
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
