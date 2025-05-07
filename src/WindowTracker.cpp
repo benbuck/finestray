@@ -45,7 +45,6 @@ HWND hwnd_;
 Items items_;
 
 Items::iterator findWindow(HWND hwnd);
-Items::const_iterator findMinimizedWindow(HWND hwnd);
 
 } // anonymous namespace
 
@@ -68,11 +67,11 @@ void stop()
     hwnd_ = nullptr;
 }
 
-void windowAdded(HWND hwnd)
+bool windowAdded(HWND hwnd)
 {
     if (findWindow(hwnd) != items_.end()) {
         WARNING_PRINTF("window already tracked: %#x\n", hwnd);
-        return;
+        return false;
     }
 
     Item item;
@@ -82,6 +81,7 @@ void windowAdded(HWND hwnd)
     items_.push_back(item);
 
     DEBUG_PRINTF("window added: %zu items\n", items_.size());
+    return true;
 }
 
 void windowDestroyed(HWND hwnd)
@@ -130,7 +130,7 @@ HWND getVisibleIndex(unsigned int index)
     }
 
     unsigned int count = 0;
-    for (const auto & item : items_) {
+    for (const Item & item : items_) {
         if (item.visible_) {
             if (count == index) {
                 return item.hwnd_;
@@ -165,6 +165,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
     if (isWindowUserVisible(hwnd)) {
         ERROR_PRINTF("window is not visible after minimize: %#x\n", hwnd);
     }
+
     std::unique_ptr<TrayIcon> trayIcon;
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         trayIcon = std::make_unique<TrayIcon>();
@@ -246,7 +247,7 @@ void updateMinimizePlacement(MinimizePlacement minimizePlacement)
     }
 }
 
-HWND getFromID(UINT id)
+HWND getFromTrayID(UINT id)
 {
     const Items::const_iterator it = std::ranges::find_if(items_, [id](const Item & item) noexcept {
         return item.trayIcon_ && (item.trayIcon_->id() == id);
@@ -265,7 +266,7 @@ HWND getMinimizedIndex(unsigned int index)
     }
 
     unsigned int count = 0;
-    for (const auto & item : items_) {
+    for (const Item & item : items_) {
         if (item.minimized_) {
             if (count == index) {
                 return item.hwnd_;
@@ -318,11 +319,6 @@ std::vector<HWND> getAllVisible()
     return visibleWindows;
 }
 
-bool isMinimized(HWND hwnd)
-{
-    return findMinimizedWindow(hwnd) != items_.end();
-}
-
 } // namespace WindowTracker
 
 namespace
@@ -332,13 +328,6 @@ Items::iterator findWindow(HWND hwnd)
 {
     return std::ranges::find_if(items_, [hwnd](const Item & item) {
         return item.hwnd_ == hwnd;
-    });
-}
-
-Items::const_iterator findMinimizedWindow(HWND hwnd)
-{
-    return std::ranges::find_if(items_, [hwnd](const Item & item) {
-        return (item.hwnd_ == hwnd) && item.minimized_;
     });
 }
 

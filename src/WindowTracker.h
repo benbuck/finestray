@@ -27,7 +27,7 @@ namespace WindowTracker
 {
 void start(HWND hwnd);
 void stop();
-void windowAdded(HWND hwnd);
+bool windowAdded(HWND hwnd);
 void windowDestroyed(HWND hwnd);
 void windowChanged(HWND hwnd);
 HWND getVisibleIndex(unsigned int index);
@@ -35,11 +35,10 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement);
 void restore(HWND hwnd);
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement);
 void updateMinimizePlacement(MinimizePlacement minimizePlacement);
-HWND getFromID(UINT id);
+HWND getFromTrayID(UINT id);
 HWND getMinimizedIndex(unsigned int index);
 HWND getLastMinimized() noexcept;
 std::vector<HWND> getAllMinimized();
 std::vector<HWND> getAllVisible();
-bool isMinimized(HWND hwnd);
 
 } // namespace WindowTracker

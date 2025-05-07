@@ -478,7 +478,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // user selected and activated icon
                 case NIN_SELECT: {
                     INFO_PRINTF("tray icon selected\n");
-                    HWND hwndTray = WindowTracker::getFromID(narrow_cast<UINT>(wParam));
+                    HWND hwndTray = WindowTracker::getFromTrayID(narrow_cast<UINT>(wParam));
                     if (hwndTray) {
                         INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
                         restoreWindow(hwndTray);
@@ -533,7 +533,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 switch (wParam) {
                     case HSHELL_WINDOWCREATED: {
                         INFO_PRINTF("shell hook window created %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
-                        WindowTracker::windowAdded(shellHwnd);
+                        onAddWindow(shellHwnd);
                         break;
                     }
 
@@ -858,14 +858,14 @@ void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
-    WindowTracker::windowAdded(hwnd);
-
-    if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
-        if (modifiersActive(modifiersOverride_)) {
-            DEBUG_PRINTF("\tmodifier active, not minimizing\n");
-        } else {
-            DEBUG_PRINTF("\tminimizing\n");
-            minimizeWindow(hwnd);
+    if (WindowTracker::windowAdded(hwnd)) {
+        if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
+            if (modifiersActive(modifiersOverride_)) {
+                DEBUG_PRINTF("\tmodifier active, not minimizing\n");
+            } else {
+                DEBUG_PRINTF("\tminimizing\n");
+                minimizeWindow(hwnd);
+            }
         }
     }
 }
