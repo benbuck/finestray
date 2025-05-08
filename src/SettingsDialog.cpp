@@ -46,6 +46,7 @@ enum AutoTrayListViewColumn
     AutoTrayListViewColumn_Executable,
     AutoTrayListViewColumn_WindowTitle,
     AutoTrayListViewColumn_TrayEvent,
+    AutoTrayListViewColumn_MinimizePersistence,
     AutoTrayListViewColumn_Count
 };
 
@@ -78,6 +79,8 @@ void setItemTextSafe(HWND listViewHwnd, unsigned int item, int subItem, const ch
 void setItemStateSafe(HWND listViewHwnd, unsigned int item, UINT state, UINT stateMask);
 TrayEvent resourceStringToTrayEvent(const std::string & str);
 std::string trayEventToResourceString(TrayEvent trayEvent);
+MinimizePersistence resourceStringToMinimizePersistence(const std::string & str);
+std::string minimizePersistenceToResourceString(MinimizePersistence minimizePersistence);
 
 Settings settings_;
 SettingsDialog::CompletionCallback completionCallback_;
@@ -189,6 +192,12 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 IDC_AUTO_TRAY_EVENT_OPEN,
                 IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE,
                 IDC_AUTO_TRAY_EVENT_MINIMIZE);
+
+            checkRadioButtonSafe(
+                dialogHwnd,
+                IDC_AUTO_TRAY_PERSIST_NEVER,
+                IDC_AUTO_TRAY_PERSIST_ALWAYS,
+                IDC_AUTO_TRAY_PERSIST_NEVER);
 
             spyEnableIcon(dialogHwnd);
 
@@ -345,7 +354,7 @@ void autoTrayListViewInit(HWND dialogHwnd)
 {
     autoTrayListViewHwnd_ = GetDlgItem(dialogHwnd, IDC_AUTO_TRAY_LIST);
 
-    const int columnWeights[AutoTrayListViewColumn_Count] = { 100, 150, 75, 75 };
+    const int columnWeights[AutoTrayListViewColumn_Count] = { 75, 150, 100, 75, 50 };
     const int totalColumnWeight = std::accumulate(std::begin(columnWeights), std::end(columnWeights), 0);
 
     HWND hWndHdr = reinterpret_cast<HWND>(SendMessage(autoTrayListViewHwnd_, LVM_GETHEADER, 0, 0));
@@ -390,6 +399,13 @@ void autoTrayListViewInit(HWND dialogHwnd)
             AutoTrayListViewColumn_TrayEvent,
             width,
             getResourceString(IDS_COLUMN_TRAY_EVENT).c_str());
+
+        width = (listViewWidth * columnWeights[AutoTrayListViewColumn_MinimizePersistence]) / totalColumnWeight;
+        insertColumnSafe(
+            autoTrayListViewHwnd_,
+            AutoTrayListViewColumn_MinimizePersistence,
+            width,
+            getResourceString(IDS_COLUMN_MINIMIZE_PERSISTENCE).c_str());
     }
 
     if (!SendMessageA(autoTrayListViewHwnd_, LVM_DELETEALLITEMS, 0, 0)) {
@@ -431,6 +447,12 @@ void autoTrayListViewInit(HWND dialogHwnd)
             narrow_cast<unsigned int>(a),
             AutoTrayListViewColumn_TrayEvent,
             trayEventToResourceString(settings_.autoTrays_.at(a).trayEvent_).c_str());
+
+        setItemTextSafe(
+            autoTrayListViewHwnd_,
+            narrow_cast<unsigned int>(a),
+            AutoTrayListViewColumn_MinimizePersistence,
+            minimizePersistenceToResourceString(settings_.autoTrays_.at(a).minimizePersistence_).c_str());
     }
 
     autoTrayListViewActiveItem_ = ~0U;
@@ -458,6 +480,10 @@ std::vector<Settings::AutoTray> autoTrayListViewGetItems(HWND /* dialogHwnd */)
         const std::string trayEventStr =
             getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_TrayEvent);
         autoTray.trayEvent_ = resourceStringToTrayEvent(trayEventStr);
+
+        const std::string minimizePersistenceStr =
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_MinimizePersistence);
+        autoTray.minimizePersistence_ = resourceStringToMinimizePersistence(minimizePersistenceStr);
 
         if (!autoTray.executable_.empty() || !autoTray.windowClass_.empty() || !autoTray.windowTitle_.empty()) {
             autoTrays.push_back(autoTray);
@@ -601,6 +627,21 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, unsigned int item)
         item,
         AutoTrayListViewColumn_TrayEvent,
         trayEventToResourceString(trayEvent).c_str());
+
+    MinimizePersistence minimizePersistence = MinimizePersistence::None;
+    if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_PERSIST_NEVER) == BST_CHECKED) {
+        minimizePersistence = MinimizePersistence::Never;
+    } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_PERSIST_ALWAYS) == BST_CHECKED) {
+        minimizePersistence = MinimizePersistence::Always;
+    } else {
+        WARNING_PRINTF("No minimize persistence selected");
+    }
+
+    setItemTextSafe(
+        autoTrayListViewHwnd_,
+        item,
+        AutoTrayListViewColumn_MinimizePersistence,
+        minimizePersistenceToResourceString(minimizePersistence).c_str());
 }
 
 void autoTrayListViewItemDelete(HWND dialogHwnd, unsigned int item)
@@ -671,6 +712,18 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, unsigned int item)
             WARNING_PRINTF("Unknown tray event %s\n", trayEventStr.c_str());
         }
         checkRadioButtonSafe(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE, checkButtonId);
+
+        const std::string minimizePersistenceStr =
+            getListViewItemText(autoTrayListViewHwnd_, item, AutoTrayListViewColumn_MinimizePersistence);
+        checkButtonId = IDC_AUTO_TRAY_PERSIST_NEVER;
+        if (minimizePersistenceStr == getResourceString(IDS_MINIMIZE_PERSISTENCE_NEVER)) {
+            checkButtonId = IDC_AUTO_TRAY_PERSIST_NEVER;
+        } else if (minimizePersistenceStr == getResourceString(IDS_MINIMIZE_PERSISTENCE_ALWAYS)) {
+            checkButtonId = IDC_AUTO_TRAY_PERSIST_ALWAYS;
+        } else {
+            WARNING_PRINTF("Unknown minimize persistence %s\n", minimizePersistenceStr.c_str());
+        }
+        checkRadioButtonSafe(dialogHwnd, IDC_AUTO_TRAY_PERSIST_NEVER, IDC_AUTO_TRAY_PERSIST_ALWAYS, checkButtonId);
 
         autoTrayListViewActiveItem_ = item;
     }
@@ -1012,6 +1065,33 @@ std::string trayEventToResourceString(TrayEvent trayEvent)
         case TrayEvent::None:
         default: {
             WARNING_PRINTF("Unknown tray event %d\n", narrow_cast<int>(trayEvent));
+            return "";
+        }
+    }
+}
+
+MinimizePersistence resourceStringToMinimizePersistence(const std::string & str)
+{
+    if (str == getResourceString(IDS_MINIMIZE_PERSISTENCE_NEVER)) {
+        return MinimizePersistence::Never;
+    }
+
+    if (str == getResourceString(IDS_MINIMIZE_PERSISTENCE_ALWAYS)) {
+        return MinimizePersistence::Always;
+    }
+
+    WARNING_PRINTF("Unknown minimize persistence %s\n", str.c_str());
+    return MinimizePersistence::None;
+}
+
+std::string minimizePersistenceToResourceString(MinimizePersistence minimizePersistence)
+{
+    switch (minimizePersistence) {
+        case MinimizePersistence::Never: return getResourceString(IDS_MINIMIZE_PERSISTENCE_NEVER);
+        case MinimizePersistence::Always: return getResourceString(IDS_MINIMIZE_PERSISTENCE_ALWAYS);
+        case MinimizePersistence::None:
+        default: {
+            WARNING_PRINTF("Unknown minimize persistence %d\n", narrow_cast<int>(minimizePersistence));
             return "";
         }
     }

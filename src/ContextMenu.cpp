@@ -24,16 +24,43 @@
 #include "Resource.h"
 #include "StringUtility.h"
 #include "WindowIcon.h"
+#include "WindowTracker.h"
 
 namespace
 {
 
+constexpr WORD IDM_VISIBLEWINDOW_BASE = 0x2000;
+constexpr WORD IDM_VISIBLEWINDOW_MAX = 0x2FFF;
+constexpr WORD IDM_MINIMIZEDWINDOW_BASE = 0x3000;
+constexpr WORD IDM_MINIMIZEDWINDOW_MAX = 0x3FFF;
+
 bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHandleWrapper & bitmap);
+
+std::vector<HWND> visibleWindows_;
+std::vector<HWND> minimizedWindows_;
 
 } // anonymous namespace
 
-bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const std::vector<HWND> && minimizedWindows)
+namespace ContextMenu
 {
+
+bool show(HWND hwnd, bool showVisibleWindows)
+{
+    visibleWindows_.clear();
+    minimizedWindows_.clear();
+
+    WindowTracker::enumerate([&](const WindowTracker::Item & item) {
+        if (item.visible_) {
+            if (showVisibleWindows || (item.minimizePersistence_ == MinimizePersistence::Always)) {
+                visibleWindows_.push_back(item.hwnd_);
+            }
+        } else if (item.minimized_) {
+            minimizedWindows_.push_back(item.hwnd_);
+        }
+
+        return true;
+    });
+
     // create popup menu
     const MenuHandleWrapper menu(CreatePopupMenu());
     if (!menu) {
@@ -43,7 +70,7 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
         return false;
     }
 
-    // add menu entries
+    // add menu entry and separator for the app itself
     if (!AppendMenuA(menu, MF_STRING, IDM_APP, APP_NAME)) {
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
@@ -55,9 +82,10 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
 
     std::vector<BitmapHandleWrapper> bitmaps;
 
-    if (!visibleWindows.empty()) {
-        for (size_t i = 0; i < visibleWindows.size(); ++i) {
-            HWND visibleHwnd = visibleWindows.at(i);
+    // add menu entries for visible windows
+    if (!visibleWindows_.empty()) {
+        for (size_t i = 0; i < visibleWindows_.size(); ++i) {
+            HWND visibleHwnd = visibleWindows_.at(i);
             bitmaps.emplace_back(WindowIcon::bitmap(visibleHwnd));
             if (!addMenuItemForWindow(
                     menu,
@@ -90,9 +118,10 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
         }
     }
 
-    if (!minimizedWindows.empty()) {
-        for (size_t i = 0; i < minimizedWindows.size(); ++i) {
-            HWND minimizedHwnd = minimizedWindows.at(i);
+    // add menu entries for minimized windows
+    if (!minimizedWindows_.empty()) {
+        for (size_t i = 0; i < minimizedWindows_.size(); ++i) {
+            HWND minimizedHwnd = minimizedWindows_.at(i);
             bitmaps.emplace_back(WindowIcon::bitmap(minimizedHwnd));
             if (!addMenuItemForWindow(
                     menu,
@@ -125,15 +154,19 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
         }
     }
 
+    // add menu entries for settings
     if (!AppendMenuA(menu, MF_STRING, IDM_SETTINGS, getResourceString(IDS_MENU_SETTINGS).c_str())) {
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
 
+    // add menu entry for exit
     if (!AppendMenuA(menu, MF_STRING, IDM_EXIT, getResourceString(IDS_MENU_EXIT).c_str())) {
         WARNING_PRINTF("failed to create menu entry, AppendMenuA() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
+
+    // create icons for the menu items
 
     const BitmapHandleWrapper appBitmap(Bitmap::getResource(IDB_APP));
     const BitmapHandleWrapper minimizeBitmap(Bitmap::getResource(IDB_MINIMIZE));
@@ -173,7 +206,7 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
                 StringUtility::lastErrorString().c_str());
         }
 
-        if (!visibleWindows.empty()) {
+        if (!visibleWindows_.empty()) {
             menuItemInfo.hbmpItem = minimizeBitmap;
             if (!SetMenuItemInfoA(menu, IDM_MINIMIZE_ALL, FALSE, &menuItemInfo)) {
                 WARNING_PRINTF(
@@ -182,7 +215,7 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
             }
         }
 
-        if (!minimizedWindows.empty()) {
+        if (!minimizedWindows_.empty()) {
             menuItemInfo.hbmpItem = restoreBitmap;
             if (!SetMenuItemInfoA(menu, IDM_RESTORE_ALL, FALSE, &menuItemInfo)) {
                 WARNING_PRINTF(
@@ -239,6 +272,34 @@ bool showContextMenu(HWND hwnd, const std::vector<HWND> && visibleWindows, const
 
     return true;
 }
+
+HWND getMinimizedWindow(unsigned int id)
+{
+    if (id >= IDM_MINIMIZEDWINDOW_BASE && id <= IDM_MINIMIZEDWINDOW_MAX) {
+        const unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
+        if (index >= minimizedWindows_.size()) {
+            return nullptr;
+        }
+        return minimizedWindows_.at(index);
+    }
+
+    return nullptr;
+}
+
+HWND getVisibleWindow(unsigned int id)
+{
+    if (id >= IDM_VISIBLEWINDOW_BASE && id <= IDM_VISIBLEWINDOW_MAX) {
+        const unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
+        if (index >= visibleWindows_.size()) {
+            return nullptr;
+        }
+        return visibleWindows_.at(index);
+    }
+
+    return nullptr;
+}
+
+} // namespace ContextMenu
 
 namespace
 {

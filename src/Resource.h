@@ -31,9 +31,12 @@
 #define IDS_COLUMN_WINDOW_CLASS                   223
 #define IDS_COLUMN_WINDOW_TITLE                   224
 #define IDS_COLUMN_TRAY_EVENT                     225
+#define IDS_COLUMN_MINIMIZE_PERSISTENCE           226
 #define IDS_TRAY_EVENT_OPEN                       230
 #define IDS_TRAY_EVENT_MINIMIZE                   231
 #define IDS_TRAY_EVENT_OPEN_AND_MINIMIZE          232
+#define IDS_MINIMIZE_PERSISTENCE_NEVER            233
+#define IDS_MINIMIZE_PERSISTENCE_ALWAYS           234
 
 // error strings
 #define IDS_ERROR_INIT_COM                        301
@@ -81,14 +84,16 @@
 #define IDC_AUTO_TRAY_EDIT_WINDOWTITLE           1016
 #define IDC_AUTO_TRAY_EVENT_OPEN                 1017
 #define IDC_AUTO_TRAY_EVENT_MINIMIZE             1018
-#define IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE    1029
-#define IDC_AUTO_TRAY_ITEM_UPDATE                1020
-#define IDC_AUTO_TRAY_ITEM_ADD                   1021
-#define IDC_AUTO_TRAY_ITEM_DELETE                1022
-#define IDC_AUTO_TRAY_ITEM_SPY                   1023
-#define IDC_HELP_PAGE                            1024
-#define IDC_ABOUT                                1025
-#define IDC_RESET                                1026
-#define IDC_EXIT                                 1027
+#define IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE    1019
+#define IDC_AUTO_TRAY_PERSIST_NEVER              1020
+#define IDC_AUTO_TRAY_PERSIST_ALWAYS             1021
+#define IDC_AUTO_TRAY_ITEM_UPDATE                1022
+#define IDC_AUTO_TRAY_ITEM_ADD                   1023
+#define IDC_AUTO_TRAY_ITEM_DELETE                1024
+#define IDC_AUTO_TRAY_ITEM_SPY                   1025
+#define IDC_HELP_PAGE                            1026
+#define IDC_ABOUT                                1027
+#define IDC_RESET                                1028
+#define IDC_EXIT                                 1029
 
 // clang-format on

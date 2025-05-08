@@ -47,6 +47,7 @@
 #include <Windows.h>
 
 // Standard library
+#include <cassert>
 #include <ranges>
 #include <regex>
 #include <string>
@@ -67,12 +68,10 @@ enum class HotkeyID : unsigned int
 
 LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 ErrorContext start();
-void stop();
-std::vector<HWND> getContextMenuVisibleWindows();
-std::vector<HWND> getContextMenuMinimizedWindows();
-bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent);
+void stop() noexcept;
+bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent, MinimizePersistence * minimizePersistence);
 void minimizeAllWindows();
-void minimizeWindow(HWND hwnd);
+void minimizeWindow(HWND hwnd, MinimizePersistence minimizePersistence);
 void restoreAllWindows();
 void restoreWindow(HWND hwnd);
 void restoreLastWindow();
@@ -178,7 +177,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    DEBUG_PRINTF("settings:\n");
     settings_.dump();
 
     IconHandleWrapper icon(LoadIcon(hinstance, MAKEINTRESOURCE(IDI_FINESTRAY)), IconHandleWrapper::Mode::Referenced);
@@ -307,59 +305,48 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             WORD const id = LOWORD(wParam);
             switch (id) {
                 // about dialog
-                case IDM_APP:
-                case IDM_ABOUT: {
+                case ContextMenu::IDM_APP:
+                case ContextMenu::IDM_ABOUT: {
                     INFO_PRINTF("menu about\n");
                     showAboutDialog(hwnd);
                     break;
                 }
 
-                case IDM_MINIMIZE_ALL: {
+                case ContextMenu::IDM_MINIMIZE_ALL: {
                     INFO_PRINTF("menu minimize all\n");
                     minimizeAllWindows();
                     break;
                 }
 
-                case IDM_RESTORE_ALL: {
+                case ContextMenu::IDM_RESTORE_ALL: {
                     INFO_PRINTF("menu restore all\n");
                     restoreAllWindows();
                     break;
                 }
 
-                case IDM_SETTINGS: {
+                case ContextMenu::IDM_SETTINGS: {
                     INFO_PRINTF("menu settings\n");
                     showSettingsDialog();
                     break;
                 }
 
                 // exit the app
-                case IDM_EXIT: {
+                case ContextMenu::IDM_EXIT: {
                     INFO_PRINTF("menu exit\n");
                     PostQuitMessage(0);
                     break;
                 }
 
                 default: {
-                    if ((id >= IDM_MINIMIZEDWINDOW_BASE) && (id <= IDM_MINIMIZEDWINDOW_MAX)) {
-                        const unsigned int index = id - IDM_MINIMIZEDWINDOW_BASE;
-                        INFO_PRINTF("menu restore minimized window index %u\n", index);
-                        HWND minimizedWindow = WindowTracker::getMinimizedIndex(index);
-                        if (!minimizedWindow) {
-                            WARNING_PRINTF("no minimized window at index %u\n", index);
-                        } else {
-                            restoreWindow(minimizedWindow);
-                        }
-                    } else if ((id >= IDM_VISIBLEWINDOW_BASE) && (id <= IDM_VISIBLEWINDOW_MAX)) {
-                        const unsigned int index = id - IDM_VISIBLEWINDOW_BASE;
-                        INFO_PRINTF("menu minimize visible window index %u\n", index);
-                        HWND visibleWindow = WindowTracker::getVisibleIndex(index);
-                        if (!visibleWindow) {
-                            WARNING_PRINTF("no visible window at index %u\n", index);
-                        } else {
-                            minimizeWindow(visibleWindow);
+                    HWND minimizedHwnd = ContextMenu::getMinimizedWindow(id);
+                    if (minimizedHwnd) {
+                        restoreWindow(minimizedHwnd);
+                    } else {
+                        HWND visibleHwnd = ContextMenu::getVisibleWindow(id);
+                        if (visibleHwnd) {
+                            minimizeWindow(visibleHwnd, MinimizePersistence::None);
                         }
                     }
-
                     break;
                 }
             }
@@ -393,13 +380,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         // only minimize windows that have a minimize button
                         LONG const windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
                         if (windowStyle & WS_MINIMIZEBOX) {
-#if !defined(NDEBUG)
-                            const WindowInfo windowInfo(foregroundHwnd);
-                            DEBUG_PRINTF("\twindow executable '%s'\n", windowInfo.executable().c_str());
-                            DEBUG_PRINTF("\twindow text '%s'\n", windowInfo.title().c_str());
-                            DEBUG_PRINTF("\twindow class name '%s'\n", windowInfo.className().c_str());
-#endif
-                            minimizeWindow(foregroundHwnd);
+                            minimizeWindow(foregroundHwnd, MinimizePersistence::None);
                         }
                     }
                     break;
@@ -428,10 +409,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
                     } else {
-                        if (!showContextMenu(
-                                hwnd,
-                                std::move(getContextMenuVisibleWindows()),
-                                std::move(getContextMenuMinimizedWindows()))) {
+                        if (!ContextMenu::show(hwnd, settings_.showWindowsInMenu_)) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }
@@ -455,10 +433,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring\n");
                     } else {
-                        if (!showContextMenu(
-                                hwnd,
-                                std::move(getContextMenuVisibleWindows()),
-                                std::move(getContextMenuMinimizedWindows()))) {
+                        if (!ContextMenu::show(hwnd, settings_.showWindowsInMenu_)) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }
@@ -478,13 +453,19 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 // user selected and activated icon
                 case NIN_SELECT: {
                     INFO_PRINTF("tray icon selected\n");
-                    HWND hwndTray = WindowTracker::getFromTrayID(narrow_cast<UINT>(wParam));
+                    HWND hwndTray = TrayIcon::getWindowFromID(narrow_cast<UINT>(wParam));
                     if (hwndTray) {
-                        INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
-                        restoreWindow(hwndTray);
-                    } else if (wParam == trayIcon_.id()) {
-                        INFO_PRINTF("toggling settings dialog\n");
-                        toggleSettingsDialog();
+                        if (hwndTray == appWindow_) {
+                            INFO_PRINTF("toggling settings dialog\n");
+                            toggleSettingsDialog();
+                        } else if (WindowTracker::isMinimized(hwndTray)) {
+                            INFO_PRINTF("restoring window from tray: %#x\n", hwndTray);
+                            restoreWindow(hwndTray);
+                        } else {
+                            INFO_PRINTF("minimizing window to tray: %#x\n", hwndTray);
+                            // must be persistent for this to happen
+                            minimizeWindow(hwndTray, MinimizePersistence::None);
+                        }
                     } else {
                         WARNING_PRINTF("unknown tray icon id %#x\n", wParam);
                     }
@@ -553,6 +534,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
+#if 0
                     case HSHELL_ACTIVATESHELLWINDOW: DEBUG_PRINTF("HSHELL_ACTIVATESHELLWINDOW: %#x\n", lParam); break;
                     case HSHELL_WINDOWACTIVATED: DEBUG_PRINTF("HSHELL_WINDOWACTIVATED: %#x\n", lParam); break;
                     case HSHELL_GETMINRECT: DEBUG_PRINTF("HSHELL_GETMINRECT: %#x\n", lParam); break;
@@ -567,9 +549,10 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     case HSHELL_MONITORCHANGED: DEBUG_PRINTF("HSHELL_MONITORCHANGED: %#x\n", lParam); break;
                     case HSHELL_FLASH: DEBUG_PRINTF("HSHELL_FLASH: %#x\n", lParam); break;
                     case HSHELL_RUDEAPPACTIVATED: DEBUG_PRINTF("HSHELL_RUDEAPPACTIVATED: %#x\n", lParam); break;
+#endif
 
                     default: {
-                        DEBUG_PRINTF("unknown shell hook message %x\n", wParam);
+                        // DEBUG_PRINTF("unknown shell hook message %x\n", wParam);
                         break;
                     }
                 }
@@ -711,7 +694,7 @@ ErrorContext start()
     return {};
 }
 
-void stop()
+void stop() noexcept
 {
     DEBUG_PRINTF("stopping\n");
 
@@ -724,25 +707,7 @@ void stop()
     hotkeyMenu_.destroy();
 }
 
-std::vector<HWND> getContextMenuVisibleWindows()
-{
-    if (!settings_.showWindowsInMenu_) {
-        return {};
-    }
-
-    return WindowTracker::getAllVisible();
-}
-
-std::vector<HWND> getContextMenuMinimizedWindows()
-{
-    if (!minimizePlacementIncludesMenu(settings_.minimizePlacement_)) {
-        return {};
-    }
-
-    return WindowTracker::getAllMinimized();
-}
-
-bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
+bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent, MinimizePersistence * minimizePersistence)
 {
     const WindowInfo windowInfo(hwnd);
     DEBUG_PRINTF("\texecutable: %s\n", windowInfo.executable().c_str());
@@ -814,6 +779,10 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
             }
         }
 
+        if (minimizePersistence) {
+            *minimizePersistence = autoTray.minimizePersistence_;
+        }
+
         DEBUG_PRINTF("\tshould auto-tray: %s\n", StringUtility::boolToCString(shouldAutoTray));
         return shouldAutoTray;
     }
@@ -824,21 +793,39 @@ bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent)
 
 void minimizeAllWindows()
 {
-    const std::vector<HWND> visibleWindows = WindowTracker::getAllVisible();
-    for (HWND hwnd : visibleWindows) {
-        WindowTracker::minimize(hwnd, settings_.minimizePlacement_);
+    std::vector<HWND> windowsToMinimize;
+
+    WindowTracker::enumerate([&windowsToMinimize](const WindowTracker::Item & item) {
+        if (item.visible_ && !item.minimized_) {
+            DEBUG_PRINTF("minimizing window: %#x\n", item.hwnd_);
+            windowsToMinimize.push_back(item.hwnd_);
+        }
+        return true;
+    });
+
+    for (HWND hwnd : windowsToMinimize) {
+        minimizeWindow(hwnd, MinimizePersistence::None);
     }
 }
 
-void minimizeWindow(HWND hwnd)
+void minimizeWindow(HWND hwnd, MinimizePersistence minimizePersistence)
 {
-    WindowTracker::minimize(hwnd, settings_.minimizePlacement_);
+    WindowTracker::minimize(hwnd, settings_.minimizePlacement_, minimizePersistence);
 }
 
 void restoreAllWindows()
 {
-    while (HWND hwnd = WindowTracker::getLastMinimized()) {
-        DEBUG_PRINTF("restoring window: %#x\n", hwnd);
+    std::vector<HWND> windowsToRestore;
+
+    WindowTracker::reverseEnumerate([&windowsToRestore](const WindowTracker::Item & item) {
+        if (item.minimized_) {
+            DEBUG_PRINTF("restoring window: %#x\n", item.hwnd_);
+            windowsToRestore.push_back(item.hwnd_);
+        }
+        return true;
+    });
+
+    for (HWND hwnd : windowsToRestore) {
         WindowTracker::restore(hwnd);
     }
 }
@@ -850,8 +837,20 @@ void restoreWindow(HWND hwnd)
 
 void restoreLastWindow()
 {
-    HWND minimizedWindow = WindowTracker::getLastMinimized();
-    WindowTracker::restore(minimizedWindow);
+    HWND hwnd = nullptr;
+
+    WindowTracker::reverseEnumerate([&hwnd](const WindowTracker::Item & item) {
+        if (item.minimized_) {
+            DEBUG_PRINTF("restoring last minimized window: %#x\n", item.hwnd_);
+            hwnd = item.hwnd_;
+            return false; // stop enumerating
+        }
+        return true;
+    });
+
+    if (hwnd) {
+        WindowTracker::restore(hwnd);
+    }
 }
 
 void onAddWindow(HWND hwnd)
@@ -859,12 +858,13 @@ void onAddWindow(HWND hwnd)
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
     if (WindowTracker::windowAdded(hwnd)) {
-        if (windowShouldAutoTray(hwnd, TrayEvent::Open)) {
+        MinimizePersistence minimizePersistence = MinimizePersistence::None;
+        if (windowShouldAutoTray(hwnd, TrayEvent::Open, &minimizePersistence)) {
             if (modifiersActive(modifiersOverride_)) {
                 DEBUG_PRINTF("\tmodifier active, not minimizing\n");
             } else {
                 DEBUG_PRINTF("\tminimizing\n");
-                minimizeWindow(hwnd);
+                minimizeWindow(hwnd, minimizePersistence);
             }
         }
     }
@@ -890,17 +890,18 @@ void onMinimizeEvent(
     }
 
     DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
-    if (!windowShouldAutoTray(hwnd, TrayEvent::Minimize)) {
+    MinimizePersistence minimizePersistence = MinimizePersistence::None;
+    if (!windowShouldAutoTray(hwnd, TrayEvent::Minimize, &minimizePersistence)) {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifiers active, minimizing\n");
-            minimizeWindow(hwnd);
+            minimizeWindow(hwnd, MinimizePersistence::Never);
         }
     } else {
         if (modifiersActive(modifiersOverride_)) {
             DEBUG_PRINTF("\tmodifier active, not minimizing\n");
         } else {
             DEBUG_PRINTF("\tminimizing\n");
-            minimizeWindow(hwnd);
+            minimizeWindow(hwnd, minimizePersistence);
         }
     }
 }

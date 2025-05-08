@@ -28,6 +28,8 @@ enum class TrayEvent
 const char * trayEventToCString(TrayEvent trayEvent) noexcept;
 TrayEvent trayEventFromCString(const char * trayEventString) noexcept;
 
+bool trayEventValid(TrayEvent trayEvent) noexcept;
+
 inline constexpr bool trayEventIncludesOpen(TrayEvent trayEvent)
 {
     return (trayEvent == TrayEvent::Open) || (trayEvent == TrayEvent::OpenAndMinimize);

@@ -15,30 +15,43 @@
 #pragma once
 
 // App
+#include "MinimizePersistence.h"
 #include "MinimizePlacement.h"
 
 // Windows
 #include <Windows.h>
 
 // Standard library
+#include <functional>
+#include <memory>
+#include <string>
 #include <vector>
+
+class TrayIcon;
 
 namespace WindowTracker
 {
-void start(HWND hwnd);
-void stop();
+struct Item
+{
+    HWND hwnd_ {};
+    std::string title_;
+    bool visible_ {};
+    bool minimized_ {};
+    MinimizePersistence minimizePersistence_ { MinimizePersistence::Never };
+    std::shared_ptr<TrayIcon> trayIcon_;
+};
+
+void start(HWND messageHwnd) noexcept;
+void stop() noexcept;
 bool windowAdded(HWND hwnd);
 void windowDestroyed(HWND hwnd);
 void windowChanged(HWND hwnd);
-HWND getVisibleIndex(unsigned int index);
-void minimize(HWND hwnd, MinimizePlacement minimizePlacement);
+void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence);
 void restore(HWND hwnd);
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement);
 void updateMinimizePlacement(MinimizePlacement minimizePlacement);
-HWND getFromTrayID(UINT id);
-HWND getMinimizedIndex(unsigned int index);
-HWND getLastMinimized() noexcept;
-std::vector<HWND> getAllMinimized();
-std::vector<HWND> getAllVisible();
+bool isMinimized(HWND hwnd);
+void enumerate(std::function<bool(const Item &)> callback);
+void reverseEnumerate(std::function<bool(const Item &)> callback);
 
 } // namespace WindowTracker

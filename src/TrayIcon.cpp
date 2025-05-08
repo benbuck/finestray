@@ -23,18 +23,29 @@
 // Windows
 #include <combaseapi.h>
 
-volatile LONG TrayIcon::gid_ = 0;
+// Standard library
+#include <map>
+
+namespace
+{
+
+typedef std::map<UINT, HWND> IDMap;
+
+IDMap idMap_;
+volatile LONG gid_ = 0;
+
+} // anonymous namespace
 
 ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleWrapper && icon)
 {
     LONG const gid = InterlockedIncrement(&gid_);
 
-    DEBUG_PRINTF("creating tray icon %u\n", gid);
-
     if (nid_.uID) {
         WARNING_PRINTF("tray icon already created, destroying first\n");
         destroy();
     }
+
+    DEBUG_PRINTF("creating tray icon %u\n", gid);
 
     icon_ = std::move(icon);
 
@@ -74,6 +85,8 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleW
         return { IDS_ERROR_CREATE_TRAY_ICON, lastErrorString + " (NIM_SETVERSION)" };
     }
 
+    idMap_[nid_.uID] = hwnd;
+
     return {};
 }
 
@@ -81,6 +94,8 @@ void TrayIcon::destroy() noexcept
 {
     if (nid_.uID) {
         DEBUG_PRINTF("destroying tray icon %u\n", nid_.uID);
+
+        idMap_.erase(nid_.uID);
 
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
             WARNING_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %lu\n", GetLastError());
@@ -102,4 +117,13 @@ void TrayIcon::updateTip(const std::string & tip)
                 StringUtility::lastErrorString().c_str());
         }
     }
+}
+
+HWND TrayIcon::getWindowFromID(UINT id) noexcept
+{
+    const IDMap::iterator it = idMap_.find(id);
+    if (it != idMap_.end()) {
+        return it->second;
+    }
+    return nullptr;
 }

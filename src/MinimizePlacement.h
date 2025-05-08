@@ -28,6 +28,8 @@ enum class MinimizePlacement
 const char * minimizePlacementToCString(MinimizePlacement minimizePlacement) noexcept;
 MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementString) noexcept;
 
+bool minimizePlacementValid(MinimizePlacement minimizePlacement) noexcept;
+
 inline constexpr bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
 {
     return (minimizePlacement == MinimizePlacement::Tray) || (minimizePlacement == MinimizePlacement::TrayAndMenu);

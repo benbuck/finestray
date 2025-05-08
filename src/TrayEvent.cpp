@@ -16,6 +16,22 @@
 #include "TrayEvent.h"
 #include "Log.h"
 
+bool trayEventValid(TrayEvent trayEvent) noexcept
+{
+    switch (trayEvent) {
+        case TrayEvent::Open:
+        case TrayEvent::Minimize:
+        case TrayEvent::OpenAndMinimize: {
+            return true;
+        }
+
+        case TrayEvent::None:
+        default: {
+            return false;
+        }
+    }
+}
+
 const char * trayEventToCString(TrayEvent trayEvent) noexcept
 {
     switch (trayEvent) {

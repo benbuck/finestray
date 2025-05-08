@@ -55,6 +55,8 @@ add_executable(Finestray WIN32
     src/Log.cpp
     src/Log.h
     src/MenuHandleWrapper.h
+    src/MinimizePersistence.cpp
+    src/MinimizePersistence.h
     src/MinimizePlacement.cpp
     src/MinimizePlacement.h
     src/Modifiers.cpp

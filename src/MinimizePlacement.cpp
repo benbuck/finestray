@@ -16,6 +16,23 @@
 #include "MinimizePlacement.h"
 #include "Log.h"
 
+bool minimizePlacementValid(MinimizePlacement minimizePlacement) noexcept
+{
+    switch (minimizePlacement) {
+        case MinimizePlacement::Tray:
+        case MinimizePlacement::Menu:
+        case MinimizePlacement::TrayAndMenu: {
+            return true;
+        }
+
+        case MinimizePlacement::None:
+        default: {
+            WARNING_PRINTF("error, bad minimize placement: %d\n", minimizePlacement);
+            return false;
+        }
+    }
+}
+
 const char * minimizePlacementToCString(MinimizePlacement minimizePlacement) noexcept
 {
     switch (minimizePlacement) {

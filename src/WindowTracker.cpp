@@ -22,6 +22,7 @@
 #include "WindowMessage.h"
 
 // Standard library
+#include <cassert>
 #include <list>
 #include <memory>
 #include <ranges>
@@ -30,19 +31,11 @@
 namespace
 {
 
-struct Item
-{
-    HWND hwnd_ {};
-    std::string title_;
-    bool visible_ {};
-    bool minimized_ {};
-    std::shared_ptr<TrayIcon> trayIcon_;
-};
+typedef std::list<WindowTracker::Item> Items;
 
-typedef std::list<Item> Items;
-
-HWND hwnd_;
+HWND messageHwnd_;
 Items items_;
+bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
 
@@ -51,20 +44,21 @@ Items::iterator findWindow(HWND hwnd);
 namespace WindowTracker
 {
 
-void start(HWND hwnd)
+void start(HWND messageHwnd) noexcept
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
-    hwnd_ = hwnd;
+    messageHwnd_ = messageHwnd;
 }
 
-void stop()
+void stop() noexcept
 {
     DEBUG_PRINTF("WindowTracker stopping\n");
 
+    assert(!enumerating_);
     items_.clear();
 
-    hwnd_ = nullptr;
+    messageHwnd_ = nullptr;
 }
 
 bool windowAdded(HWND hwnd)
@@ -73,6 +67,8 @@ bool windowAdded(HWND hwnd)
         WARNING_PRINTF("window already tracked: %#x\n", hwnd);
         return false;
     }
+
+    assert(!enumerating_);
 
     Item item;
     item.hwnd_ = hwnd;
@@ -86,7 +82,9 @@ bool windowAdded(HWND hwnd)
 
 void windowDestroyed(HWND hwnd)
 {
-    Items::iterator it = findWindow(hwnd);
+    assert(!enumerating_);
+
+    const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         WARNING_PRINTF("window not tracked: %#x\n", hwnd);
         return;
@@ -99,7 +97,9 @@ void windowDestroyed(HWND hwnd)
 
 void windowChanged(HWND hwnd)
 {
-    Items::iterator it = findWindow(hwnd);
+    assert(!enumerating_);
+
+    const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         WARNING_PRINTF("window not tracked: %#x\n", hwnd);
         return;
@@ -107,7 +107,7 @@ void windowChanged(HWND hwnd)
 
     Item & item = *it;
 
-    bool visible = isWindowUserVisible(hwnd);
+    const bool visible = isWindowUserVisible(hwnd);
     if (item.visible_ != visible) {
         DEBUG_PRINTF("changed window visibility: %#x to %s\n", hwnd, StringUtility::boolToCString(visible));
         item.visible_ = visible;
@@ -123,28 +123,11 @@ void windowChanged(HWND hwnd)
     }
 }
 
-HWND getVisibleIndex(unsigned int index)
-{
-    if (index >= items_.size()) {
-        return nullptr;
-    }
-
-    unsigned int count = 0;
-    for (const Item & item : items_) {
-        if (item.visible_) {
-            if (count == index) {
-                return item.hwnd_;
-            }
-            ++count;
-        }
-    }
-
-    return nullptr;
-}
-
-void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
+void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
 {
     DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
+
+    assert(!enumerating_);
 
     const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
@@ -168,21 +151,34 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
         ERROR_PRINTF("window is not visible after minimize: %#x\n", hwnd);
     }
 
-    std::unique_ptr<TrayIcon> trayIcon;
-    if (minimizePlacementIncludesTray(minimizePlacement)) {
-        trayIcon = std::make_unique<TrayIcon>();
-        IconHandleWrapper icon = WindowIcon::get(hwnd);
-        const ErrorContext err = trayIcon->create(hwnd, hwnd_, WM_TRAYWINDOW, std::move(icon));
-        if (err) {
-            WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
-            errorMessage(err);
-            return;
-        }
-    }
-
     item.minimized_ = true;
     item.visible_ = false;
-    item.trayIcon_ = std::move(trayIcon);
+
+    // "none" means keep existing persistence
+    if (minimizePersistence != MinimizePersistence::None) {
+        assert(
+            (item.minimizePersistence_ == MinimizePersistence::Never) ||
+            (minimizePersistence == MinimizePersistence::Always));
+        item.minimizePersistence_ = minimizePersistence;
+    }
+    assert(item.minimizePersistence_ != MinimizePersistence::None);
+
+    // FIX - persistent implies tray placement
+
+    if (!minimizePlacementIncludesTray(minimizePlacement)) {
+        item.trayIcon_.reset();
+    } else {
+        if (!item.trayIcon_) {
+            item.trayIcon_ = std::make_unique<TrayIcon>();
+            IconHandleWrapper icon = WindowIcon::get(hwnd);
+            const ErrorContext err = item.trayIcon_->create(hwnd, messageHwnd_, WM_TRAYWINDOW, std::move(icon));
+            if (err) {
+                WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", hwnd);
+                errorMessage(err);
+                item.trayIcon_.reset();
+            }
+        }
+    }
 
     // move item to end of list so restore order is reverse of minimize order
     items_.push_back(item);
@@ -192,6 +188,8 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement)
 void restore(HWND hwnd)
 {
     DEBUG_PRINTF("tray window restore %#x\n", hwnd);
+
+    assert(!enumerating_);
 
     // show and restore window
     // return value intentionally ignored, ShowWindow returns previous visibility
@@ -215,7 +213,9 @@ void restore(HWND hwnd)
 
     item.minimized_ = false;
     item.visible_ = true;
-    item.trayIcon_.reset();
+    if (item.minimizePersistence_ == MinimizePersistence::Never) {
+        item.trayIcon_.reset();
+    }
 
     // move item to front of list so next restore is in reverse order of minimize
     items_.push_front(item);
@@ -224,6 +224,8 @@ void restore(HWND hwnd)
 
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
 {
+    assert(!enumerating_);
+
     for (Item & item : items_) {
         if (!item.minimized_) {
             continue;
@@ -233,7 +235,7 @@ void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
             if (!item.trayIcon_) {
                 item.trayIcon_ = std::make_unique<TrayIcon>();
                 IconHandleWrapper icon = WindowIcon::get(item.hwnd_);
-                const ErrorContext err = item.trayIcon_->create(item.hwnd_, hwnd_, WM_TRAYWINDOW, std::move(icon));
+                const ErrorContext err = item.trayIcon_->create(item.hwnd_, messageHwnd_, WM_TRAYWINDOW, std::move(icon));
                 if (err) {
                     WARNING_PRINTF("failed to create tray icon for minimized window %#x\n", item.hwnd_);
                     item.trayIcon_.reset();
@@ -242,7 +244,9 @@ void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
             }
         } else {
             if (item.trayIcon_) {
-                item.trayIcon_.reset();
+                if (item.minimizePersistence_ == MinimizePersistence::Never) {
+                    item.trayIcon_.reset();
+                }
             }
         }
     }
@@ -253,82 +257,52 @@ void updateMinimizePlacement(MinimizePlacement minimizePlacement)
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         addAllMinimizedToTray(minimizePlacement);
     } else {
+        assert(!enumerating_);
+
         for (Item & item : items_) {
-            item.trayIcon_.reset();
+            if (item.minimizePersistence_ == MinimizePersistence::Never) {
+                item.trayIcon_.reset();
+            }
         }
     }
 }
 
-HWND getFromTrayID(UINT id)
+bool isMinimized(HWND hwnd)
 {
-    const Items::const_iterator it = std::ranges::find_if(items_, [id](const Item & item) noexcept {
-        return item.trayIcon_ && (item.trayIcon_->id() == id);
-    });
+    assert(!enumerating_);
+
+    const Items::const_iterator it = findWindow(hwnd);
     if (it == items_.end()) {
-        return nullptr;
+        return false;
     }
 
-    return it->hwnd_;
+    return it->minimized_;
 }
 
-HWND getMinimizedIndex(unsigned int index)
+void enumerate(std::function<bool(const Item &)> callback)
 {
-    if (index >= items_.size()) {
-        return nullptr;
-    }
+    enumerating_ = true;
 
-    unsigned int count = 0;
     for (const Item & item : items_) {
-        if (item.minimized_) {
-            if (count == index) {
-                return item.hwnd_;
-            }
-            ++count;
+        if (!callback(item)) {
+            break;
         }
     }
 
-    return nullptr;
+    enumerating_ = false;
 }
 
-HWND getLastMinimized() noexcept
+void reverseEnumerate(std::function<bool(const Item &)> callback)
 {
+    enumerating_ = true;
+
     for (Items::reverse_iterator it = items_.rbegin(); it != items_.rend(); ++it) {
-        if (it->minimized_) {
-            return it->hwnd_;
+        if (!callback(*it)) {
+            break;
         }
     }
 
-    return nullptr;
-}
-
-std::vector<HWND> getAllMinimized()
-{
-    std::vector<HWND> minimizedWindows;
-
-    for (const Item & item : items_) {
-        if (item.minimized_) {
-            if (item.visible_) {
-                // window is visible, but minimized
-                ERROR_PRINTF("window is visible and minimized: %#x\n", item.hwnd_);
-            }
-            minimizedWindows.push_back(item.hwnd_);
-        }
-    }
-
-    return minimizedWindows;
-}
-
-std::vector<HWND> getAllVisible()
-{
-    std::vector<HWND> visibleWindows;
-
-    for (const Item & item : items_) {
-        if (item.visible_ && !item.minimized_) {
-            visibleWindows.push_back(item.hwnd_);
-        }
-    }
-
-    return visibleWindows;
+    enumerating_ = false;
 }
 
 } // namespace WindowTracker
@@ -338,7 +312,9 @@ namespace
 
 Items::iterator findWindow(HWND hwnd)
 {
-    return std::ranges::find_if(items_, [hwnd](const Item & item) {
+    assert(!enumerating_);
+
+    return std::ranges::find_if(items_, [hwnd](const WindowTracker::Item & item) {
         return item.hwnd_ == hwnd;
     });
 }

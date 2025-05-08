@@ -15,6 +15,7 @@
 #pragma once
 
 // App
+#include "MinimizePersistence.h"
 #include "MinimizePlacement.h"
 #include "TrayEvent.h"
 
@@ -38,7 +39,6 @@ public:
     std::string toJSON() const;
 
     bool valid() const;
-
     void normalize();
     void dump() const noexcept;
 
@@ -50,8 +50,8 @@ public:
         std::string executable_;
         std::string windowClass_;
         std::string windowTitle_;
-
         TrayEvent trayEvent_ { TrayEvent::Minimize };
+        MinimizePersistence minimizePersistence_ { MinimizePersistence::Never };
     };
 
     void addAutoTray(AutoTray && autoTray);

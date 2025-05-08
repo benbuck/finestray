@@ -36,6 +36,7 @@ namespace
 {
 
 bool autoTrayItemCallback(const cJSON * cjson, void * userData);
+bool isAutoTrayInvalid(const Settings::AutoTray & autoTray);
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue) noexcept;
 double getNumber(const cJSON * cjson, const char * key, double defaultValue) noexcept;
 const char * getString(const cJSON * cjson, const char * key, const char * defaultValue) noexcept;
@@ -52,6 +53,7 @@ enum SettingKeys : unsigned int
     SK_WindowClass,
     SK_WindowTitle,
     SK_TrayEvent,
+    SK_MinimizePersistence,
     SK_HotkeyMinimize,
     SK_HotkeyMinimizeAll,
     SK_HotkeyRestore,
@@ -83,6 +85,7 @@ const char * settingKeys_[SK_Count] = { "version",
                                         "window-class",
                                         "window-title",
                                         "tray-event",
+                                        "minimize-persistence",
                                         "hotkey-minimize",
                                         "hotkey-minimize-all",
                                         "hotkey-restore",
@@ -228,6 +231,13 @@ std::string Settings::toJSON() const
                     fail = true;
                 }
 
+                if (!cJSON_AddStringToObject(
+                        item,
+                        settingKeys_[SK_MinimizePersistence],
+                        minimizePersistenceToCString(autoTray.minimizePersistence_))) {
+                    fail = true;
+                }
+
                 if (!cJSON_AddItemToArray(autotrayArray, item)) {
                     fail = true;
                 }
@@ -249,17 +259,8 @@ bool Settings::valid() const
         return false;
     }
 
-    switch (minimizePlacement_) {
-        case MinimizePlacement::Tray:
-        case MinimizePlacement::Menu:
-        case MinimizePlacement::TrayAndMenu: {
-            break;
-        }
-
-        case MinimizePlacement::None:
-        default: {
-            return false;
-        }
+    if (!minimizePlacementValid(minimizePlacement_)) {
+        return false;
     }
 
     if (!Hotkey::valid(hotkeyMinimize_)) {
@@ -286,16 +287,7 @@ bool Settings::valid() const
         return false;
     }
 
-    if (std::ranges::any_of(autoTrays_, [](const AutoTray & autoTray) {
-            try {
-                const std::regex re(autoTray.windowTitle_);
-                static_cast<void>(re);
-                return false;
-            } catch (const std::regex_error & e) {
-                WARNING_PRINTF("regex error: %s\n", e.what());
-                return true;
-            }
-        })) {
+    if (std::ranges::any_of(autoTrays_, isAutoTrayInvalid)) {
         return false;
     }
 
@@ -306,20 +298,9 @@ void Settings::normalize()
 {
     version_ = versionCurrent_;
 
-    switch (minimizePlacement_) {
-        case MinimizePlacement::Tray:
-        case MinimizePlacement::Menu:
-        case MinimizePlacement::TrayAndMenu: {
-            // no change
-            break;
-        }
-
-        case MinimizePlacement::None:
-        default: {
-            DEBUG_PRINTF("Fixing bad minimize placement: %d\n", minimizePlacement_);
-            minimizePlacement_ = minimizePlacementDefault_;
-            break;
-        }
+    if (!minimizePlacementValid(minimizePlacement_)) {
+        WARNING_PRINTF("Fixing bad minimize placement: %d\n", minimizePlacement_);
+        minimizePlacement_ = minimizePlacementDefault_;
     }
 
     hotkeyMinimize_ = Hotkey::normalize(hotkeyMinimize_);
@@ -340,6 +321,11 @@ void Settings::normalize()
         if (autoTray.trayEvent_ == TrayEvent::None) {
             DEBUG_PRINTF("Changing auto-tray item with no event to minimize\n");
             autoTray.trayEvent_ = TrayEvent::Minimize;
+        }
+
+        if (autoTray.minimizePersistence_ == MinimizePersistence::None) {
+            DEBUG_PRINTF("Changing auto-tray item with no minimize persistence to never\n");
+            autoTray.minimizePersistence_ = MinimizePersistence::Never;
         }
 
         ++it;
@@ -368,6 +354,10 @@ void Settings::dump() const noexcept
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowClass], autoTray.windowClass_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_WindowTitle], autoTray.windowTitle_.c_str());
         DEBUG_PRINTF("\t\t%s: '%s'\n", settingKeys_[SK_TrayEvent], trayEventToCString(autoTray.trayEvent_));
+        DEBUG_PRINTF(
+            "\t\t%s: '%s'\n",
+            settingKeys_[SK_MinimizePersistence],
+            minimizePersistenceToCString(autoTray.minimizePersistence_));
     }
 #endif
 }
@@ -411,17 +401,41 @@ bool autoTrayItemCallback(const cJSON * cjson, void * userData)
     const char * windowClass = getString(cjson, settingKeys_[SK_WindowClass], nullptr);
     const char * windowTitle = getString(cjson, settingKeys_[SK_WindowTitle], nullptr);
     const char * trayEvent = getString(cjson, settingKeys_[SK_TrayEvent], nullptr);
+    const char * minimizePersistence = getString(cjson, settingKeys_[SK_MinimizePersistence], nullptr);
     if (executable || windowClass || windowTitle) {
         Settings::AutoTray autoTray;
         autoTray.executable_ = executable ? executable : "";
         autoTray.windowClass_ = windowClass ? windowClass : "";
         autoTray.windowTitle_ = windowTitle ? windowTitle : "";
         autoTray.trayEvent_ = trayEvent ? trayEventFromCString(trayEvent) : TrayEvent::Minimize;
+        autoTray.minimizePersistence_ = minimizePersistence ? minimizePersistenceFromCString(minimizePersistence)
+                                                            : MinimizePersistence::Never;
 
         settings->addAutoTray(std::move(autoTray));
     }
 
     return true;
+}
+
+bool isAutoTrayInvalid(const Settings::AutoTray & autoTray)
+{
+    try {
+        const std::regex re(autoTray.windowTitle_);
+        static_cast<void>(re);
+    } catch (const std::regex_error & e) {
+        static_cast<void>(e);
+        return true;
+    }
+
+    if (!trayEventValid(autoTray.trayEvent_)) {
+        return true;
+    }
+
+    if (!minimizePersistenceValid(autoTray.minimizePersistence_)) {
+        return true;
+    }
+
+    return false;
 }
 
 bool getBool(const cJSON * cjson, const char * key, bool defaultValue) noexcept

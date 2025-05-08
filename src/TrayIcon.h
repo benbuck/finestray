@@ -43,11 +43,10 @@ public:
 
     void updateTip(const std::string & tip);
 
-    inline UINT id() const noexcept { return nid_.uID; }
+    static HWND getWindowFromID(UINT id) noexcept;
 
 private:
     NOTIFYICONDATAA nid_ {};
 
     IconHandleWrapper icon_;
-    static volatile LONG gid_;
 };

@@ -14,27 +14,17 @@
 
 #pragma once
 
-// App
-#include "MinimizePlacement.h"
-
-// Windows
-#include <Windows.h>
-
 // Standard library
-#include <vector>
+#include <string>
 
-namespace ContextMenu
+enum class MinimizePersistence
 {
+    None,
+    Never,
+    Always
+};
 
-constexpr WORD IDM_APP = 0x1001;
-constexpr WORD IDM_SETTINGS = 0x1002;
-constexpr WORD IDM_ABOUT = 0x1003;
-constexpr WORD IDM_EXIT = 0x1004;
-constexpr WORD IDM_MINIMIZE_ALL = 0x1005;
-constexpr WORD IDM_RESTORE_ALL = 0x1006;
+bool minimizePersistenceValid(MinimizePersistence minimizePersistence) noexcept;
 
-bool show(HWND hwnd, bool showVisibleWindows);
-HWND getMinimizedWindow(unsigned int id);
-HWND getVisibleWindow(unsigned int id);
-
-} // namespace ContextMenu
+const char * minimizePersistenceToCString(MinimizePersistence minimizePersistence) noexcept;
+MinimizePersistence minimizePersistenceFromCString(const char * minimizePersistenceString) noexcept;
