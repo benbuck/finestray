@@ -1,5 +1,6 @@
 # To do list
 
+- Add auto-update feature (winsparkle?)
 - Mimic Win10 taskbar (get icon of shortcut)
 - Get windows error reporting (WER) working
 - Investigate VirusTotal results for installer
