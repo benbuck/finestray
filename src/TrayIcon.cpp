@@ -119,7 +119,7 @@ void TrayIcon::updateTip(const std::string & tip)
     }
 }
 
-HWND TrayIcon::getWindowFromID(UINT id) noexcept
+HWND TrayIcon::getWindowFromID(UINT id)
 {
     const IDMap::iterator it = idMap_.find(id);
     if (it != idMap_.end()) {

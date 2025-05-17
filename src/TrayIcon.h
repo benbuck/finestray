@@ -43,7 +43,7 @@ public:
 
     void updateTip(const std::string & tip);
 
-    static HWND getWindowFromID(UINT id) noexcept;
+    static HWND getWindowFromID(UINT id);
 
 private:
     NOTIFYICONDATAA nid_ {};
