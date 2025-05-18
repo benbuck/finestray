@@ -209,6 +209,13 @@ Auto-tray event options:
   Select this option if you want the specified auto-tray window to minimize to the tray both when it opens, and when it
   is minimized.
 
+Tray persistence options:
+
+- **Never**:
+  Select this option if you want the specified tray icon to disappear when the auto-tray window is restored.
+- **Always**:
+  Select this option if you want the specified tray icon to remain when the auto-tray window is restored.
+
 Note that the Override modifier also has an effect on auto-trays. It overrides the normal auto-tray behavior. For
 example, if you are holding down the override modifier keys when a window is created, it will prevent the normal
 auto-tray behavior from happening. If you minimize an auto-tray window while holding the override modifier keys, the

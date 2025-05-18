@@ -51,7 +51,7 @@ bool show(HWND hwnd, bool showVisibleWindows)
 
     WindowTracker::enumerate([&](const WindowTracker::Item & item) {
         if (item.visible_) {
-            if (showVisibleWindows || (item.minimizePersistence_ == MinimizePersistence::Always)) {
+            if (showVisibleWindows) {
                 visibleWindows_.push_back(item.hwnd_);
             }
         } else if (item.minimized_) {
