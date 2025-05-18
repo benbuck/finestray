@@ -409,7 +409,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring hotkey\n");
                     } else {
-                        if (!ContextMenu::show(hwnd, settings_.showWindowsInMenu_)) {
+                        if (!ContextMenu::show(hwnd, settings_.minimizePlacement_)) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }
@@ -433,7 +433,7 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (contextMenuActive_) {
                         WARNING_PRINTF("context menu already active, ignoring\n");
                     } else {
-                        if (!ContextMenu::show(hwnd, settings_.showWindowsInMenu_)) {
+                        if (!ContextMenu::show(hwnd, settings_.minimizePlacement_)) {
                             errorMessage(IDS_ERROR_CREATE_MENU);
                         }
                     }

@@ -160,7 +160,6 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
     switch (message) {
         case WM_INITDIALOG: {
             checkDlgButtonSafe(dialogHwnd, IDC_START_WITH_WINDOWS, settings_.startWithWindows_);
-            checkDlgButtonSafe(dialogHwnd, IDC_SHOW_WINDOWS_IN_MENU, settings_.showWindowsInMenu_);
             checkDlgButtonSafe(dialogHwnd, IDC_LOG_TO_FILE, settings_.logToFile_);
 
             int checkButtonId = IDC_MINIMIZE_PLACEMENT_TRAY_AND_MENU;
@@ -221,12 +220,6 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                 switch (LOWORD(wParam)) {
                     case IDC_START_WITH_WINDOWS: {
                         settings_.startWithWindows_ = IsDlgButtonChecked(dialogHwnd, IDC_START_WITH_WINDOWS) ==
-                            BST_CHECKED;
-                        break;
-                    }
-
-                    case IDC_SHOW_WINDOWS_IN_MENU: {
-                        settings_.showWindowsInMenu_ = IsDlgButtonChecked(dialogHwnd, IDC_SHOW_WINDOWS_IN_MENU) ==
                             BST_CHECKED;
                         break;
                     }

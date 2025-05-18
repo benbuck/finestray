@@ -33,7 +33,7 @@ constexpr WORD IDM_EXIT = 0x1004;
 constexpr WORD IDM_MINIMIZE_ALL = 0x1005;
 constexpr WORD IDM_RESTORE_ALL = 0x1006;
 
-bool show(HWND hwnd, bool showVisibleWindows);
+bool show(HWND hwnd, MinimizePlacement minimizePlacement);
 HWND getMinimizedWindow(unsigned int id);
 HWND getVisibleWindow(unsigned int id);
 
