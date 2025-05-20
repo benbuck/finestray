@@ -252,6 +252,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
+    WindowTracker::start(appWindow_);
+
     DEBUG_PRINTF("starting\n");
     err = start();
     if (err) {
@@ -288,6 +290,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
+    WindowTracker::stop();
     settingsDialogWindow_.destroy();
     appWindow_.destroy();
 
@@ -681,7 +684,6 @@ ErrorContext start()
         }
     }
 
-    WindowTracker::start(appWindow_);
     if (!EnumWindows(
             [](HWND hwnd, LPARAM /*lParam*/) -> BOOL {
                 onAddWindow(hwnd);
@@ -697,8 +699,6 @@ ErrorContext start()
 void stop() noexcept
 {
     DEBUG_PRINTF("stopping\n");
-
-    WindowTracker::stop();
 
     hotkeyRestore_.destroy();
     hotkeyRestoreAll_.destroy();
