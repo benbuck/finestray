@@ -537,23 +537,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-#if 0
-                    case HSHELL_ACTIVATESHELLWINDOW: DEBUG_PRINTF("HSHELL_ACTIVATESHELLWINDOW: %#x\n", lParam); break;
-                    case HSHELL_WINDOWACTIVATED: DEBUG_PRINTF("HSHELL_WINDOWACTIVATED: %#x\n", lParam); break;
-                    case HSHELL_GETMINRECT: DEBUG_PRINTF("HSHELL_GETMINRECT: %#x\n", lParam); break;
-                    case HSHELL_TASKMAN: DEBUG_PRINTF("HSHELL_TASKMAN: %#x\n", lParam); break;
-                    case HSHELL_LANGUAGE: DEBUG_PRINTF("HSHELL_LANGUAGE: %#x\n", lParam); break;
-                    case HSHELL_SYSMENU: DEBUG_PRINTF("HSHELL_SYSMENU: %#x\n", lParam); break;
-                    case HSHELL_ENDTASK: DEBUG_PRINTF("HSHELL_ENDTASK: %#x\n", lParam); break;
-                    case HSHELL_ACCESSIBILITYSTATE: DEBUG_PRINTF("HSHELL_ACCESSIBILITYSTATE: %#x\n", lParam); break;
-                    case HSHELL_APPCOMMAND: DEBUG_PRINTF("HSHELL_APPCOMMAND: %#x\n", lParam); break;
-                    case HSHELL_WINDOWREPLACED: DEBUG_PRINTF("HSHELL_WINDOWREPLACED: %#x\n", lParam); break;
-                    case HSHELL_WINDOWREPLACING: DEBUG_PRINTF("HSHELL_WINDOWREPLACING: %#x\n", lParam); break;
-                    case HSHELL_MONITORCHANGED: DEBUG_PRINTF("HSHELL_MONITORCHANGED: %#x\n", lParam); break;
-                    case HSHELL_FLASH: DEBUG_PRINTF("HSHELL_FLASH: %#x\n", lParam); break;
-                    case HSHELL_RUDEAPPACTIVATED: DEBUG_PRINTF("HSHELL_RUDEAPPACTIVATED: %#x\n", lParam); break;
-#endif
-
                     default: {
                         // DEBUG_PRINTF("unknown shell hook message %x\n", wParam);
                         break;
