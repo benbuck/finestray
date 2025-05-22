@@ -26,8 +26,11 @@ There are three standard ways to get Finestray:
 
 ## Basic Operation
 
+To use Finestray, run it, then use one of the available methods described below to minimize windows to the tray, and
+then to restore them to their original position when you want.
+
 The first time Finestray starts (whenever you don't have any saved settings), it should display the
-[Settings](#settings) window.
+[Settings](#settings) window. You should review the settings, and then press the "OK" button when you are satisfied.
 
 Whenever you run Finestray, it will add an icon for itself to your tray. The icon looks like this:
 ![Finestray icon](src/images/icon.png "Finestray icon")
@@ -41,6 +44,8 @@ to their normal placement:
 - **Restore hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Up), and the most recent window that was minimized to tray
   will be restored to its prior location.
+- **Minimize all hotkey**:
+  Press the configurable hotkey (typically Alt+Ctrl+Shift+Right), and all of the windows will be minimize to the tray.
 - **Restore all hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Left), and all of the minimized windows will be restored to
   their prior locations.
@@ -66,8 +71,8 @@ to their normal placement:
 ## Context Menu
 
 The context menu is accessible by right clicking on any of the tray icons that Finestray creates, or by activating the
-associated hotkey. When shown, the context menu looks like this, but it could have more items depending on various
-factors:
+associated hotkey. When shown, the most basic context menu looks like this, but it could have more items depending on
+various factors:
 
 ![Context menu](src/images/context-menu.png "Context menu")
 
@@ -105,10 +110,10 @@ icon.
 The available settings correspond to some of the above features. The settings are:
 
 - **Start with windows**:
-  This toggles whether Finestray is launched when you start Windows. This creates a shortcut link located in your
-  startup folder (`shell:Startup`, typically
+  This toggles whether Finestray is launched when you start Windows. If enabled, this creates a shortcut link located in
+  your startup folder (`shell:Startup`, typically
   `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which which launches the Finestray
-  executable.
+  executable when you log into Windows.
 - **Enable log file**:
   This toggles whether Finestray saves logging information to a file or not. If enabled, Finestray first tries to save
   the log file to `%LOCALAPPDATA%\\Finestray\\Finestray.log`, and if that's not possible it saves in the same location
@@ -138,9 +143,9 @@ The available settings correspond to some of the above features. The settings ar
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
 - **Auto-trays**:
   This lets you configure the list of auto-tray values that are used to control automatically minimizing specific
-  windows to the tray. Items can be added to the list by pressing the Add button, removed from the list by pressing the
-  Delete button, or modified by selecting an item, entering new values into the fields, and pressing the Update button.
-  Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
+  windows to the tray. Items can be added to the list by pressing the "Add" button, removed from the list by pressing
+  the "Delete" button, or modified by selecting an item, entering new values into the fields, and pressing the "Update"
+  button. Please see the [Auto-Tray Settings](#auto-tray-settings) section for more information.
 
 At the bottom of the Settings dialog are six buttons: Help, About, Reset, Exit, Cancel, and OK:
 
@@ -163,7 +168,7 @@ Finestray application.
 
 ### Modifiers and Hotkeys
 
-Modifier choices: `alt`, `ctrl`, `shift`, `win`
+Modifier choices: `alt`, `ctrl`, `shift`, `win`.
 
 Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`,
   `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
@@ -196,7 +201,9 @@ window. Because of this, Finestray provides three possible ways, which can be us
   This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
   is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
   expressions, they are much too complicated to explain here, but just as an example, to match the Notepad window which
-  has a title like "Untitled - Notepad", you could use a regular expression like: `.* - Notepad$`.
+  has a title like "Untitled - Notepad", you could use a regular expression like: `.* - Notepad$`. Note that many
+  programs dynamically change the title of their window based on various factors, so it may not be easy to pick a
+  windows title that always works.
 
 Auto-tray event options:
 
@@ -209,7 +216,7 @@ Auto-tray event options:
   Select this option if you want the specified auto-tray window to minimize to the tray both when it opens, and when it
   is minimized.
 
-Tray persistence options:
+Tray persistence options (this has no effect if your Minimize Placement setting is "Menu"):
 
 - **Never**:
   Select this option if you want the specified tray icon to disappear when the auto-tray window is restored.
@@ -223,14 +230,14 @@ window will minimize the standard way instead of to the tray.
 
 ### Spy feature
 
-If you want to use the Auto-tray feature but don't know the executable, class, or title of a window, or just would like
-help filling those values, you can use the Spy feature. To use it, first open the [Settings](#settings) window, find the
-crosshair icon next to the text that says "Spy (drag this):", and use your mouse to drag that icon onto the window that
-you want to obtain the executable, class, and title of. As you drag the crosshair around, the settings window should be
-updated with information about each window you move it over, and when you release the mouse button then the crosshair
-icon will return to its original position, and the values in the settings should stay filled in with whatever window you
-last dragged on top of. You can modify the values if you like, or leave them alone, and then press the Add button to
-create a new Auto-tray item for that window.
+If you want to use the Auto-tray feature but don't know the executable, class, or title of a window, or would just like
+some help filling those values, you can use the Spy feature. To use it, first open the [Settings](#settings) window,
+find the crosshair icon next to the text that says "Spy (drag this):", and use your mouse to drag that icon onto the
+window that you want to obtain the executable, class, and title of. As you drag the crosshair around, the settings
+window should be updated with information about each window you move it over, and when you release the mouse button then
+the crosshair icon will return to its original position, and the values in the settings should stay filled in with
+whatever window you last dragged on top of. You can modify the values if you like, or leave them alone, and then press
+the "Add" button to create a new Auto-tray item for that window.
 
 If the Spy feature doesn't work for you, alternatively you can use another tool like
 [Window Spy](https://amourspirit.github.io/AutoHotkey-Snippit/WindowSpy.html) or
@@ -240,8 +247,8 @@ window identification features.
 ## Limitations
 
 Unfortunately, Finestray can not currently minimize all windows to the tray. Some software creates windows that do not
-adhere to the typical behavior for minimizing. For example, apps obtained from the Windows Store may not be compatible
-with Finestray.
+adhere to the typical behavior for minimizing. For example, apps obtained from the Windows Store (also known as UWP
+apps) may not be compatible with Finestray.
 
 ## Legal
 
