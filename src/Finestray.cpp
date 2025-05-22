@@ -14,7 +14,7 @@
 
 // App
 #include "AboutDialog.h"
-#include "AppName.h"
+#include "AppInfo.h"
 #include "Bitmap.h"
 #include "BitmapHandleWrapper.h"
 #include "COMLibraryWrapper.h"

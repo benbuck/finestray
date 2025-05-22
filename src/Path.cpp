@@ -14,7 +14,7 @@
 
 // App
 #include "Path.h"
-#include "AppName.h"
+#include "AppInfo.h"
 #include "File.h"
 #include "HandleWrapper.h"
 #include "Log.h"

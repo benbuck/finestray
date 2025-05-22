@@ -8,7 +8,7 @@
 
 - Update version information:
 
-  - Finestray.rc
+  - AppInfo.h
 
     - APP_VERSION
     - APP_VERSION_STRING

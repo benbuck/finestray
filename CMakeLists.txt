@@ -32,7 +32,7 @@ project(Finestray
 add_executable(Finestray WIN32
     src/AboutDialog.cpp
     src/AboutDialog.h
-    src/AppName.h
+    src/AppInfo.h
     src/Bitmap.cpp
     src/Bitmap.h
     src/BitmapHandleWrapper.h

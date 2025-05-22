@@ -14,7 +14,7 @@
 
 // App
 #include "Helpers.h"
-#include "AppName.h"
+#include "AppInfo.h"
 #include "Log.h"
 #include "StringUtility.h"
 

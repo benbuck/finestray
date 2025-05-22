@@ -28,8 +28,8 @@ if ($oldVersionComponents.Length -ne 2 -or $newVersionComponents.Length -ne 2) {
 
 $oldVersion4 = "$oldVersion.0.0"
 $newVersion4 = "$newVersion.0.0"
-$oldVersion4Commas = "$($oldVersionComponents[0]),$($oldVersionComponents[1]),0,0"
-$newVersion4Commas = "$($newVersionComponents[0]),$($newVersionComponents[1]),0,0"
+$oldVersion4Commas = "$($oldVersionComponents[0]), $($oldVersionComponents[1]), 0, 0"
+$newVersion4Commas = "$($newVersionComponents[0]), $($newVersionComponents[1]), 0, 0"
 
 $dateString = Get-Date -Format "yyyy-MM-dd"
 
@@ -56,13 +56,13 @@ $content = $content -replace "-$oldVersion-", "-$newVersion-"
 $content = $content -replace "/v$oldVersion/", "/v$newVersion/"
 Set-Content -Path README.md -Value $content
 
-Write-Output "Updating Finestray.rc"
-$content = (Get-Content src/Finestray.rc)
+Write-Output "Updating AppInfo.h"
+$content = (Get-Content src/AppInfo.h)
 $content = $content -replace "#define APP_VERSION $oldVersion4Commas", "#define APP_VERSION $newVersion4Commas"
 $content = $content -replace "#define APP_VERSION_STRING ""$oldVersion4""", "#define APP_VERSION_STRING ""$newVersion4"""
 $content = $content -replace "#define APP_VERSION_STRING_SIMPLE ""$oldVersion""", "#define APP_VERSION_STRING_SIMPLE ""$newVersion"""
 $content = $content -replace "#define APP_DATE "".*""", "#define APP_DATE ""$dateString"""
-Set-Content -Path src/Finestray.rc -Value $content
+Set-Content -Path src/AppInfo.h -Value $content
 
 Write-Output "Building"
 .\build-all.bat

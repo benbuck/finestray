@@ -15,3 +15,8 @@
 #pragma once
 
 #define APP_NAME "Finestray"
+#define APP_VERSION 0, 4, 0, 0
+#define APP_VERSION_STRING "0.4.0.0"
+#define APP_VERSION_STRING_SIMPLE "0.4"
+#define APP_DATE "2025-05-21"
+#define APP_COPYRIGHT "Copyright 2020 Benbuck Nason"
