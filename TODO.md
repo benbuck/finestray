@@ -4,7 +4,6 @@
 - Mimic Win10 taskbar (get icon of shortcut)
 - Get windows error reporting (WER) working
 - Investigate VirusTotal results for installer
-- Add option to make tray icons persistent even when window is restored
 - Find a way to properly minimize UWP app windows
 
 ## Legal
