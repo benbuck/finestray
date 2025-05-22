@@ -23,7 +23,11 @@
 
 - Commit above changes
 
-- Build everything
+- Build everything:
+  - build-all.bat
+
+- Run cppcheck:
+  - Finestray.cppcheck
 
 - Test app and installer
 
