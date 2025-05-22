@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4] - 2025-05-21
+
+- Remove poll interval setting
+- Remove show windows in menu setting
+- Add minimize persistence auto-tray setting
+- Add event type auto-tray setting
+- Improve method for spy window selection
+- Better regular expression checking
+- Add version to settings file
+- Don't assert in Log::printf if file handle closed
+- Add sha256 artifacts of portable and installer
+- Avoid using strncpy_s in two cases, and fix third
+- Change writeable dir search order
+- Improve context menu icon creation
+- Refactor and simplify Hotkey parsing and handling
+- More debug print logging
+- Handle long strings in debug log printf
+- Fix icon background color for github builds
+- Various internal improvements
+
 ## [0.3] - 2025-03-13
 
 - Fix bug in menu hotkey handling that caused an error message
@@ -42,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public pre-release
 
-[unreleased]: https://github.com/benbuck/finestray/compare/v0.3...HEAD
+[unreleased]: https://github.com/benbuck/finestray/compare/v0.4...HEAD
+[0.4]: https://github.com/benbuck/finestray/compare/v0.3...v0.4
 [0.3]: https://github.com/benbuck/finestray/compare/v0.2...v0.3
 [0.2]: https://github.com/benbuck/finestray/compare/v0.1...v0.2
 [0.1]: https://github.com/benbuck/finestray/releases/tag/v0.1
