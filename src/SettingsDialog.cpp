@@ -15,6 +15,7 @@
 // App
 #include "SettingsDialog.h"
 #include "AboutDialog.h"
+#include "AppInfo.h"
 #include "HandleWrapper.h"
 #include "Helpers.h"
 #include "Hotkey.h"
@@ -270,7 +271,7 @@ INT_PTR settingsDialogFunc(HWND dialogHwnd, UINT message, WPARAM wParam, LPARAM 
                         ShellExecuteA(
                             nullptr,
                             "open",
-                            "https://github.com/benbuck/finestray/blob/main/README.md",
+                            "https://github.com/benbuck/finestray/blob/v" APP_VERSION_STRING_SIMPLE "/README.md",
                             nullptr,
                             nullptr,
                             SW_SHOWNORMAL);
