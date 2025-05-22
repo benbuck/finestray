@@ -284,6 +284,7 @@ void enumerate(std::function<bool(const Item &)> callback)
     enumerating_ = true;
 
     for (const Item & item : items_) {
+        // cppcheck-suppress useStlAlgorithm
         if (!callback(item)) {
             break;
         }

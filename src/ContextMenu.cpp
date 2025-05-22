@@ -68,6 +68,7 @@ bool show(HWND hwnd, MinimizePlacement minimizePlacement)
         return false;
     }
 
+    // cppcheck-suppress variableScope
     std::vector<BitmapHandleWrapper> bitmaps;
 
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
