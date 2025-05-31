@@ -109,13 +109,13 @@ void windowChanged(HWND hwnd)
 
     const bool visible = isWindowUserVisible(hwnd);
     if (item.visible_ != visible) {
-        DEBUG_PRINTF("changed window visibility: %#x to %s\n", hwnd, StringUtility::boolToCString(visible));
+        DEBUG_PRINTF("changed window %#x visibility: to %s\n", hwnd, StringUtility::boolToCString(visible));
         item.visible_ = visible;
     }
 
     const std::string title = getWindowText(hwnd);
     if (item.title_ != title) {
-        DEBUG_PRINTF("changed window title: %#x to %s\n", hwnd, title.c_str());
+        DEBUG_PRINTF("changed window %#x title: to %s\n", hwnd, title.c_str());
         item.title_ = title;
         if (item.trayIcon_) {
             item.trayIcon_->updateTip(item.title_);

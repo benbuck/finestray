@@ -516,13 +516,13 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 HWND shellHwnd = reinterpret_cast<HWND>(lParam);
                 switch (wParam) {
                     case HSHELL_WINDOWCREATED: {
-                        INFO_PRINTF("shell hook window created %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
+                        INFO_PRINTF("HSHELL_WINDOWCREATED: %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
                         onAddWindow(shellHwnd);
                         break;
                     }
 
                     case HSHELL_WINDOWDESTROYED: {
-                        INFO_PRINTF("shell hook destroyed %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
+                        INFO_PRINTF("HSHELL_WINDOWDESTROYED: %#x - '%s'\n", shellHwnd, getWindowText(shellHwnd).c_str());
                         if (IsWindow(shellHwnd)) {
                             WindowTracker::windowChanged(shellHwnd);
                         } else {
