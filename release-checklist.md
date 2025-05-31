@@ -40,7 +40,13 @@
 - Update release notes:
   - <https://github.com/benbuck/finestray/releases>
 
-- Deploy winget package using wingetcreate
+- Deploy winget package
+  - Using github workflow
+  - Using wingetcreate:
+    wingetcreate update Benbuck.Finestray --version [new version] --urls <https://github.com/benbuck/finestray/releases/download/v[old tag]/Finestray-[old version]-win64.exe>
+  - manually clone winget-pkgs repo (https://github.com/microsoft/winget-pkgs.git) and add manifests for new version of Benbuck.Finestray
+  - Create winget-pkgs github issue
+  - Resolve issue with pull request including new manifests
 
 ## Legal
 
