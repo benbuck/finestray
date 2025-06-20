@@ -140,6 +140,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 0;
     }
 
+    INFO_PRINTF("starting %s %s (%s)\n", APP_NAME, APP_VERSION_STRING_SIMPLE, APP_DATE);
+
     DEBUG_PRINTF("initializing COM\n");
     const COMLibraryWrapper comLibrary;
     if (!comLibrary.initialized()) {
@@ -160,7 +162,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     settings_.initDefaults();
     const std::string settingsFile = getSettingsFileName();
     if (readSettingsFromFile(settingsFile, settings_)) {
-        DEBUG_PRINTF("read settings from %s\n", settingsFile.c_str());
+        DEBUG_PRINTF("read settings from '%s'\n", settingsFile.c_str());
         updateStartWithWindowsShortcut();
     } else {
         if (Settings::fileExists(settingsFile)) {
@@ -693,9 +695,9 @@ void stop() noexcept
 bool windowShouldAutoTray(HWND hwnd, TrayEvent trayEvent, MinimizePersistence * minimizePersistence)
 {
     const WindowInfo windowInfo(hwnd);
-    DEBUG_PRINTF("\texecutable: %s\n", windowInfo.executable().c_str());
-    DEBUG_PRINTF("\ttitle: %s\n", windowInfo.title().c_str());
-    DEBUG_PRINTF("\tclass: %s\n", windowInfo.className().c_str());
+    DEBUG_PRINTF("\texecutable: '%s'\n", windowInfo.executable().c_str());
+    DEBUG_PRINTF("\ttitle: '%s'\n", windowInfo.title().c_str());
+    DEBUG_PRINTF("\tclass: '%s'\n", windowInfo.className().c_str());
 
     for (const Settings::AutoTray & autoTray : settings_.autoTrays_) {
         bool classMatch = false;
@@ -891,7 +893,7 @@ void onMinimizeEvent(
 
 bool readSettingsFromFile(const std::string & fileName, Settings & settings)
 {
-    DEBUG_PRINTF("Reading settings from file: %s\n", fileName.c_str());
+    DEBUG_PRINTF("Reading settings from file: '%s'\n", fileName.c_str());
 
     const std::string writeableDir = getWriteableDir();
     const std::string json = fileRead(pathJoin(writeableDir, fileName));
@@ -904,7 +906,7 @@ bool readSettingsFromFile(const std::string & fileName, Settings & settings)
 
 bool writeSettingsToFile(const std::string & fileName, const Settings & settings)
 {
-    DEBUG_PRINTF("Writing settings to file %s\n", fileName.c_str());
+    DEBUG_PRINTF("Writing settings to file '%s'\n", fileName.c_str());
 
     if (!settings.valid()) {
         ERROR_PRINTF("writing invalid settings\n");
@@ -992,7 +994,7 @@ void onSettingsDialogComplete(bool success, const Settings & settings)
             if (!writeSettingsToFile(settingsFile, settings_)) {
                 errorMessage(ErrorContext(IDS_ERROR_SAVE_SETTINGS, settingsFile));
             } else {
-                DEBUG_PRINTF("wrote settings to %s\n", settingsFile.c_str());
+                DEBUG_PRINTF("wrote settings to '%s'\n", settingsFile.c_str());
             }
 
             if (settingsChanged) {
@@ -1022,19 +1024,19 @@ void updateStartWithWindowsShortcut()
     const std::string startupShortcutFullPath = getStartupShortcutFullPath();
     if (settings_.startWithWindows_) {
         if (fileExists(startupShortcutFullPath)) {
-            DEBUG_PRINTF("not updating, startup link already exists: %s\n", startupShortcutFullPath.c_str());
+            DEBUG_PRINTF("not updating, startup link already exists: '%s'\n", startupShortcutFullPath.c_str());
         } else {
             const std::string exeFullPath = getExecutableFullPath();
             if (!createShortcut(startupShortcutFullPath, exeFullPath)) {
-                WARNING_PRINTF("failed to create startup link: %s\n", startupShortcutFullPath.c_str());
+                WARNING_PRINTF("failed to create startup link: '%s'\n", startupShortcutFullPath.c_str());
             }
         }
     } else {
         if (!fileExists(startupShortcutFullPath)) {
-            DEBUG_PRINTF("not updating, startup link already does not exist: %s\n", startupShortcutFullPath.c_str());
+            DEBUG_PRINTF("not updating, startup link already does not exist: '%s'\n", startupShortcutFullPath.c_str());
         } else {
             if (!fileDelete(startupShortcutFullPath)) {
-                WARNING_PRINTF("failed to delete startup link: %s\n", startupShortcutFullPath.c_str());
+                WARNING_PRINTF("failed to delete startup link: '%s'\n", startupShortcutFullPath.c_str());
             }
         }
     }

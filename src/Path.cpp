@@ -259,7 +259,7 @@ bool getExecutablePathComponents()
     }
 
     executableFileName_ = fileName;
-    DEBUG_PRINTF("executable file name: %s\n", executableFileName_.c_str());
+    DEBUG_PRINTF("executable file name: '%s'\n", executableFileName_.c_str());
 
     if (!PathRemoveFileSpecA(moduleFullPath)) {
         WARNING_PRINTF(
@@ -270,7 +270,7 @@ bool getExecutablePathComponents()
     }
 
     executableDir_ = moduleFullPath;
-    DEBUG_PRINTF("executable dir: %s\n", executableDir_.c_str());
+    DEBUG_PRINTF("executable dir: '%s'\n", executableDir_.c_str());
 
     return true;
 }

@@ -63,6 +63,8 @@ void stop() noexcept
 
 bool windowAdded(HWND hwnd)
 {
+    DEBUG_PRINTF("window added %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+
     if (findWindow(hwnd) != items_.end()) {
         WARNING_PRINTF("window already tracked: %#x\n", hwnd);
         return false;
@@ -82,6 +84,8 @@ bool windowAdded(HWND hwnd)
 
 void windowDestroyed(HWND hwnd)
 {
+    DEBUG_PRINTF("window destroyed %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+
     assert(!enumerating_);
 
     const Items::iterator it = findWindow(hwnd);
@@ -97,6 +101,8 @@ void windowDestroyed(HWND hwnd)
 
 void windowChanged(HWND hwnd)
 {
+    DEBUG_PRINTF("window changed: %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+
     assert(!enumerating_);
 
     const Items::iterator it = findWindow(hwnd);
@@ -125,7 +131,7 @@ void windowChanged(HWND hwnd)
 
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
 {
-    DEBUG_PRINTF("tray window minimize %#x\n", hwnd);
+    DEBUG_PRINTF("tray window minimize %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
 
     assert(!enumerating_);
 
@@ -187,7 +193,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
 
 void restore(HWND hwnd)
 {
-    DEBUG_PRINTF("tray window restore %#x\n", hwnd);
+    DEBUG_PRINTF("tray window restore %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
 
     assert(!enumerating_);
 
@@ -224,6 +230,10 @@ void restore(HWND hwnd)
 
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
 {
+    DEBUG_PRINTF(
+        "adding all minimized windows to tray with placement '%s'\n",
+        minimizePlacementToCString(minimizePlacement));
+
     assert(!enumerating_);
 
     for (Item & item : items_) {
@@ -254,6 +264,8 @@ void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
 
 void updateMinimizePlacement(MinimizePlacement minimizePlacement)
 {
+    DEBUG_PRINTF("updating minimize placement to '%s'\n", minimizePlacementToCString(minimizePlacement));
+
     if (minimizePlacementIncludesTray(minimizePlacement)) {
         addAllMinimizedToTray(minimizePlacement);
     } else {

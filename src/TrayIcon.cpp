@@ -108,7 +108,7 @@ void TrayIcon::destroy() noexcept
 void TrayIcon::updateTip(const std::string & tip)
 {
     if (nid_.uID) {
-        DEBUG_PRINTF("updating tray icon %u tip to %s\n", nid_.uID, tip.c_str());
+        DEBUG_PRINTF("updating tray icon %u tip to '%s'\n", nid_.uID, tip.c_str());
         constexpr size_t tipMaxSize = sizeof(nid_.szTip) / sizeof(nid_.szTip[0]);
         strncpy_s(nid_.szTip, tip.c_str(), tipMaxSize - 1);
         if (!Shell_NotifyIconA(NIM_MODIFY, &nid_)) {

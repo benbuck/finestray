@@ -146,11 +146,14 @@ void print(Level level, const char * str) noexcept
     SYSTEMTIME systemTime;
     memset(&systemTime, 0, sizeof(systemTime));
     GetLocalTime(&systemTime);
-    char timeStr[32];
+    char timeStr[64];
     const int printed = snprintf(
         timeStr,
         sizeof(timeStr),
-        "%02u:%02u:%02u.%03u",
+        "%u-%02u-%02u %02u:%02u:%02u.%03u",
+        systemTime.wYear,
+        systemTime.wMonth,
+        systemTime.wDay,
         systemTime.wHour,
         systemTime.wMinute,
         systemTime.wSecond,

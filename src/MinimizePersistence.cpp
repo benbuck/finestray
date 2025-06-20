@@ -60,6 +60,6 @@ MinimizePersistence minimizePersistenceFromCString(const char * minimizePersiste
         return MinimizePersistence::Always;
     }
 
-    WARNING_PRINTF("error, bad minimize persistence string: %s\n", minimizePersistenceString);
+    WARNING_PRINTF("error, bad minimize persistence string: '%s'\n", minimizePersistenceString);
     return MinimizePersistence::None;
 }

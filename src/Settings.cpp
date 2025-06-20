@@ -330,7 +330,7 @@ void Settings::dump() const noexcept
     DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_Version], version_);
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_StartWithWindows], StringUtility::boolToCString(startWithWindows_));
     DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_LogToFile], StringUtility::boolToCString(logToFile_));
-    DEBUG_PRINTF("\t%s: %s\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToCString(minimizePlacement_));
+    DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_MinimizePlacement], minimizePlacementToCString(minimizePlacement_));
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimize], hotkeyMinimize_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMinimizeAll], hotkeyMinimizeAll_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestore], hotkeyRestore_.c_str());

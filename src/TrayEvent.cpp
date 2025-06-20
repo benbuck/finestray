@@ -65,6 +65,6 @@ TrayEvent trayEventFromCString(const char * trayEventString) noexcept
         return TrayEvent::OpenAndMinimize;
     }
 
-    WARNING_PRINTF("error, bad tray event string: %s\n", trayEventString);
+    WARNING_PRINTF("error, bad tray event string: '%s'\n", trayEventString);
     return TrayEvent::None;
 }

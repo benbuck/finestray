@@ -703,7 +703,7 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, unsigned int item)
         } else if (trayEventStr == getResourceString(IDS_TRAY_EVENT_OPEN_AND_MINIMIZE)) {
             checkButtonId = IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE;
         } else {
-            WARNING_PRINTF("Unknown tray event %s\n", trayEventStr.c_str());
+            WARNING_PRINTF("Unknown tray event '%s'\n", trayEventStr.c_str());
         }
         checkRadioButtonSafe(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE, checkButtonId);
 
@@ -715,7 +715,7 @@ void autoTrayListViewItemEdit(HWND dialogHwnd, unsigned int item)
         } else if (minimizePersistenceStr == getResourceString(IDS_MINIMIZE_PERSISTENCE_ALWAYS)) {
             checkButtonId = IDC_AUTO_TRAY_PERSIST_ALWAYS;
         } else {
-            WARNING_PRINTF("Unknown minimize persistence %s\n", minimizePersistenceStr.c_str());
+            WARNING_PRINTF("Unknown minimize persistence '%s'\n", minimizePersistenceStr.c_str());
         }
         checkRadioButtonSafe(dialogHwnd, IDC_AUTO_TRAY_PERSIST_NEVER, IDC_AUTO_TRAY_PERSIST_ALWAYS, checkButtonId);
 
@@ -1046,7 +1046,7 @@ TrayEvent resourceStringToTrayEvent(const std::string & str)
         return TrayEvent::OpenAndMinimize;
     }
 
-    WARNING_PRINTF("Unknown tray event %s\n", str.c_str());
+    WARNING_PRINTF("Unknown tray event '%s'\n", str.c_str());
     return TrayEvent::None;
 }
 
@@ -1074,7 +1074,7 @@ MinimizePersistence resourceStringToMinimizePersistence(const std::string & str)
         return MinimizePersistence::Always;
     }
 
-    WARNING_PRINTF("Unknown minimize persistence %s\n", str.c_str());
+    WARNING_PRINTF("Unknown minimize persistence '%s'\n", str.c_str());
     return MinimizePersistence::None;
 }
 
