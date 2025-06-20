@@ -24,6 +24,7 @@
 #include "Resource.h"
 #include "StringUtility.h"
 #include "WindowIcon.h"
+#include "WindowInfo.h"
 #include "WindowTracker.h"
 
 namespace
@@ -307,7 +308,7 @@ namespace
 
 bool addMenuItemForWindow(HMENU menu, HWND hwnd, unsigned int id, const BitmapHandleWrapper & bitmap)
 {
-    std::string title = getWindowText(hwnd);
+    std::string title = WindowInfo::getTitle(hwnd);
     constexpr size_t maxTitleLength = 30;
     if (title.length() > maxTitleLength) {
         const std::string_view ellipsis = "...";

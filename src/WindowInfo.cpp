@@ -48,32 +48,39 @@ WindowInfo::WindowInfo(HWND hwnd)
             WARNING_PRINTF("OpenProcess() failed: %s\n", StringUtility::lastErrorString().c_str());
         } else {
             if (!GetModuleFileNameExA(static_cast<HANDLE>(process), nullptr, executableFullPath, sizeof(executableFullPath))) {
-                WARNING_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::lastErrorString().c_str());
+                WARNING_PRINTF("GetModuleFileNameExA() failed: %s\n", StringUtility::lastErrorString().c_str());
             } else {
                 executable_ = executableFullPath;
             }
         }
     }
 
+    title_ = getTitle(hwnd);
+}
+
+std::string WindowInfo::getTitle(HWND hwnd)
+{
     const int len = GetWindowTextLengthA(hwnd);
     if (!len) {
         if (GetLastError() != ERROR_SUCCESS) {
             WARNING_PRINTF(
-                "failed to get window text length, GetWindowTextLengthA() failed: %s\n",
+                "failed to get window title length, GetWindowTextLengthA() failed: %s\n",
                 StringUtility::lastErrorString().c_str());
-        } else {
-            title_.clear(); // no title
         }
-    } else {
-        title_.resize(static_cast<size_t>(len) + 1);
-        res = GetWindowTextA(hwnd, title_.data(), narrow_cast<int>(title_.size()));
-        if (!res && (GetLastError() != ERROR_SUCCESS)) {
-            WARNING_PRINTF(
-                "failed to get window text, GetWindowTextA() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
-            title_.clear();
-        } else {
-            title_.resize(narrow_cast<size_t>(res)); // remove nul terminator
-        }
+        return {};
     }
+
+    std::string title;
+    title.resize(static_cast<size_t>(len) + 1);
+    const int res = GetWindowTextA(hwnd, title.data(), narrow_cast<int>(title.size()));
+    if (!res && (GetLastError() != ERROR_SUCCESS)) {
+        WARNING_PRINTF(
+            "failed to get window title, GetWindowTextA() failed: %s\n",
+            StringUtility::lastErrorString().c_str());
+        return {};
+    }
+
+    title.resize(narrow_cast<size_t>(res)); // remove nul terminator
+
+    return title;
 }

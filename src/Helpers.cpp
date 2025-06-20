@@ -53,28 +53,6 @@ std::string getResourceString(unsigned int id)
     return StringUtility::wideStringToString(wstr);
 }
 
-std::string getWindowText(HWND hwnd)
-{
-    std::string text;
-    const int len = GetWindowTextLengthA(hwnd);
-    if (!len) {
-        return {};
-    }
-
-    text.resize(static_cast<size_t>(len) + 1);
-    const int res = GetWindowTextA(hwnd, text.data(), narrow_cast<int>(text.size()));
-    if (!res && (GetLastError() != ERROR_SUCCESS)) {
-        WARNING_PRINTF(
-            "failed to get window text, GetWindowTextA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return {};
-    }
-
-    text.resize(narrow_cast<size_t>(res)); // remove nul terminator
-
-    return text;
-}
-
 bool isWindowStealth(HWND hwnd) noexcept
 {
     return !isAltTabWindow(hwnd) || isToolWindow(hwnd) || isCloakedWindow(hwnd);

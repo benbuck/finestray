@@ -33,6 +33,8 @@ public:
 
     const std::string & title() const noexcept { return title_; }
 
+    static std::string getTitle(HWND hwnd);
+
 private:
     std::string className_;
     std::string executable_;

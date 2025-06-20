@@ -19,6 +19,7 @@
 #include "StringUtility.h"
 #include "TrayIcon.h"
 #include "WindowIcon.h"
+#include "WindowInfo.h"
 #include "WindowMessage.h"
 
 // Standard library
@@ -63,7 +64,7 @@ void stop() noexcept
 
 bool windowAdded(HWND hwnd)
 {
-    DEBUG_PRINTF("window added %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+    DEBUG_PRINTF("window added %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
 
     if (findWindow(hwnd) != items_.end()) {
         WARNING_PRINTF("window already tracked: %#x\n", hwnd);
@@ -74,7 +75,7 @@ bool windowAdded(HWND hwnd)
 
     Item item;
     item.hwnd_ = hwnd;
-    item.title_ = getWindowText(hwnd);
+    item.title_ = WindowInfo::getTitle(hwnd);
     item.visible_ = isWindowUserVisible(hwnd);
     items_.push_back(item);
 
@@ -84,7 +85,7 @@ bool windowAdded(HWND hwnd)
 
 void windowDestroyed(HWND hwnd)
 {
-    DEBUG_PRINTF("window destroyed %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+    DEBUG_PRINTF("window destroyed %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
 
     assert(!enumerating_);
 
@@ -101,7 +102,7 @@ void windowDestroyed(HWND hwnd)
 
 void windowChanged(HWND hwnd)
 {
-    DEBUG_PRINTF("window changed: %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+    DEBUG_PRINTF("window changed: %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
 
     assert(!enumerating_);
 
@@ -119,7 +120,7 @@ void windowChanged(HWND hwnd)
         item.visible_ = visible;
     }
 
-    const std::string title = getWindowText(hwnd);
+    const std::string title = WindowInfo::getTitle(hwnd);
     if (item.title_ != title) {
         DEBUG_PRINTF("changed window %#x title: to %s\n", hwnd, title.c_str());
         item.title_ = title;
@@ -131,7 +132,7 @@ void windowChanged(HWND hwnd)
 
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
 {
-    DEBUG_PRINTF("tray window minimize %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+    DEBUG_PRINTF("tray window minimize %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
 
     assert(!enumerating_);
 
@@ -193,7 +194,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
 
 void restore(HWND hwnd)
 {
-    DEBUG_PRINTF("tray window restore %#x - '%s'\n", hwnd, getWindowText(hwnd).c_str());
+    DEBUG_PRINTF("tray window restore %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
 
     assert(!enumerating_);
 
