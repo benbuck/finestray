@@ -53,7 +53,7 @@ std::string fileRead(const std::string & fileName)
             "could not read %lld bytes from '%s', ReadFile() failed: %s\n",
             fileSize.QuadPart,
             fileName.c_str(),
-            GetLastError());
+            StringUtility::lastErrorString().c_str());
         return {};
     }
 
@@ -83,7 +83,7 @@ bool fileWrite(const std::string & fileName, const std::string & contents)
             "could not write %d bytes to '%s', WriteFile() failed: %s\n",
             contents.size(),
             fileName.c_str(),
-            GetLastError());
+            StringUtility::lastErrorString().c_str());
         return false;
     }
 

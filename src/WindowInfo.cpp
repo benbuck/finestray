@@ -62,10 +62,12 @@ std::string WindowInfo::getTitle(HWND hwnd)
 {
     const int len = GetWindowTextLengthA(hwnd);
     if (!len) {
-        if (GetLastError() != ERROR_SUCCESS) {
+        DWORD error = GetLastError();
+        if (error != ERROR_SUCCESS) {
             WARNING_PRINTF(
-                "failed to get window title length, GetWindowTextLengthA() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
+                "failed to get window %#x title length, GetWindowTextLengthA() failed: %s\n",
+                hwnd,
+                StringUtility::errorToString(error).c_str());
         }
         return {};
     }
@@ -73,11 +75,15 @@ std::string WindowInfo::getTitle(HWND hwnd)
     std::string title;
     title.resize(static_cast<size_t>(len) + 1);
     const int res = GetWindowTextA(hwnd, title.data(), narrow_cast<int>(title.size()));
-    if (!res && (GetLastError() != ERROR_SUCCESS)) {
-        WARNING_PRINTF(
-            "failed to get window title, GetWindowTextA() failed: %s\n",
-            StringUtility::lastErrorString().c_str());
-        return {};
+    if (!res) {
+        DWORD error = GetLastError();
+        if (error != ERROR_SUCCESS) {
+            WARNING_PRINTF(
+                "failed to get window %#x title, GetWindowTextA() failed: %s\n",
+                hwnd,
+                StringUtility::errorToString(error).c_str());
+            return {};
+        }
     }
 
     title.resize(narrow_cast<size_t>(res)); // remove nul terminator

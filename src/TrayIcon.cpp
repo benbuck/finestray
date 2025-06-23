@@ -58,10 +58,14 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleW
     nid_.hIcon = icon_ ? icon_ : LoadIcon(nullptr, IDI_APPLICATION);
     nid_.uVersion = NOTIFYICON_VERSION;
 
-    if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0])) &&
-        (GetLastError() != ERROR_SUCCESS)) {
-        WARNING_PRINTF("could not window text, GetWindowTextA() failed: %s\n", StringUtility::lastErrorString().c_str());
-        nid_.uFlags &= ~static_cast<UINT>(NIF_TIP);
+    if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
+        DWORD error = GetLastError();
+        if (error != ERROR_SUCCESS) {
+            WARNING_PRINTF(
+                "could not window text, GetWindowTextA() failed: %s\n",
+                StringUtility::errorToString(error).c_str());
+            nid_.uFlags &= ~static_cast<UINT>(NIF_TIP);
+        }
     }
 
     if (FAILED(CoCreateGuid(&nid_.guidItem))) {
@@ -98,7 +102,9 @@ void TrayIcon::destroy() noexcept
         idMap_.erase(nid_.uID);
 
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
-            WARNING_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %lu\n", GetLastError());
+            WARNING_PRINTF(
+                "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
+                StringUtility::lastErrorString().c_str());
         }
 
         ZeroMemory(&nid_, sizeof(nid_));
