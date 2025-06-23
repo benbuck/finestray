@@ -39,6 +39,8 @@ Items items_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
+void addItem(HWND hwnd) noexcept;
+void updateItem(WindowTracker::Item & item, HWND hwnd) noexcept;
 
 } // anonymous namespace
 
@@ -64,22 +66,15 @@ void stop() noexcept
 
 bool windowAdded(HWND hwnd)
 {
-    DEBUG_PRINTF("window added %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
-
-    if (findWindow(hwnd) != items_.end()) {
-        WARNING_PRINTF("window already tracked: %#x\n", hwnd);
+    auto it = findWindow(hwnd);
+    if (it != items_.end()) {
+        WARNING_PRINTF("window added but already tracked: %#x\n", hwnd);
+        Item & item = *it;
+        updateItem(item, hwnd);
         return false;
     }
 
-    assert(!enumerating_);
-
-    Item item;
-    item.hwnd_ = hwnd;
-    item.title_ = WindowInfo::getTitle(hwnd);
-    item.visible_ = isWindowUserVisible(hwnd);
-    items_.push_back(item);
-
-    DEBUG_PRINTF("window added: %zu items\n", items_.size());
+    addItem(hwnd);
     return true;
 }
 
@@ -97,7 +92,7 @@ void windowDestroyed(HWND hwnd)
 
     items_.erase(it);
 
-    DEBUG_PRINTF("window destroyed: %zu items\n", items_.size());
+    DEBUG_PRINTF("window destroyed: %zu items remaining\n", items_.size());
 }
 
 void windowChanged(HWND hwnd)
@@ -109,25 +104,12 @@ void windowChanged(HWND hwnd)
     const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         WARNING_PRINTF("window not tracked: %#x\n", hwnd);
+        addItem(hwnd);
         return;
     }
 
     Item & item = *it;
-
-    const bool visible = isWindowUserVisible(hwnd);
-    if (item.visible_ != visible) {
-        DEBUG_PRINTF("changed window %#x visibility: to %s\n", hwnd, StringUtility::boolToCString(visible));
-        item.visible_ = visible;
-    }
-
-    const std::string title = WindowInfo::getTitle(hwnd);
-    if (item.title_ != title) {
-        DEBUG_PRINTF("changed window %#x title: to %s\n", hwnd, title.c_str());
-        item.title_ = title;
-        if (item.trayIcon_) {
-            item.trayIcon_->updateTip(item.title_);
-        }
-    }
+    updateItem(item, hwnd);
 }
 
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
@@ -331,6 +313,39 @@ Items::iterator findWindow(HWND hwnd)
     return std::ranges::find_if(items_, [hwnd](const WindowTracker::Item & item) {
         return item.hwnd_ == hwnd;
     });
+}
+
+void addItem(HWND hwnd) noexcept
+{
+    std::string title = WindowInfo::getTitle(hwnd);
+    bool visible = isWindowUserVisible(hwnd);
+    DEBUG_PRINTF("window added %#x - '%s' (%s)\n", hwnd, title.c_str(), visible ? "visible" : "invisible");
+
+    assert(!enumerating_);
+
+    WindowTracker::Item item;
+    item.hwnd_ = hwnd;
+    item.title_ = title;
+    item.visible_ = visible;
+    items_.push_back(item);
+}
+
+void updateItem(WindowTracker::Item & item, HWND hwnd) noexcept
+{
+    const bool visible = isWindowUserVisible(hwnd);
+    if (item.visible_ != visible) {
+        DEBUG_PRINTF("\tchanged window %#x visibility: to %s\n", hwnd, StringUtility::boolToCString(visible));
+        item.visible_ = visible;
+    }
+
+    const std::string title = WindowInfo::getTitle(hwnd);
+    if (item.title_ != title) {
+        DEBUG_PRINTF("\tchanged window %#x title: to %s\n", hwnd, title.c_str());
+        item.title_ = title;
+        if (item.trayIcon_) {
+            item.trayIcon_->updateTip(item.title_);
+        }
+    }
 }
 
 } // anonymous namespace
