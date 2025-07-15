@@ -31,7 +31,8 @@ WindowInfo::WindowInfo(HWND hwnd)
     int res = GetClassNameA(hwnd, className_.data(), narrow_cast<int>(className_.size()));
     if (!res) {
         WARNING_PRINTF(
-            "failed to get window class name, GetClassNameA() failed: %s\n",
+            "failed to get window %#x class name, GetClassNameA() failed: %s\n",
+            hwnd,
             StringUtility::lastErrorString().c_str());
         className_.clear();
     } else {
@@ -41,7 +42,7 @@ WindowInfo::WindowInfo(HWND hwnd)
     char executableFullPath[MAX_PATH] = {};
     DWORD processID = 0;
     if (!GetWindowThreadProcessId(hwnd, &processID)) {
-        WARNING_PRINTF("GetWindowThreadProcessId() failed: %s\n", StringUtility::lastErrorString().c_str());
+        WARNING_PRINTF("GetWindowThreadProcessId failed for %#x: %s\n", hwnd, StringUtility::lastErrorString().c_str());
     } else {
         const HandleWrapper process(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID));
         if (!process) {

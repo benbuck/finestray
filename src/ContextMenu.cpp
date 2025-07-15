@@ -47,6 +47,8 @@ namespace ContextMenu
 
 bool show(HWND hwnd, MinimizePlacement minimizePlacement)
 {
+    DEBUG_PRINTF("showing context menu, minimizePlacement %s\n", minimizePlacementToCString(minimizePlacement));
+
     visibleWindows_.clear();
     minimizedWindows_.clear();
 
@@ -75,8 +77,10 @@ bool show(HWND hwnd, MinimizePlacement minimizePlacement)
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
         WindowTracker::enumerate([&](const WindowTracker::Item & item) {
             if (item.visible_) {
+                DEBUG_PRINTF("adding visible window: %#x - '%s'\n", item.hwnd_, item.title_.c_str());
                 visibleWindows_.push_back(item.hwnd_);
             } else if (item.minimized_) {
+                DEBUG_PRINTF("adding minimized window: %#x - '%s'\n", item.hwnd_, item.title_.c_str());
                 minimizedWindows_.push_back(item.hwnd_);
             }
 

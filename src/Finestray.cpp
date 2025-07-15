@@ -132,6 +132,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     // NOLINTEND
 #endif
 
+    INFO_PRINTF("launching %s %s (%s)\n", APP_NAME, APP_VERSION_STRING_SIMPLE, APP_DATE);
+
     // check if already running
     HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
     if (oldHwnd) {
@@ -139,8 +141,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         SendMessageA(oldHwnd, WM_SHOWSETTINGS, 0, 0);
         return 0;
     }
-
-    INFO_PRINTF("starting %s %s (%s)\n", APP_NAME, APP_VERSION_STRING_SIMPLE, APP_DATE);
 
     DEBUG_PRINTF("initializing COM\n");
     const COMLibraryWrapper comLibrary;
