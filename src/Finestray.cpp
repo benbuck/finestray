@@ -876,11 +876,11 @@ void onMinimizeEvent(
     }
 
     if (!isWindowUserVisible(hwnd)) {
-        DEBUG_PRINTF("ignoring invisible window: %#x\n", hwnd);
+        DEBUG_PRINTF("minimize event: ignoring invisible window: %#x\n", hwnd);
         return;
     }
 
-    DEBUG_PRINTF("minimize start: hwnd %#x\n", hwnd);
+    DEBUG_PRINTF("minimize event: hwnd %#x\n", hwnd);
     MinimizePersistence minimizePersistence = MinimizePersistence::None;
     if (!windowShouldAutoTray(hwnd, TrayEvent::Minimize, &minimizePersistence)) {
         if (modifiersActive(modifiersOverride_)) {
