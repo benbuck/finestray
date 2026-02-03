@@ -123,7 +123,7 @@ void printf(Level level, const char * fmt, ...) noexcept
     if (len >= narrow_cast<int>(bufferSize)) {
         bufferSize = static_cast<size_t>(len) + 1;
         buffer = new (std::nothrow) char[bufferSize];
-        if (!buffer) {
+        if (buffer) {
             len = vsnprintf(buffer, bufferSize, fmt, ap);
             assert(len < static_cast<int>(bufferSize));
         }
