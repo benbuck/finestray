@@ -24,9 +24,10 @@
 namespace
 {
 
-bool isAltTabWindow(HWND hwnd) noexcept;
 bool isToolWindow(HWND hwnd) noexcept;
 bool isCloakedWindow(HWND hwnd) noexcept;
+bool isNoActivateWindow(HWND hwnd) noexcept;
+bool isOwnedWindow(HWND hwnd) noexcept;
 
 } // anonymous namespace
 
@@ -55,7 +56,7 @@ std::string getResourceString(unsigned int id)
 
 bool isWindowStealth(HWND hwnd) noexcept
 {
-    return !isAltTabWindow(hwnd) || isToolWindow(hwnd) || isCloakedWindow(hwnd);
+    return isToolWindow(hwnd) || isCloakedWindow(hwnd) || isNoActivateWindow(hwnd) || isOwnedWindow(hwnd);
 }
 
 bool isWindowUserVisible(HWND hwnd) noexcept
@@ -96,31 +97,10 @@ void errorMessage(const ErrorContext & errorContext)
 namespace
 {
 
-// from https://devblogs.microsoft.com/oldnewthing/20071008-00/?p=24863
-bool isAltTabWindow(HWND hwnd) noexcept
-{
-    // Start at the root owner
-    HWND hwndWalk = GetAncestor(hwnd, GA_ROOTOWNER);
-
-    // See if we are the last active visible popup
-    while (true) {
-        HWND hwndTry = GetLastActivePopup(hwndWalk);
-        if (hwndTry == hwndWalk) {
-            break;
-        }
-        if (IsWindowVisible(hwndTry)) {
-            break;
-        }
-        hwndWalk = hwndTry;
-    }
-
-    return hwndWalk == hwnd;
-}
-
 bool isToolWindow(HWND hwnd) noexcept
 {
     LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    return (exStyle & WS_EX_TOOLWINDOW) != 0;
+    return (static_cast<UINT_PTR>(exStyle) & WS_EX_TOOLWINDOW) != 0;
 }
 
 // from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
@@ -129,6 +109,23 @@ bool isCloakedWindow(HWND hwnd) noexcept
     BOOL isCloaked = FALSE;
     HRESULT const hr = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &isCloaked, sizeof(isCloaked));
     return SUCCEEDED(hr) && isCloaked;
+}
+
+// The taskbar does not show windows with WS_EX_NOACTIVATE
+bool isNoActivateWindow(HWND hwnd) noexcept
+{
+    const LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+    return (static_cast<UINT_PTR>(exStyle) & WS_EX_NOACTIVATE) != 0;
+}
+
+// The taskbar does not show owned windows unless WS_EX_APPWINDOW is set
+bool isOwnedWindow(HWND hwnd) noexcept
+{
+    const LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
+    if ((static_cast<UINT_PTR>(exStyle) & WS_EX_APPWINDOW) != 0) {
+        return false;
+    }
+    return GetWindow(hwnd, GW_OWNER) != nullptr;
 }
 
 } // anonymous namespace

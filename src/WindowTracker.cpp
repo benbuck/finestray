@@ -365,8 +365,9 @@ VOID timerProc(
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    // ignore windows that can't be visible to the user
-    if (isWindowStealth(hwnd)) {
+    // ignore windows that can't be visible to the user, unless we're tracking
+    // them as minimized in the tray
+    if (isWindowStealth(hwnd) && !WindowTracker::isMinimized(hwnd)) {
         return TRUE;
     }
 
