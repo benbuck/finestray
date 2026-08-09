@@ -56,7 +56,7 @@ void restoreRemovedVirtualDesktopWindows();
 namespace WindowTracker
 {
 
-void start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
+bool start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
@@ -69,8 +69,11 @@ void start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
         timer_ = SetTimer(messageHwnd_, 1, pollMillis_, timerProc);
         if (!timer_) {
             ERROR_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+            return false;
         }
     }
+
+    return true;
 }
 
 void stop() noexcept

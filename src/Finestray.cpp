@@ -268,6 +268,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
+    if (!WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow)) {
+        errorMessage(IDS_ERROR_START_WINDOW_TRACKER);
+        return IDS_ERROR_START_WINDOW_TRACKER;
+    }
+
     DEBUG_PRINTF("running message loop\n");
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0)) {
@@ -634,8 +639,6 @@ ErrorContext start()
             return { IDS_ERROR_PARSE_REGEX, "'" + autoTray.windowTitle_ + "': " + e.what() };
         }
     }
-
-    WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow);
 
     return {};
 }

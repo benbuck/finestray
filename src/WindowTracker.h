@@ -41,7 +41,7 @@ struct Item
     std::shared_ptr<TrayIcon> trayIcon_;
 };
 
-void start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND));
+bool start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND));
 void stop() noexcept;
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence);
 void restore(HWND hwnd);

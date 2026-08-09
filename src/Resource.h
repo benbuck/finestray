@@ -49,11 +49,12 @@
 #define IDS_ERROR_PARSE_REGEX                     308
 #define IDS_ERROR_REGISTER_MODIFIER               309
 #define IDS_ERROR_REGISTER_EVENTHOOK              310
-#define IDS_ERROR_CREATE_TRAY_ICON                311
-#define IDS_ERROR_CREATE_MENU                     312
-#define IDS_ERROR_CREATE_DIALOG                   313
-#define IDS_ERROR_LOAD_SETTINGS                   314
-#define IDS_ERROR_SAVE_SETTINGS                   315
+#define IDS_ERROR_START_WINDOW_TRACKER            311
+#define IDS_ERROR_CREATE_TRAY_ICON                312
+#define IDS_ERROR_CREATE_MENU                     313
+#define IDS_ERROR_CREATE_DIALOG                   314
+#define IDS_ERROR_LOAD_SETTINGS                   315
+#define IDS_ERROR_SAVE_SETTINGS                   316
 
 // bitmaps
 #define IDB_APP                                   401

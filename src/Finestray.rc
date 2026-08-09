@@ -57,6 +57,7 @@ BEGIN
     IDS_ERROR_PARSE_REGEX            "Couldn't parse regex"
     IDS_ERROR_REGISTER_MODIFIER      "Couldn't register modifier"
     IDS_ERROR_REGISTER_EVENTHOOK     "Couldn't register event hook"
+    IDS_ERROR_START_WINDOW_TRACKER   "Couldn't start window tracker"
     IDS_ERROR_CREATE_TRAY_ICON       "Couldn't create tray icon"
     IDS_ERROR_CREATE_MENU            "Error creating menu"
     IDS_ERROR_CREATE_DIALOG          "Failed to create dialog window"
