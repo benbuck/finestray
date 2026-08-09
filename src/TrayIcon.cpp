@@ -29,7 +29,7 @@
 namespace
 {
 
-typedef std::map<UINT, HWND> IDMap;
+using IDMap = std::map<UINT, HWND>;
 
 IDMap idMap_;
 volatile LONG gid_ = 0;

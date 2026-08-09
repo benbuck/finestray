@@ -114,7 +114,7 @@ void Settings::initDefaults()
 
 bool Settings::fromJSON(const std::string & json)
 {
-    CJsonWrapper cjson(cJSON_Parse(json.c_str()));
+    const CJsonWrapper cjson(cJSON_Parse(json.c_str()));
     if (!cjson) {
         WARNING_PRINTF("failed to parse settings JSON:\n%s\n", cJSON_GetErrorPtr());
         return false;
@@ -154,7 +154,7 @@ bool Settings::fromJSON(const std::string & json)
 
 std::string Settings::toJSON() const
 {
-    CJsonWrapper cjson(cJSON_CreateObject());
+    const CJsonWrapper cjson(cJSON_CreateObject());
     if (!cjson) {
         WARNING_PRINTF("failed to create settings JSON object\n");
         return {};

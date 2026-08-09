@@ -28,7 +28,7 @@
 WindowInfo::WindowInfo(HWND hwnd)
 {
     className_.resize(256);
-    int res = GetClassNameA(hwnd, className_.data(), narrow_cast<int>(className_.size()));
+    const int res = GetClassNameA(hwnd, className_.data(), narrow_cast<int>(className_.size()));
     if (!res) {
         WARNING_PRINTF(
             "failed to get window %#x class name, GetClassNameA() failed: %s\n",

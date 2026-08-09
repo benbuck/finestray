@@ -100,7 +100,7 @@ namespace
 bool isToolWindow(HWND hwnd) noexcept
 {
     LONG_PTR const exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    return (static_cast<UINT_PTR>(exStyle) & WS_EX_TOOLWINDOW) != 0;
+    return (narrow_cast<UINT_PTR>(exStyle) & WS_EX_TOOLWINDOW) != 0;
 }
 
 // from https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
@@ -115,14 +115,14 @@ bool isCloakedWindow(HWND hwnd) noexcept
 bool isNoActivateWindow(HWND hwnd) noexcept
 {
     const LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    return (static_cast<UINT_PTR>(exStyle) & WS_EX_NOACTIVATE) != 0;
+    return (narrow_cast<UINT_PTR>(exStyle) & WS_EX_NOACTIVATE) != 0;
 }
 
 // The taskbar does not show owned windows unless WS_EX_APPWINDOW is set
 bool isOwnedWindow(HWND hwnd) noexcept
 {
     const LONG_PTR exStyle = GetWindowLongPtrA(hwnd, GWL_EXSTYLE);
-    if ((static_cast<UINT_PTR>(exStyle) & WS_EX_APPWINDOW) != 0) {
+    if ((narrow_cast<UINT_PTR>(exStyle) & WS_EX_APPWINDOW) != 0) {
         return false;
     }
     return GetWindow(hwnd, GW_OWNER) != nullptr;

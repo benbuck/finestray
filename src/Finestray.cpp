@@ -112,6 +112,7 @@ UINT taskbarCreatedMessage_;
 #pragma warning(push)
 #pragma warning(disable : 26461)
 #endif
+// NOLINTNEXTLINE(readability-non-const-parameter)
 int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nShowCmd)
 #if defined(_MSC_VER)
 #pragma warning(pop)
@@ -376,8 +377,8 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         WARNING_PRINTF("no foreground window to minimize, ignoring\n");
                     } else {
                         // only minimize windows that have a minimize button
-                        LONG const windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
-                        if (windowStyle & WS_MINIMIZEBOX) {
+                        const LONG windowStyle = GetWindowLong(foregroundHwnd, GWL_STYLE);
+                        if (narrow_cast<ULONG>(windowStyle) & WS_MINIMIZEBOX) {
                             minimizeWindow(foregroundHwnd, MinimizePersistence::None);
                         }
                     }

@@ -48,7 +48,7 @@ void restore(HWND hwnd);
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement);
 void updateMinimizePlacement(MinimizePlacement minimizePlacement);
 bool isMinimized(HWND hwnd);
-void enumerate(std::function<bool(const Item &)> callback);
-void reverseEnumerate(std::function<bool(const Item &)> callback);
+void enumerate(const std::function<bool(const Item &)> & callback);
+void reverseEnumerate(const std::function<bool(const Item &)> & callback);
 
 } // namespace WindowTracker

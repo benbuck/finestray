@@ -34,7 +34,7 @@
 namespace
 {
 
-typedef std::list<WindowTracker::Item> Items;
+using Items = std::list<WindowTracker::Item>;
 
 HWND messageHwnd_;
 UINT pollMillis_;
@@ -252,7 +252,7 @@ bool isMinimized(HWND hwnd)
     return it->minimized_;
 }
 
-void enumerate(std::function<bool(const Item &)> callback)
+void enumerate(const std::function<bool(const Item &)> & callback)
 {
     enumerating_ = true;
 
@@ -266,12 +266,13 @@ void enumerate(std::function<bool(const Item &)> callback)
     enumerating_ = false;
 }
 
-void reverseEnumerate(std::function<bool(const Item &)> callback)
+void reverseEnumerate(const std::function<bool(const Item &)> & callback)
 {
     enumerating_ = true;
 
-    for (Items::reverse_iterator it = items_.rbegin(); it != items_.rend(); ++it) {
-        if (!callback(*it)) {
+    for (const auto & item : std::ranges::reverse_view(items_)) {
+        // cppcheck-suppress useStlAlgorithm
+        if (!callback(item)) {
             break;
         }
     }
