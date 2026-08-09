@@ -13,15 +13,15 @@ reduce visual clutter.
 
 There are three standard ways to get Finestray:
 
-1) Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). It's named
+1. Using the installer from the [Finestray release page](https://github.com/benbuck/finestray/releases). It's named
    [Finestray-0.4-Win64.exe](https://github.com/benbuck/finestray/releases/download/v0.4/Finestray-0.4-win64.exe).
    Once you have downloaded the file, you will need to run it and go through the prompts to complete the installation.
    After installation completes, Finestray should launch automatically.
-2) Using the portable executable from [Finestray release page](https://github.com/benbuck/finestray/releases). The
+2. Using the portable executable from [Finestray release page](https://github.com/benbuck/finestray/releases). The
    portable executable is named
    [Finestray.exe](https://github.com/benbuck/finestray/releases/download/v0.4/Finestray.exe). Place it wherever you
    prefer on your system, and run it from there.
-3) Using winget. From a Windows shell (e.g. Command Prompt or Powershell): ```winget install finestray```. After
+3. Using winget. From a Windows shell (e.g. Command Prompt or Powershell): `winget install finestray`. After
    installation completes, Finestray should launch automatically.
 
 ## Basic Operation
@@ -58,7 +58,6 @@ to their normal placement:
 - **Tray Icons**:
   If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
   click it again it will hide the Settings window.
-
   For any window that has been minimized to an icon in the tray, simply click the icon to restore it to its original
   location.
 - **Auto-trays**:
@@ -120,9 +119,9 @@ The available settings correspond to some of the above features. The settings ar
   as the Finestray application.
 - **Minimize placement**:
   This controls where to place minimized windows minimized using Finestray. The choices are:
-  - **Tray**: the window will get an icon in the tray.
-  - **Menu**: the window will get an entry in the [Context menu](#context-menu).
-  - **Tray and Menu**: the window will get an icon in the tray and an entry in the [Context menu](#context-menu).
+    - **Tray**: the window will get an icon in the tray.
+    - **Menu**: the window will get an entry in the [Context menu](#context-menu).
+    - **Tray and Menu**: the window will get an icon in the tray and an entry in the [Context menu](#context-menu).
 - **Minimize hotkey**:
   This lets you configure the hotkey that is used to minimize a window to the tray. Please see the
   [Modifiers and Hotkeys](#modifiers-and-hotkeys) section for more information.
@@ -171,8 +170,8 @@ Finestray application.
 Modifier choices: `alt`, `ctrl`, `shift`, `win`.
 
 Key choices: `back`, `esc`, `f1`, `f2`, `f3`, `f4`, `f5`, `f6`, `f7`, `f8`, `f9`, `f10`, `f11`, `f12`, `f13`, `f14`,
-  `f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
-  `home`, `end`, `ins`, `del`, letters, numbers, and punctuation.
+`f15`, `f16`, `f17`, `f18`, `f19`, `f20`, `f21`, `f22`, `f23`, `f24`, `tab`, `left`, `right`, `up`, `down`, `space`,
+`home`, `end`, `ins`, `del`, letters, numbers, and punctuation.
 
 For the override modifier, you can provide one or more modifiers using spaces in between. For example you could provide
 a modifier `alt`, or a modifier `ctrl shift`.
@@ -196,7 +195,7 @@ window. Because of this, Finestray provides three possible ways, which can be us
 - **Executable name**:
   This value corresponds to program the created the window. Provide the full path to the executable, for example
   `C:\Windows\notepad.exe`. This must match (case insensitive) the full path of the executable that owns the window, or
-  you  can leave this empty if you don't care which executable created the window.
+  you can leave this empty if you don't care which executable created the window.
 - **Window title**:
   This typically corresponds to the text at the top of the window in the title bar, or shown in the taskbar. The value
   is provided as a [regular expression](https://en.cppreference.com/w/cpp/regex). If you aren't familiar with regular
@@ -257,7 +256,7 @@ with Finestray.
 
 ## Legal
 
-Copyright &copy; 2020 [Benbuck Nason](<https://github.com/benbuck>)
+Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
 
 Finestray is distributed under the [Apache License, Version 2.0](LICENSE).
 
