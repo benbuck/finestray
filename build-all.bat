@@ -12,80 +12,81 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 
+@echo off
 setlocal enabledelayedexpansion
 
 pushd %~dp0
 
+echo.
+echo ---------------------------------------------------------------
+echo Building ninja-msvc-build.bat Debug
 call ninja-msvc-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
+echo.
+echo ---------------------------------------------------------------
+echo Building ninja-msvc-build.bat Release
 call ninja-msvc-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call ninja-msvc-build.bat Analyze
-if %ERRORLEVEL% NEQ 0 (
-    echo Build failed
-    exit /b %ERRORLEVEL%
-)
-
+echo.
+echo ---------------------------------------------------------------
+echo Building ninja-clang-build.bat Debug
 call ninja-clang-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
+echo.
+echo ---------------------------------------------------------------
+echo Building ninja-clang-build.bat Release
 call ninja-clang-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-::call ninja-clang-build.bat Analyze
-::if %ERRORLEVEL% NEQ 0 (
-::    echo Build failed
-::    exit /b %ERRORLEVEL%
-::)
-
+echo.
+echo ---------------------------------------------------------------
+echo Building vstudio-msvc-build.bat Debug
 call vstudio-msvc-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
+echo.
+echo ---------------------------------------------------------------
+echo Building vstudio-msvc-build.bat Release
 call vstudio-msvc-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
-call vstudio-msvc-build.bat Analyze
-if %ERRORLEVEL% NEQ 0 (
-    echo Build failed
-    exit /b %ERRORLEVEL%
-)
-
+echo.
+echo ---------------------------------------------------------------
+echo Building vstudio-clang-build.bat Debug
 call vstudio-clang-build.bat Debug
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
 
+echo.
+echo ---------------------------------------------------------------
+echo Building vstudio-clang-build.bat Release
 call vstudio-clang-build.bat Release
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed
     exit /b %ERRORLEVEL%
 )
-
-::call vstudio-clang-build.bat Analyze
-::if %ERRORLEVEL% NEQ 0 (
-::    echo Build failed
-::    exit /b %ERRORLEVEL%
-::)
 
 popd

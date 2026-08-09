@@ -26,8 +26,8 @@
 - Build everything:
   - build-all.bat
 
-- Run cppcheck:
-  - Finestray.cppcheck
+- Analyze everything
+  - analyze-all.bat
 
 - Test app and installer
 
