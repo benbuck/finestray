@@ -18,6 +18,7 @@
 #include "Log.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
+#include "VirtualDesktop.h"
 #include "WindowIcon.h"
 #include "WindowInfo.h"
 #include "WindowMessage.h"
@@ -48,6 +49,7 @@ void addItem(HWND hwnd);
 void updateItem(WindowTracker::Item & item, HWND hwnd);
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
+void restoreRemovedVirtualDesktopWindows();
 
 } // anonymous namespace
 
@@ -96,6 +98,10 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
 
     assert(!enumerating_);
 
+    // If the user removed the hidden virtual desktop, restore any windows that
+    // were on it before minimizing this one
+    restoreRemovedVirtualDesktopWindows();
+
     const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         DEBUG_PRINTF("not minimizing unknown window %#x\n", hwnd);
@@ -109,13 +115,22 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
         return;
     }
 
-    // minimize and hide window
-    // return value intentionally ignored, ShowWindow returns previous visibility
-    ShowWindow(hwnd, SW_MINIMIZE);
-    ShowWindow(hwnd, SW_HIDE);
+    // UWP app windows (ApplicationFrameWindow) do not stay hidden when hidden with ShowWindow,
+    // so minimize them to a hidden virtual desktop instead
+    if (isUwpWindow(hwnd)) {
+        // move to virtual desktop
+        if (!VirtualDesktop::minimize(hwnd)) {
+            ERROR_PRINTF("failed to minimize UWP window %#x to hidden virtual desktop\n", hwnd);
+        }
+    } else {
+        // minimize and hide window
+        // return values intentionally ignored, ShowWindow returns previous visibility
+        ShowWindow(hwnd, SW_MINIMIZE);
+        ShowWindow(hwnd, SW_HIDE);
 
-    if (isWindowUserVisible(hwnd)) {
-        ERROR_PRINTF("window is not visible after minimize: %#x\n", hwnd);
+        if (isWindowUserVisible(hwnd)) {
+            ERROR_PRINTF("window is not visible after minimize: %#x\n", hwnd);
+        }
     }
 
     item.minimized_ = true;
@@ -158,25 +173,40 @@ void restore(HWND hwnd)
 
     assert(!enumerating_);
 
-    // show and restore window
-    // return value intentionally ignored, ShowWindow returns previous visibility
-    ShowWindow(hwnd, SW_SHOWNORMAL);
-
-    // make window foreground
-    // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
-    SetForegroundWindow(hwnd);
-
-    if (!isWindowUserVisible(hwnd)) {
-        ERROR_PRINTF("window is not visible after restore: %#x\n", hwnd);
-    }
-
     const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         WARNING_PRINTF("unknown window restored %#x\n", hwnd);
+        // show and restore window
+        // return value intentionally ignored, ShowWindow returns previous visibility
+        ShowWindow(hwnd, SW_SHOWNORMAL);
+        // make window foreground
+        // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
+        SetForegroundWindow(hwnd);
         return;
     }
 
     Item & item = *it;
+
+    if (isUwpWindow(hwnd)) {
+        // move UWP app window back from the hidden virtual desktop
+        VirtualDesktop::restore(hwnd);
+        if (IsIconic(hwnd)) {
+            // return value intentionally ignored, ShowWindow returns previous visibility
+            ShowWindow(hwnd, SW_SHOWNORMAL);
+        }
+    } else {
+        // show and restore window
+        // return value intentionally ignored, ShowWindow returns previous visibility
+        ShowWindow(hwnd, SW_SHOWNORMAL);
+
+        if (!isWindowUserVisible(hwnd)) {
+            ERROR_PRINTF("window is not visible after restore: %#x\n", hwnd);
+        }
+    }
+
+    // make window foreground
+    // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
+    SetForegroundWindow(hwnd);
 
     item.minimized_ = false;
     item.visible_ = true;
@@ -309,6 +339,35 @@ void addItem(HWND hwnd)
     items_.push_back(item);
 }
 
+void restoreRemovedVirtualDesktopWindows()
+{
+    assert(!enumerating_);
+
+    const std::vector<HWND> affected = VirtualDesktop::checkHiddenDesktopRemoved();
+    if (affected.empty()) {
+        return;
+    }
+
+    DEBUG_PRINTF("restoring %zu window(s) from removed hidden virtual desktop\n", affected.size());
+    for (HWND hwnd : affected) {
+        const Items::iterator it = findWindow(hwnd);
+        if (it == items_.end()) {
+            continue;
+        }
+
+        WindowTracker::Item & item = *it;
+        item.minimized_ = false;
+        item.visible_ = true;
+        if (item.minimizePersistence_ == MinimizePersistence::Never) {
+            item.trayIcon_.reset();
+        }
+
+        // put the item at the front of the list so the next restore is in reverse order of minimize
+        items_.push_front(item);
+        items_.erase(it);
+    }
+}
+
 void updateItem(WindowTracker::Item & item, HWND hwnd)
 {
     const bool visible = isWindowUserVisible(hwnd);
@@ -362,6 +421,9 @@ VOID timerProc(
     for (WindowTracker::Item & item : items_) {
         updateItem(item, item.hwnd_);
     }
+
+    // restore any windows that were on the hidden virtual desktop if the user removed it
+    restoreRemovedVirtualDesktopWindows();
 }
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)

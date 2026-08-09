@@ -61,6 +61,7 @@ add_executable(Finestray WIN32
     src/MinimizePlacement.h
     src/Modifiers.cpp
     src/Modifiers.h
+    src/ModuleHandleWrapper.h
     src/Path.cpp
     src/Path.h
     src/Resource.h
@@ -74,6 +75,8 @@ add_executable(Finestray WIN32
     src/TrayEvent.h
     src/TrayIcon.cpp
     src/TrayIcon.h
+    src/VirtualDesktop.cpp
+    src/VirtualDesktop.h
     src/WindowHandleWrapper.h
     src/WindowIcon.cpp
     src/WindowIcon.h
@@ -82,6 +85,7 @@ add_executable(Finestray WIN32
     src/WindowTracker.cpp
     src/WindowTracker.h
     src/WindowMessage.h
+    src/WindowsUndocumented.h
     src/WinEventHookHandleWrapper.h
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
 )
@@ -241,6 +245,7 @@ target_link_libraries(Finestray
         Comctl32.lib
         ShLwApi.lib
         dwmapi.lib
+        ntdll.lib
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

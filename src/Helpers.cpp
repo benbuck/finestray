@@ -64,6 +64,15 @@ bool isWindowUserVisible(HWND hwnd) noexcept
     return IsWindowVisible(hwnd) && !isWindowStealth(hwnd);
 }
 
+bool isUwpWindow(HWND hwnd) noexcept
+{
+    char className[MAX_CLASS_NAME] = {};
+    if (!GetClassNameA(hwnd, className, narrow_cast<int>(sizeof(className)))) {
+        return false;
+    }
+    return _stricmp(className, "ApplicationFrameWindow") == 0;
+}
+
 void errorMessage(unsigned int id)
 {
     const std::string & err = getResourceString(id);

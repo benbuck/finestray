@@ -14,26 +14,21 @@
 
 #pragma once
 
-// App
-#include "ErrorContext.h"
-
 // Windows
 #include <Windows.h>
 
 // Standard library
-#include <string>
-#include <type_traits>
+#include <vector>
 
-template <class T, class U>
-constexpr T narrow_cast(U && u) noexcept
+namespace VirtualDesktop
 {
-    return static_cast<T>(std::forward<U>(u));
-}
+bool start();
+void stop() noexcept;
+bool minimize(HWND hwnd);
+bool restore(HWND hwnd);
 
-HINSTANCE getInstance() noexcept;
-std::string getResourceString(unsigned int id);
-bool isWindowStealth(HWND hwnd) noexcept;
-bool isWindowUserVisible(HWND hwnd) noexcept;
-bool isUwpWindow(HWND hwnd) noexcept;
-void errorMessage(unsigned int id);
-void errorMessage(const ErrorContext & errorContext);
+// Returns the windows that were hidden on the hidden virtual desktop if the
+// desktop was removed by the user, resetting internal state so a fresh desktop
+// is created on the next minimize. Returns empty if the desktop still exists.
+std::vector<HWND> checkHiddenDesktopRemoved();
+} // namespace VirtualDesktop

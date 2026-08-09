@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Minimize UWP app windows to the tray using a hidden virtual desktop
+
 ## [0.4] - 2025-05-21
 
 - Remove poll interval setting

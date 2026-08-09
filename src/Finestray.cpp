@@ -33,6 +33,7 @@
 #include "SettingsDialog.h"
 #include "StringUtility.h"
 #include "TrayIcon.h"
+#include "VirtualDesktop.h"
 #include "WinEventHookHandleWrapper.h"
 #include "WindowHandleWrapper.h"
 #include "WindowIcon.h"
@@ -286,6 +287,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
+    VirtualDesktop::stop();
     WindowTracker::stop();
     settingsDialogWindow_.destroy();
     appWindow_.destroy();

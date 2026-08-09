@@ -246,9 +246,14 @@ window identification features.
 
 ## Limitations
 
-Unfortunately, Finestray can not currently minimize all windows to the tray. Some software creates windows that do not
-adhere to the typical behavior for minimizing. For example, apps obtained from the Windows Store (also known as UWP
-apps) may not be compatible with Finestray.
+UWP app windows (also known as Windows Store apps) can not be minimized the same way that normal windss are. Because of
+this, they are instead "minimized" to the tray by moving them to a hidden virtual desktop, and are moved back to the
+current virtual desktop when restored. This means that a hidden virtual desktop (named "Finestray") is created when the
+first UWP app window is minimized to the tray, and is removed when the last one is restored. Note that this virtual
+desktop appears in Task View (Win+Tab) while it exists.
+
+Some software may create windows that do not adhere to the typical behavior for minimizing, and may not be compatible
+with Finestray.
 
 ## Legal
 
