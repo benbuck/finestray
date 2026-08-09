@@ -317,8 +317,8 @@ Items::iterator findWindow(HWND hwnd)
 
 void addItem(HWND hwnd) noexcept
 {
-    std::string title = WindowInfo::getTitle(hwnd);
-    bool visible = isWindowUserVisible(hwnd);
+    const std::string title = WindowInfo::getTitle(hwnd);
+    const bool visible = isWindowUserVisible(hwnd);
     DEBUG_PRINTF("window added %#x - '%s' (%s)\n", hwnd, title.c_str(), visible ? "visible" : "invisible");
 
     assert(!enumerating_);

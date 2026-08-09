@@ -55,7 +55,7 @@ public:
 #pragma warning(push)
 #pragma warning(disable : 26408) // Avoid malloc() and free(), prefer the nothrow version of new with delete
 #endif
-    std::string print()
+    std::string print() const
     {
         char * rawJson = cJSON_Print(cjson_);
         std::string json(rawJson);

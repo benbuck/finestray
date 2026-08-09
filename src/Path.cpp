@@ -236,7 +236,7 @@ bool getExecutablePathComponents()
 
     if (length >= sizeof(moduleFullPath)) {
         WARNING_PRINTF("executable full path too long\n");
-        DWORD error = GetLastError();
+        const DWORD error = GetLastError();
         if (error != ERROR_INSUFFICIENT_BUFFER) {
             ERROR_PRINTF("GetModuleFileNameA() failed: %s\n", StringUtility::errorToString(error).c_str());
         }

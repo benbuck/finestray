@@ -63,7 +63,7 @@ std::string WindowInfo::getTitle(HWND hwnd)
 {
     const int len = GetWindowTextLengthA(hwnd);
     if (!len) {
-        DWORD error = GetLastError();
+        const DWORD error = GetLastError();
         if (error != ERROR_SUCCESS) {
             WARNING_PRINTF(
                 "failed to get window %#x title length, GetWindowTextLengthA() failed: %s\n",
@@ -77,7 +77,7 @@ std::string WindowInfo::getTitle(HWND hwnd)
     title.resize(static_cast<size_t>(len) + 1);
     const int res = GetWindowTextA(hwnd, title.data(), narrow_cast<int>(title.size()));
     if (!res) {
-        DWORD error = GetLastError();
+        const DWORD error = GetLastError();
         if (error != ERROR_SUCCESS) {
             WARNING_PRINTF(
                 "failed to get window %#x title, GetWindowTextA() failed: %s\n",

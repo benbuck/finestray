@@ -59,7 +59,7 @@ ErrorContext TrayIcon::create(HWND hwnd, HWND messageHwnd, UINT msg, IconHandleW
     nid_.uVersion = NOTIFYICON_VERSION;
 
     if (!GetWindowTextA(hwnd, nid_.szTip, sizeof(nid_.szTip) / sizeof(nid_.szTip[0]))) {
-        DWORD error = GetLastError();
+        const DWORD error = GetLastError();
         if (error != ERROR_SUCCESS) {
             WARNING_PRINTF(
                 "could not window text, GetWindowTextA() failed: %s\n",

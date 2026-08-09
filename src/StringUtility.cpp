@@ -153,7 +153,7 @@ std::string errorToString(unsigned int error)
 
 std::string lastErrorString()
 {
-    DWORD lastError = GetLastError();
+    const DWORD lastError = GetLastError();
     return std::to_string(lastError) + " - " + errorToString(lastError);
 }
 
