@@ -613,7 +613,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, unsigned int item)
     } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE) == BST_CHECKED) {
         trayEvent = TrayEvent::OpenAndMinimize;
     } else {
-        WARNING_PRINTF("No tray event selected");
+        WARNING_PRINTF("No tray event selected\n");
     }
 
     setItemTextSafe(
@@ -628,7 +628,7 @@ void autoTrayListViewItemUpdate(HWND dialogHwnd, unsigned int item)
     } else if (IsDlgButtonChecked(dialogHwnd, IDC_AUTO_TRAY_PERSIST_ALWAYS) == BST_CHECKED) {
         minimizePersistence = MinimizePersistence::Always;
     } else {
-        WARNING_PRINTF("No minimize persistence selected");
+        WARNING_PRINTF("No minimize persistence selected\n");
     }
 
     setItemTextSafe(

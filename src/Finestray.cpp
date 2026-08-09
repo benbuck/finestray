@@ -195,7 +195,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     ATOM const atom = RegisterClassExA(&wc);
     if (!atom) {
         const std::string lastErrorString = StringUtility::lastErrorString();
-        ERROR_PRINTF("could not create window class, RegisterClassExA() failed: %s", lastErrorString.c_str());
+        ERROR_PRINTF("could not create window class, RegisterClassExA() failed: %s\n", lastErrorString.c_str());
         errorMessage(ErrorContext(IDS_ERROR_REGISTER_WINDOW_CLASS, lastErrorString));
         return IDS_ERROR_REGISTER_WINDOW_CLASS;
     }
@@ -216,7 +216,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     );
     if (!appWindow_) {
         const std::string lastErrorString = StringUtility::lastErrorString();
-        ERROR_PRINTF("could not create window, CreateWindowA() failed: %s", lastErrorString.c_str());
+        ERROR_PRINTF("could not create window, CreateWindowA() failed: %s\n", lastErrorString.c_str());
         errorMessage(ErrorContext(IDS_ERROR_CREATE_WINDOW, lastErrorString));
         return IDS_ERROR_CREATE_WINDOW;
     }
