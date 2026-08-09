@@ -27,11 +27,11 @@ pushd %BUILD_DIR%
 cmake ..\..
 
 :: build
-cmake --build . --config %BUILD_CONFIG%
+cmake --build . --config %BUILD_CONFIG% --parallel
 
 :: for release builds, also make the package
 if "%BUILD_CONFIG%"=="Release" (
-    cmake --build . --config %BUILD_CONFIG% --target PACKAGE
+    cmake --build . --config %BUILD_CONFIG% --target PACKAGE --parallel
 )
 
 popd

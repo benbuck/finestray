@@ -37,17 +37,11 @@ if not defined VCINSTALLDIR (
 cmake ..\..\.. -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_CONFIG% -DCMAKE_CXX_COMPILER=clang -DCMAKE_C_COMPILER=clang -DCMAKE_LINKER=lld-link
 
 :: build
-cmake --build .
-
-rem :: for analyze builds, also make the analyze target
-rem if "%BUILD_CONFIG%"=="Analyze" (
-rem     analyze-build --cdb compile_commands.json --use-analyzer clang --output .
-rem     ::cmake --build . --config %BUILD_CONFIG% --target analyze
-rem )
+cmake --build . --parallel
 
 :: for release builds, also make the package
 if "%BUILD_CONFIG%"=="Release" (
-    cmake --build . --config %BUILD_CONFIG% --target package
+    cmake --build . --config %BUILD_CONFIG% --target package --parallel
 )
 
 popd

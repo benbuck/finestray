@@ -37,11 +37,11 @@ if not defined VCINSTALLDIR (
 cmake ..\..\.. -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
 
 :: build
-cmake --build .
+cmake --build . --parallel
 
 :: for release builds, also make the package
 if "%BUILD_CONFIG%"=="Release" (
-    cmake --build . --config %BUILD_CONFIG% --target package
+    cmake --build . --config %BUILD_CONFIG% --target package --parallel
 )
 
 popd
