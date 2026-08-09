@@ -102,9 +102,7 @@ void TrayIcon::destroy() noexcept
         idMap_.erase(nid_.uID);
 
         if (!Shell_NotifyIconA(NIM_DELETE, &nid_)) {
-            WARNING_PRINTF(
-                "could not destroy tray icon, Shell_NotifyIcon() failed: %s\n",
-                StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("could not destroy tray icon, Shell_NotifyIcon() failed: %ld\n", GetLastError());
         }
 
         ZeroMemory(&nid_, sizeof(nid_));

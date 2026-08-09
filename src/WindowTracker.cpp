@@ -315,7 +315,7 @@ Items::iterator findWindow(HWND hwnd)
     });
 }
 
-void addItem(HWND hwnd) noexcept
+void addItem(HWND hwnd)
 {
     const std::string title = WindowInfo::getTitle(hwnd);
     const bool visible = isWindowUserVisible(hwnd);
@@ -330,7 +330,7 @@ void addItem(HWND hwnd) noexcept
     items_.push_back(item);
 }
 
-void updateItem(WindowTracker::Item & item, HWND hwnd) noexcept
+void updateItem(WindowTracker::Item & item, HWND hwnd)
 {
     const bool visible = isWindowUserVisible(hwnd);
     if (item.visible_ != visible) {

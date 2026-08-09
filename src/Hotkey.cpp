@@ -68,10 +68,7 @@ void Hotkey::destroy() noexcept
     if (id_ >= 0) {
         DEBUG_PRINTF("destroying hotkey %d\n", id_);
         if (!UnregisterHotKey(hwnd_, id_)) {
-            WARNING_PRINTF(
-                "failed to unregister hotkey %d, UnregisterHotKey failed: %s\n",
-                id_,
-                StringUtility::lastErrorString().c_str());
+            WARNING_PRINTF("failed to unregister hotkey %d, UnregisterHotKey failed: %ld\n", id_, GetLastError());
         }
 
         id_ = -1;
