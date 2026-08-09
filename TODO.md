@@ -1,6 +1,5 @@
 # To do list
 
-- Bluetooth settings window visibility not consistent
 - Fix clang launch crash
 - Mimic Win10 taskbar (get icon of shortcut)
 - Get windows error reporting (WER) working
