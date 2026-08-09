@@ -59,6 +59,7 @@ enum SettingKeys : unsigned int
     SK_HotkeyRestoreAll,
     SK_HotkeyMenu,
     SK_ModifiersOverride,
+    SK_PollInterval,
     SK_AutoTray,
 
     SK_Count
@@ -74,6 +75,7 @@ constexpr char hotkeyRestoreDefault_[] = "alt ctrl shift up";
 constexpr char hotkeyRestoreAllDefault_[] = "alt ctrl shift left";
 constexpr char hotkeyMenuDefault_[] = "alt ctrl shift home";
 constexpr char modifiersOverrideDefault_[] = "alt ctrl shift";
+constexpr unsigned int pollIntervalDefault_ = 500;
 const char * settingKeys_[SK_Count] = { "version",
                                         "start-with-windows",
                                         "log-to-file",
@@ -89,6 +91,7 @@ const char * settingKeys_[SK_Count] = { "version",
                                         "hotkey-restore-all",
                                         "hotkey-menu",
                                         "modifiers-override",
+                                        "poll-interval",
                                         "auto-tray" };
 
 } // anonymous namespace
@@ -105,6 +108,7 @@ void Settings::initDefaults()
     hotkeyRestoreAll_ = hotkeyRestoreAllDefault_;
     hotkeyMenu_ = hotkeyMenuDefault_;
     modifiersOverride_ = modifiersOverrideDefault_;
+    pollInterval_ = pollIntervalDefault_;
     autoTrays_.clear();
 }
 
@@ -135,6 +139,8 @@ bool Settings::fromJSON(const std::string & json)
     hotkeyRestoreAll_ = getString(cjson, settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
     hotkeyMenu_ = getString(cjson, settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     modifiersOverride_ = getString(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
+    pollInterval_ = narrow_cast<unsigned int>(
+        getNumber(cjson, settingKeys_[SK_PollInterval], static_cast<double>(pollInterval_)));
 
     const cJSON * autotray = cJSON_GetObjectItemCaseSensitive(cjson, settingKeys_[SK_AutoTray]);
     if (autotray) {
@@ -188,6 +194,9 @@ std::string Settings::toJSON() const
         fail = true;
     }
     if (!cJSON_AddStringToObject(cjson, settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str())) {
+        fail = true;
+    }
+    if (!cJSON_AddNumberToObject(cjson, settingKeys_[SK_PollInterval], static_cast<double>(pollInterval_))) {
         fail = true;
     }
 
@@ -337,6 +346,7 @@ void Settings::dump() const noexcept
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyRestoreAll], hotkeyRestoreAll_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_HotkeyMenu], hotkeyMenu_.c_str());
     DEBUG_PRINTF("\t%s: '%s'\n", settingKeys_[SK_ModifiersOverride], modifiersOverride_.c_str());
+    DEBUG_PRINTF("\t%s: %u\n", settingKeys_[SK_PollInterval], pollInterval_);
 
     for (const AutoTray & autoTray : autoTrays_) {
         DEBUG_PRINTF("\t%s:\n", settingKeys_[SK_AutoTray]);

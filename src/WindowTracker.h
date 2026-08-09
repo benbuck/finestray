@@ -41,11 +41,8 @@ struct Item
     std::shared_ptr<TrayIcon> trayIcon_;
 };
 
-void start(HWND messageHwnd) noexcept;
+void start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND));
 void stop() noexcept;
-bool windowAdded(HWND hwnd);
-void windowDestroyed(HWND hwnd);
-void windowChanged(HWND hwnd);
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence);
 void restore(HWND hwnd);
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement);

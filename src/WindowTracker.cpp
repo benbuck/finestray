@@ -23,11 +23,13 @@
 #include "WindowMessage.h"
 
 // Standard library
+#include <algorithm>
 #include <cassert>
 #include <list>
 #include <memory>
 #include <ranges>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -35,23 +37,38 @@ namespace
 typedef std::list<WindowTracker::Item> Items;
 
 HWND messageHwnd_;
+UINT pollMillis_;
+void (*addWindowCallback_)(HWND);
+UINT_PTR timer_;
 Items items_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
-void addItem(HWND hwnd) noexcept;
-void updateItem(WindowTracker::Item & item, HWND hwnd) noexcept;
+void addItem(HWND hwnd);
+void updateItem(WindowTracker::Item & item, HWND hwnd);
+VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
+BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 
 } // anonymous namespace
 
 namespace WindowTracker
 {
 
-void start(HWND messageHwnd) noexcept
+void start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
     messageHwnd_ = messageHwnd;
+    pollMillis_ = pollMillis;
+    addWindowCallback_ = addWindowCallback;
+
+    if (pollMillis_ > 0) {
+        DEBUG_PRINTF("WindowTracker setting poll timer to %u\n", pollMillis_);
+        timer_ = SetTimer(messageHwnd_, 1, pollMillis_, timerProc);
+        if (!timer_) {
+            ERROR_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+        }
+    }
 }
 
 void stop() noexcept
@@ -61,55 +78,16 @@ void stop() noexcept
     assert(!enumerating_);
     items_.clear();
 
+    if (timer_) {
+        if (!KillTimer(messageHwnd_, timer_)) {
+            ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+        }
+        timer_ = 0;
+    }
+
+    addWindowCallback_ = nullptr;
+    pollMillis_ = 0;
     messageHwnd_ = nullptr;
-}
-
-bool windowAdded(HWND hwnd)
-{
-    auto it = findWindow(hwnd);
-    if (it != items_.end()) {
-        WARNING_PRINTF("window added but already tracked: %#x\n", hwnd);
-        Item & item = *it;
-        updateItem(item, hwnd);
-        return false;
-    }
-
-    addItem(hwnd);
-    return true;
-}
-
-void windowDestroyed(HWND hwnd)
-{
-    DEBUG_PRINTF("window destroyed %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
-
-    assert(!enumerating_);
-
-    const Items::iterator it = findWindow(hwnd);
-    if (it == items_.end()) {
-        WARNING_PRINTF("window not tracked: %#x\n", hwnd);
-        return;
-    }
-
-    items_.erase(it);
-
-    DEBUG_PRINTF("window destroyed: %zu items remaining\n", items_.size());
-}
-
-void windowChanged(HWND hwnd)
-{
-    DEBUG_PRINTF("window changed: %#x - '%s'\n", hwnd, WindowInfo::getTitle(hwnd).c_str());
-
-    assert(!enumerating_);
-
-    const Items::iterator it = findWindow(hwnd);
-    if (it == items_.end()) {
-        WARNING_PRINTF("window not tracked: %#x\n", hwnd);
-        addItem(hwnd);
-        return;
-    }
-
-    Item & item = *it;
-    updateItem(item, hwnd);
 }
 
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
@@ -206,7 +184,7 @@ void restore(HWND hwnd)
         item.trayIcon_.reset();
     }
 
-    // move item to front of list so next restore is in reverse order of minimize
+    // put the item at the front of the list so the next restore is in reverse order of minimize
     items_.push_front(item);
     items_.erase(it);
 }
@@ -346,6 +324,55 @@ void updateItem(WindowTracker::Item & item, HWND hwnd)
             item.trayIcon_->updateTip(item.title_);
         }
     }
+}
+
+VOID timerProc(
+    HWND /* unnamedParam1 */,
+    UINT /* unnamedParam2 */,
+    UINT_PTR /* unnamedParam3 */,
+    DWORD /* unnamedParam4 */)
+{
+    std::vector<HWND> newWindows;
+    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&newWindows))) {
+        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    // check for removed windows
+    for (Items::iterator it = items_.begin(); it != items_.end();) {
+        const std::vector<HWND>::const_iterator nit = std::ranges::find(newWindows, it->hwnd_);
+        if (nit != newWindows.end()) {
+            ++it;
+        } else {
+            it = items_.erase(it);
+        }
+    }
+
+    // check for added windows
+    for (HWND hwnd : newWindows) {
+        if (findWindow(hwnd) == items_.end()) {
+            addItem(hwnd);
+            if (addWindowCallback_) {
+                addWindowCallback_(hwnd);
+            }
+        }
+    }
+
+    // check for changed window titles or visibility
+    for (WindowTracker::Item & item : items_) {
+        updateItem(item, item.hwnd_);
+    }
+}
+
+BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
+{
+    // ignore windows that can't be visible to the user
+    if (isWindowStealth(hwnd)) {
+        return TRUE;
+    }
+
+    std::vector<HWND> & windows = *reinterpret_cast<std::vector<HWND> *>(lParam);
+    windows.push_back(hwnd);
+    return TRUE;
 }
 
 } // anonymous namespace

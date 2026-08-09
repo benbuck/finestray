@@ -105,7 +105,6 @@ Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
-UINT shellHookMsg_;
 
 } // anonymous namespace
 
@@ -254,8 +253,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
-    WindowTracker::start(appWindow_);
-
     DEBUG_PRINTF("starting\n");
     err = start();
     if (err) {
@@ -268,9 +265,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
             showSettingsDialog();
         }
     }
-
-    RegisterShellHookWindow(appWindow_);
-    shellHookMsg_ = RegisterWindowMessage(L"SHELLHOOK");
 
     DEBUG_PRINTF("running message loop\n");
     MSG msg = {};
@@ -288,7 +282,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     // if there are any minimized windows, restore them
     restoreAllWindows();
 
-    DeregisterShellHookWindow(appWindow_);
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
@@ -514,42 +507,6 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     ERROR_PRINTF("failed to create tray icon, TrayIcon::create() failed: %s\n", err.errorString().c_str());
                 }
                 WindowTracker::addAllMinimizedToTray(settings_.minimizePlacement_);
-            } else if (uMsg == shellHookMsg_) {
-                HWND shellHwnd = reinterpret_cast<HWND>(lParam);
-                switch (wParam) {
-                    case HSHELL_WINDOWCREATED: {
-                        INFO_PRINTF(
-                            "HSHELL_WINDOWCREATED: %#x - '%s'\n",
-                            shellHwnd,
-                            WindowInfo::getTitle(shellHwnd).c_str());
-                        onAddWindow(shellHwnd);
-                        break;
-                    }
-
-                    case HSHELL_WINDOWDESTROYED: {
-                        INFO_PRINTF(
-                            "HSHELL_WINDOWDESTROYED: %#x - '%s'\n",
-                            shellHwnd,
-                            WindowInfo::getTitle(shellHwnd).c_str());
-                        if (IsWindow(shellHwnd)) {
-                            WindowTracker::windowChanged(shellHwnd);
-                        } else {
-                            WindowTracker::windowDestroyed(shellHwnd);
-                        }
-                        break;
-                    }
-
-                    case HSHELL_REDRAW: {
-                        DEBUG_PRINTF("HSHELL_REDRAW: %#x\n", lParam);
-                        WindowTracker::windowChanged(shellHwnd);
-                        break;
-                    }
-
-                    default: {
-                        // DEBUG_PRINTF("unknown shell hook message %x\n", wParam);
-                        break;
-                    }
-                }
             }
             break;
         }
@@ -675,14 +632,7 @@ ErrorContext start()
         }
     }
 
-    if (!EnumWindows(
-            [](HWND hwnd, LPARAM /*lParam*/) -> BOOL {
-                onAddWindow(hwnd);
-                return TRUE;
-            },
-            0)) {
-        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
+    WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow);
 
     return {};
 }
@@ -848,15 +798,13 @@ void onAddWindow(HWND hwnd)
 {
     DEBUG_PRINTF("added window: %#x\n", hwnd);
 
-    if (WindowTracker::windowAdded(hwnd)) {
-        MinimizePersistence minimizePersistence = MinimizePersistence::None;
-        if (windowShouldAutoTray(hwnd, TrayEvent::Open, &minimizePersistence)) {
-            if (modifiersActive(modifiersOverride_)) {
-                DEBUG_PRINTF("\tmodifier active, not minimizing\n");
-            } else {
-                DEBUG_PRINTF("\tminimizing\n");
-                minimizeWindow(hwnd, minimizePersistence);
-            }
+    MinimizePersistence minimizePersistence = MinimizePersistence::None;
+    if (windowShouldAutoTray(hwnd, TrayEvent::Open, &minimizePersistence)) {
+        if (modifiersActive(modifiersOverride_)) {
+            DEBUG_PRINTF("\tmodifier active, not minimizing\n");
+        } else {
+            DEBUG_PRINTF("\tminimizing\n");
+            minimizeWindow(hwnd, minimizePersistence);
         }
     }
 }
