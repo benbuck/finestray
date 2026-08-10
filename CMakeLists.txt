@@ -93,13 +93,7 @@ add_executable(Finestray WIN32
 set_target_properties(Finestray
     PROPERTIES
         VS_USER_PROPS ${CMAKE_CURRENT_SOURCE_DIR}/analysis.props
-        $<$<CONFIG:Analyze>:
-            CXX_CLANG_TIDY "$clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors"
-        >
 )
-
-#set_property(TARGET Finestray PROPERTY CXX_CLANG_TIDY $<$<CONFIG:Analyze>:"clang-tidy;--extra-arg=/EHsc;--fix;--fix-errors">)
-#set_property(TARGET Finestray PROPERTY VS_USER_PROPS $<$<CONFIG:Analyze>:"${CMAKE_CURRENT_SOURCE_DIR}/analysis.props">)
 
 target_compile_options(Finestray
     PRIVATE
@@ -128,8 +122,12 @@ target_compile_options(Finestray
             # Analyze compile options
             $<$<CONFIG:Analyze>:
                 /analyze # enable static analysis
+
+                # Disable warnings
+                /wd26446 # Prefer to use gsl::at() instead of unchecked subscript operator
                 /wd26485 # No array to pointer decay
                 /wd26490 # Don't use reinterpret_cast
+                /wd26821 # Consider using gsl::span instead of std::span
             >
         >
 
@@ -138,9 +136,12 @@ target_compile_options(Finestray
             $<$<CXX_COMPILER_FRONTEND_VARIANT:GNU>: -fno-rtti >
             $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /GR- >
 
-            -Wall # enable all warnings
-            -Wextra # enable extra warnings
-            -Weverything # enable all warnings
+            -Wall        # enable all default warnings
+            -Wextra      # enable extra warnings
+            -Weverything # enable all (realy all) warnings
+            -Werror      # treat warnings as errors
+
+            # Disable warnings
             -Wno-c++98-compat
             -Wno-c++98-compat-pedantic
             -Wno-covered-switch-default
@@ -148,7 +149,6 @@ target_compile_options(Finestray
             -Wno-global-constructors
             -Wno-gnu-zero-variadic-macro-arguments
             -Wno-unsafe-buffer-usage
-            -Werror # treat warnings as errors
 
             # Debug compile options
             $<$<CONFIG:Debug>:
@@ -176,17 +176,25 @@ target_compile_options(Finestray
             $<$<CONFIG:Analyze>:
                 #--analyze # enable static analysis
                 -Xclang=-analyzer-output=text
+
+                # to see the full list: clang-tidy -list-checks -checks=*
+                -Xclang=-analyzer-checker=apiModeling
                 -Xclang=-analyzer-checker=core
                 -Xclang=-analyzer-checker=cplusplus
                 -Xclang=-analyzer-checker=deadcode
                 -Xclang=-analyzer-checker=nullability
                 -Xclang=-analyzer-checker=optin.core
                 -Xclang=-analyzer-checker=optin.cplusplus
+                #-Xclang=-analyzer-checker=optin.mpi
+                #-Xclang=-analyzer-checker=optin.osx
                 -Xclang=-analyzer-checker=optin.performance
                 -Xclang=-analyzer-checker=optin.portability
+                -Xclang=-analyzer-checker=optin.taint
+                #-Xclang=-analyzer-checker=osx
                 -Xclang=-analyzer-checker=security
                 -Xclang=-analyzer-checker=unix
                 -Xclang=-analyzer-checker=valist
+                -Xclang=-analyzer-checker=webkit
             >
         >
 )
@@ -232,6 +240,8 @@ target_link_options(Finestray
 
             # Analyze link options
             $<$<CONFIG:Analyze>:
+                # disable incremental linking; unsupported by lld-link with /OPT:REF
+                $<$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>: /INCREMENTAL:NO >
             >
         >
 )
