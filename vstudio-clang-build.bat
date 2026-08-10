@@ -14,12 +14,12 @@
 
 setlocal enabledelayedexpansion
 
-:: set up build configuration (Debug/Release)
+:: set up build configuration (Debug, Release, Analyze...)
 set BUILD_CONFIG=%1
 if "%BUILD_CONFIG%"=="" set BUILD_CONFIG=Debug
 
 :: set up build dir
-set BUILD_DIR=build\vstudio-clang
+set BUILD_DIR=%dp0%build\vstudio-clang
 if not exist %BUILD_DIR% mkdir %BUILD_DIR%
 pushd %BUILD_DIR%
 
