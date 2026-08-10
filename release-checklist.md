@@ -23,11 +23,10 @@
 
 - Commit above changes
 
-- Build everything:
+- Build and check everything:
     - build-all.bat
-
-- Analyze everything
     - analyze-all.bat
+    - tidy-all.bat
 
 - Test app and installer
 
