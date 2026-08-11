@@ -59,8 +59,10 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HANDLE() const noexcept { return handle_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return handle_ != INVALID_HANDLE_VALUE; }
 
 private:

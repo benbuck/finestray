@@ -21,7 +21,10 @@
 class COMLibraryWrapper
 {
 public:
-    COMLibraryWrapper() noexcept { initialized_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
+    COMLibraryWrapper() noexcept
+        : initialized_(SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)))
+    {
+    }
 
     ~COMLibraryWrapper()
     {
@@ -35,7 +38,11 @@ public:
     COMLibraryWrapper & operator=(const COMLibraryWrapper &) = delete;
     COMLibraryWrapper & operator=(COMLibraryWrapper &&) = delete;
 
-    bool initialized() const noexcept { return initialized_; }
+    [[nodiscard]]
+    bool initialized() const noexcept
+    {
+        return initialized_;
+    }
 
 private:
     bool initialized_ {};

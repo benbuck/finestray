@@ -303,7 +303,7 @@ void reverseEnumerate(const std::function<bool(const Item &)> & callback)
 {
     enumerating_ = true;
 
-    for (const auto & item : std::ranges::reverse_view(items_)) {
+    for (const WindowTracker::Item & item : std::ranges::reverse_view(items_)) {
         // cppcheck-suppress useStlAlgorithm
         if (!callback(item)) {
             break;

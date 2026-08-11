@@ -30,12 +30,12 @@ MinimizePlacement minimizePlacementFromCString(const char * minimizePlacementStr
 
 bool minimizePlacementValid(MinimizePlacement minimizePlacement) noexcept;
 
-inline constexpr bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
+constexpr bool minimizePlacementIncludesTray(MinimizePlacement minimizePlacement)
 {
     return (minimizePlacement == MinimizePlacement::Tray) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
 }
 
-inline constexpr bool minimizePlacementIncludesMenu(MinimizePlacement minimizePlacement)
+constexpr bool minimizePlacementIncludesMenu(MinimizePlacement minimizePlacement)
 {
     return (minimizePlacement == MinimizePlacement::Menu) || (minimizePlacement == MinimizePlacement::TrayAndMenu);
 }

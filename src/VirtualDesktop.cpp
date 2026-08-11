@@ -282,9 +282,9 @@ bool minimize(HWND hwnd)
         // window does not reliably report the hidden desktop's GUID right after
         // being moved, so read the GUID from the desktop object itself.
         GUID desktopGuid = {};
-        const HRESULT guidResult = getMethod<FnGetDesktopId>(
+        const HRESULT guidResult = getMethod<FnGetDesktopId>(hiddenDesktop_.Get(), VirtualDesktopSlot::GetDesktopId)(
             hiddenDesktop_.Get(),
-            VirtualDesktopSlot::GetDesktopId)(hiddenDesktop_.Get(), &desktopGuid);
+            &desktopGuid);
         if (SUCCEEDED(guidResult)) {
             hiddenDesktopGuid_ = desktopGuid;
         } else {
@@ -345,7 +345,7 @@ bool restore(HWND hwnd)
     }
 
     if (moved) {
-        if (const auto it = std::ranges::find(hiddenWindows_, hwnd); it != hiddenWindows_.end()) {
+        if (const std::vector<HWND>::iterator it = std::ranges::find(hiddenWindows_, hwnd); it != hiddenWindows_.end()) {
             hiddenWindows_.erase(it);
         }
         if (hiddenWindows_.empty()) {

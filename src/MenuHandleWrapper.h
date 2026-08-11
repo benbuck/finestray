@@ -45,8 +45,10 @@ public:
     MenuHandleWrapper & operator=(const MenuHandleWrapper &) = delete;
     MenuHandleWrapper & operator=(MenuHandleWrapper &&) = delete;
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HMENU() const noexcept { return hmenu_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hmenu_ != nullptr; }
 
 private:

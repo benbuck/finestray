@@ -63,8 +63,10 @@ public:
         return *this;
     }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HICON() const noexcept { return hicon_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hicon_ != nullptr; }
 
 private:

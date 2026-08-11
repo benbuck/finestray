@@ -30,12 +30,12 @@ TrayEvent trayEventFromCString(const char * trayEventString) noexcept;
 
 bool trayEventValid(TrayEvent trayEvent) noexcept;
 
-inline constexpr bool trayEventIncludesOpen(TrayEvent trayEvent)
+constexpr bool trayEventIncludesOpen(TrayEvent trayEvent)
 {
     return (trayEvent == TrayEvent::Open) || (trayEvent == TrayEvent::OpenAndMinimize);
 }
 
-inline constexpr bool trayEventIncludesMinimize(TrayEvent trayEvent)
+constexpr bool trayEventIncludesMinimize(TrayEvent trayEvent)
 {
     return (trayEvent == TrayEvent::Minimize) || (trayEvent == TrayEvent::OpenAndMinimize);
 }

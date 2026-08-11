@@ -38,6 +38,7 @@ public:
     WindowHandleWrapper & operator=(const WindowHandleWrapper &) = delete;
     WindowHandleWrapper & operator=(WindowHandleWrapper &&) = delete;
 
+    // NOLINTNEXTLINE(*-assign*)
     void operator=(HWND hwnd) noexcept
     {
         destroy();
@@ -58,8 +59,14 @@ public:
         }
     }
 
-    HWND hwnd() const noexcept { return hwnd_; }
+    // NOLINTNEXTLINE(*-explicit-*)
+    [[nodiscard]]
+    HWND hwnd() const noexcept
+    {
+        return hwnd_;
+    }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HWND() const noexcept { return hwnd_; }
 
 private:

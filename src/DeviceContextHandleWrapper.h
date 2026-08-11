@@ -22,7 +22,9 @@
 #include <Windows.h>
 
 // Standard library
+#include <ranges>
 #include <vector>
+#include <windef.h>
 
 class DeviceContextHandleWrapper
 {
@@ -47,8 +49,8 @@ public:
     ~DeviceContextHandleWrapper()
     {
         if (hdc_) {
-            for (std::vector<HGDIOBJ>::reverse_iterator it = objects_.rbegin(); it != objects_.rend(); ++it) {
-                SelectObject(hdc_, *it);
+            for (HGDIOBJ & object : std::ranges::reverse_view(objects_)) {
+                SelectObject(hdc_, object);
             }
 
             switch (mode_) {
@@ -77,8 +79,10 @@ public:
     DeviceContextHandleWrapper & operator=(const DeviceContextHandleWrapper &) = delete;
     DeviceContextHandleWrapper & operator=(DeviceContextHandleWrapper &&) = delete;
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HDC() const noexcept { return hdc_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hdc_ != nullptr; }
 
     bool selectObject(HGDIOBJ object)

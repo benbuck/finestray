@@ -45,8 +45,10 @@ public:
     BrushHandleWrapper & operator=(const BrushHandleWrapper &) = delete;
     BrushHandleWrapper & operator=(BrushHandleWrapper &&) = delete;
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HBRUSH() const noexcept { return hbrush_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hbrush_ != nullptr; }
 
 private:

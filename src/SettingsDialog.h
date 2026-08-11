@@ -23,7 +23,7 @@
 namespace SettingsDialog
 {
 
-typedef void (*CompletionCallback)(bool success, const Settings & settings);
+using CompletionCallback = void (*)(bool, const Settings &);
 HWND create(HWND hwnd, const Settings & settings, CompletionCallback completionCallback);
 
 } // namespace SettingsDialog

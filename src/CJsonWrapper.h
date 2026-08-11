@@ -49,16 +49,19 @@ public:
     CJsonWrapper & operator=(const CJsonWrapper &) = delete;
     CJsonWrapper & operator=(CJsonWrapper &&) = delete;
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator cJSON *() const noexcept { return cjson_; }
 
 #if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 26408) // Avoid malloc() and free(), prefer the nothrow version of new with delete
 #endif
+    [[nodiscard]]
     std::string print() const
     {
         char * rawJson = cJSON_Print(cjson_);
         std::string json(rawJson);
+        // NOLINTNEXTLINE(*-malloc, *-memory)
         free(rawJson);
         return json;
     }

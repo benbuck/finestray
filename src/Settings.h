@@ -36,9 +36,13 @@ public:
     void initDefaults();
 
     bool fromJSON(const std::string & json);
+
+    [[nodiscard]]
     std::string toJSON() const;
 
+    [[nodiscard]]
     bool valid() const;
+
     void normalize();
     void dump() const noexcept;
 
@@ -47,17 +51,20 @@ public:
         bool operator==(const AutoTray & rhs) const = default;
         bool operator!=(const AutoTray & rhs) const = default;
 
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         std::string executable_;
         std::string windowClass_;
         std::string windowTitle_;
         TrayEvent trayEvent_ { TrayEvent::Minimize };
         MinimizePersistence minimizePersistence_ { MinimizePersistence::Never };
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
     };
 
     void addAutoTray(AutoTray && autoTray);
 
     static bool fileExists(const std::string & fileName);
 
+    // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
     unsigned int version_ {};
     bool startWithWindows_ {};
     bool logToFile_ {};
@@ -70,4 +77,5 @@ public:
     std::string modifiersOverride_;
     unsigned int pollInterval_ {}; // zero to disable
     std::vector<AutoTray> autoTrays_;
+    // NOLINTEND(misc-non-private-member-variables-in-classes)
 };

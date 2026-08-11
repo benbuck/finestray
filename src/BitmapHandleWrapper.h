@@ -61,8 +61,10 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HBITMAP() const noexcept { return hbitmap_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hbitmap_ != nullptr; }
 
     HBITMAP release() noexcept

@@ -27,12 +27,30 @@ public:
     explicit WindowInfo(HWND hwnd);
     ~WindowInfo() = default;
 
-    const std::string & className() const noexcept { return className_; }
+    WindowInfo(const WindowInfo &) = delete;
+    WindowInfo(WindowInfo &&) = delete;
+    WindowInfo & operator=(const WindowInfo &) = delete;
+    WindowInfo & operator=(WindowInfo && other) = delete;
 
-    const std::string & executable() const noexcept { return executable_; }
+    [[nodiscard]]
+    const std::string & className() const noexcept
+    {
+        return className_;
+    }
 
-    const std::string & title() const noexcept { return title_; }
+    [[nodiscard]]
+    const std::string & executable() const noexcept
+    {
+        return executable_;
+    }
 
+    [[nodiscard]]
+    const std::string & title() const noexcept
+    {
+        return title_;
+    }
+
+    [[nodiscard]]
     static std::string getTitle(HWND hwnd);
 
 private:

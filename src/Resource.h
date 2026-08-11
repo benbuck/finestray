@@ -14,6 +14,8 @@
 
 #pragma once
 
+// NOLINTBEGIN(*-macro-*)
+
 // clang-format off
 
 // icons
@@ -97,3 +99,5 @@
 #define IDC_EXIT                                 1028
 
 // clang-format on
+
+// NOLINTEND(*-macro-*)

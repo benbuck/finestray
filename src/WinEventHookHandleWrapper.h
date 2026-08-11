@@ -54,6 +54,7 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HWINEVENTHOOK() const noexcept { return hwineventhook_; }
 
 private:

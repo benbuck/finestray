@@ -59,8 +59,10 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator HMODULE() const noexcept { return hmodule_; }
 
+    // NOLINTNEXTLINE(*-explicit-*)
     operator bool() const noexcept { return hmodule_ != nullptr; }
 
 private:

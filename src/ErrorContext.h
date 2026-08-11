@@ -16,28 +16,38 @@
 
 // Standard library
 #include <string>
+#include <utility>
 
 class ErrorContext
 {
 public:
     ErrorContext() = default;
 
-    inline explicit ErrorContext(unsigned int errorId) noexcept
+    explicit ErrorContext(unsigned int errorId) noexcept
         : errorId_(errorId)
     {
     }
 
-    inline ErrorContext(unsigned int errorId, const std::string & errorString)
+    ErrorContext(unsigned int errorId, std::string errorString) noexcept
         : errorId_(errorId)
-        , errorString_(errorString)
+        , errorString_(std::move(errorString))
     {
     }
 
-    inline operator bool() const noexcept { return (errorId_ != 0) || !errorString_.empty(); }
+    // NOLINTNEXTLINE(*-explicit-*)
+    operator bool() const noexcept { return (errorId_ != 0) || !errorString_.empty(); }
 
-    inline unsigned int errorId() const noexcept { return errorId_; }
+    [[nodiscard]]
+    unsigned int errorId() const noexcept
+    {
+        return errorId_;
+    }
 
-    inline const std::string & errorString() const noexcept { return errorString_; }
+    [[nodiscard]]
+    const std::string & errorString() const noexcept
+    {
+        return errorString_;
+    }
 
 private:
     unsigned int errorId_ {};
