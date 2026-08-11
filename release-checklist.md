@@ -26,6 +26,7 @@
 - Build and check everything:
     - build-all.bat
     - analyze-all.bat
+    - cppcheck-all.bat
     - tidy-all.bat
 
 - Test app and installer
