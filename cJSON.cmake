@@ -26,7 +26,7 @@ set(ENABLE_TARGET_EXPORT OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     cJSON
     GIT_REPOSITORY https://github.com/DaveGamble/cJSON.git
-    GIT_TAG        v1.7.18
+    GIT_TAG        v1.7.19
     PATCH_COMMAND "${Patch_EXECUTABLE}" -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/cJSON.patch
     UPDATE_DISCONNECTED 1
     EXCLUDE_FROM_ALL
