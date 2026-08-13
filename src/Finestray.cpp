@@ -94,6 +94,9 @@ std::string getSettingsFileName();
 std::string getStartupShortcutFullPath();
 void updateStartWithWindowsShortcut();
 
+alignas(4) const CHAR className_[] = APP_NAME "Class";
+alignas(4) const CHAR windowTitle_[] = APP_NAME;
+
 WindowHandleWrapper appWindow_;
 TrayIcon trayIcon_;
 WindowHandleWrapper settingsDialogWindow_;
@@ -190,7 +193,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.lpfnWndProc = wndProc;
     wc.hInstance = hinstance;
-    wc.lpszClassName = APP_NAME;
+    wc.lpszClassName = className_;
     wc.hIcon = icon;
     wc.hIconSm = icon;
     ATOM const atom = RegisterClassExA(&wc);
@@ -203,8 +206,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     DEBUG_PRINTF("creating window\n");
     appWindow_ = CreateWindowA(
-        APP_NAME, // class name
-        APP_NAME, // window name
+        className_, // class name
+        windowTitle_, // window title
         WS_OVERLAPPEDWINDOW, // style
         0, // x
         0, // y
