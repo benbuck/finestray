@@ -1,0 +1,72 @@
+// Copyright 2020 Benbuck Nason
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+[
+    {
+        "label": "Debug ninja-msvc/Debug",
+        "adapter": "CodeLLDB",
+        "program": "./build/ninja-msvc/Debug/Finestray.exe",
+        "request": "launch",
+        "build": "Build ninja-msvc/Debug",
+    },
+    {
+        "label": "Debug ninja-msvc/Release",
+        "adapter": "CodeLLDB",
+        "program": "./build/ninja-msvc/Release/Finestray.exe",
+        "request": "launch",
+        "build": "Build ninja-msvc/Release",
+    },
+    {
+        "label": "Debug ninja-clang/Debug",
+        "adapter": "CodeLLDB",
+        "program": "./build/ninja-clang/Debug/Finestray.exe",
+        "request": "launch",
+        "build": "Build ninja-clang/Debug",
+    },
+    {
+        "label": "Debug ninja-clang/Release",
+        "adapter": "CodeLLDB",
+        "program": "./build/ninja-clang/Release/Finestray.exe",
+        "request": "launch",
+        "build": "Build ninja-clang/Release",
+    },
+    {
+        "label": "Debug vstudio-msvc/Debug",
+        "adapter": "CodeLLDB",
+        "program": "./build/vstudio-msvc/Debug/Finestray.exe",
+        "request": "launch",
+        "build": "Build vstudio-msvc/Debug",
+    },
+    {
+        "label": "Debug vstudio-msvc/Release",
+        "adapter": "CodeLLDB",
+        "program": "./build/vstudio-msvc/Release/Finestray.exe",
+        "request": "launch",
+        "build": "Build vstudio-msvc/Release",
+    },
+    {
+        "label": "Debug vstudio-clang/Debug",
+        "adapter": "CodeLLDB",
+        "program": "./build/vstudio-clang/Debug/Finestray.exe",
+        "request": "launch",
+        "build": "Build vstudio-clang/Debug",
+    },
+    {
+        "label": "Debug vstudio-clang/Release",
+        "adapter": "CodeLLDB",
+        "program": "./build/vstudio-clang/Release/Finestray.exe",
+        "request": "launch",
+        "build": "Build vstudio-clang/Release",
+    },
+]
