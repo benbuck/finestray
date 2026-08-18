@@ -1,6 +1,5 @@
 # To do list
 
-- Mimic Win10 taskbar (get icon of shortcut)
 - Get windows error reporting (WER) working
 - Investigate VirusTotal results for installer
 
