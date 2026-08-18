@@ -118,6 +118,8 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
         return;
     }
 
+    item.maximized_ = IsZoomed(hwnd) != FALSE;
+
     // UWP app windows (ApplicationFrameWindow) do not stay hidden when hidden with ShowWindow,
     // so minimize them to a hidden virtual desktop instead
     if (isUwpWindow(hwnd)) {
@@ -195,12 +197,12 @@ void restore(HWND hwnd)
         VirtualDesktop::restore(hwnd);
         if (IsIconic(hwnd)) {
             // return value intentionally ignored, ShowWindow returns previous visibility
-            ShowWindow(hwnd, SW_SHOWNORMAL);
+            ShowWindow(hwnd, item.maximized_ ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
         }
     } else {
         // show and restore window
         // return value intentionally ignored, ShowWindow returns previous visibility
-        ShowWindow(hwnd, SW_SHOWNORMAL);
+        ShowWindow(hwnd, item.maximized_ ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 
         if (!isWindowUserVisible(hwnd)) {
             ERROR_PRINTF("window is not visible after restore: %#x\n", hwnd);
