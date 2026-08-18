@@ -240,6 +240,7 @@ target_link_libraries(Finestray
         ShLwApi.lib
         dwmapi.lib
         ntdll.lib
+        runtimeobject.lib
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)

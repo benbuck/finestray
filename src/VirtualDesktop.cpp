@@ -16,16 +16,16 @@
 #include "VirtualDesktop.h"
 #include "Helpers.h"
 #include "Log.h"
-#include "ModuleHandleWrapper.h"
 #include "WindowsUndocumented.h"
 
 // Windows
+#include <ShObjIdl.h>
 #include <servprov.h>
+#include <winstring.h>
 #include <wrl/client.h>
 
 // Standard library
 #include <algorithm>
-#include <bit>
 #include <cstddef>
 #include <cstring>
 #include <cwchar>
@@ -39,14 +39,12 @@ namespace
 
 ComPtr<IUnknown> internalManager_;
 ComPtr<IUnknown> viewCollection_;
-ComPtr<IUnknown> virtualDesktopManager_;
+ComPtr<IVirtualDesktopManager> virtualDesktopManager_;
 ComPtr<IUnknown> hiddenDesktop_;
 GUID hiddenDesktopGuid_ {};
 std::vector<HWND> hiddenWindows_;
 VirtualDesktopSlot removeDesktopSlot_ = VirtualDesktopSlot::GetViewForHwnd;
 VirtualDesktopSlot setDesktopNameSlot_ = VirtualDesktopSlot::GetViewForHwnd;
-FnWindowsCreateStringReference createStringReference_ = nullptr;
-FnWindowsDeleteString deleteString_ = nullptr;
 bool initialized_ = false;
 bool desktopRemovalFailed_ = false;
 
@@ -121,24 +119,10 @@ void nameHiddenDesktop() noexcept
         return;
     }
 
-    if (!createStringReference_ || !deleteString_) {
-        const ModuleHandleWrapper combase(LoadLibraryW(L"combase.dll"));
-        if (combase) {
-            createStringReference_ = std::bit_cast<FnWindowsCreateStringReference>(
-                GetProcAddress(combase, "WindowsCreateStringReference"));
-            deleteString_ = std::bit_cast<FnWindowsDeleteString>(GetProcAddress(combase, "WindowsDeleteString"));
-        }
-
-        if (!createStringReference_ || !deleteString_) {
-            WARNING_PRINTF("failed to resolve combase.dll string functions\n");
-            return;
-        }
-    }
-
     HSTRING_HEADER header = {};
     HSTRING name = nullptr;
     const HRESULT createResult =
-        createStringReference_(kHiddenDesktopName, narrow_cast<UINT32>(wcslen(kHiddenDesktopName)), &header, &name);
+        WindowsCreateStringReference(kHiddenDesktopName, narrow_cast<UINT32>(wcslen(kHiddenDesktopName)), &header, &name);
     if (FAILED(createResult)) {
         WARNING_PRINTF("failed to create hidden virtual desktop name string: 0x%08X\n", createResult);
         return;
@@ -151,7 +135,7 @@ void nameHiddenDesktop() noexcept
         WARNING_PRINTF("failed to name hidden virtual desktop: 0x%08X\n", nameResult);
     }
 
-    deleteString_(name);
+    WindowsDeleteString(name);
 }
 
 } // anonymous namespace
@@ -222,7 +206,7 @@ bool start()
         CLSID_VirtualDesktopManager,
         nullptr,
         CLSCTX_INPROC_SERVER,
-        IID_VirtualDesktopManager,
+        IID_IVirtualDesktopManager,
         reinterpret_cast<void **>(virtualDesktopManager_.ReleaseAndGetAddressOf()));
     if (FAILED(hr) || !virtualDesktopManager_) {
         WARNING_PRINTF("failed to create virtual desktop manager: 0x%08X\n", hr);
@@ -370,10 +354,7 @@ bool isWindowOnCurrentDesktop(HWND hwnd)
     }
 
     BOOL onCurrentDesktop = FALSE;
-    const HRESULT hr = getMethod<FnIsWindowOnCurrentVirtualDesktop>(
-        virtualDesktopManager_.Get(),
-        VirtualDesktopSlot::IsWindowOnCurrentVirtualDesktop)(
-        virtualDesktopManager_.Get(), hwnd, &onCurrentDesktop);
+    const HRESULT hr = virtualDesktopManager_->IsWindowOnCurrentVirtualDesktop(hwnd, &onCurrentDesktop);
     if (FAILED(hr)) {
         WARNING_PRINTF("failed to determine desktop for window %#x: 0x%08X\n", hwnd, hr);
         return true;
@@ -393,9 +374,7 @@ std::vector<HWND> checkHiddenDesktopRemoved()
     // desktop, so the windows no longer report the hidden desktop's GUID
     for (HWND hwnd : hiddenWindows_) {
         GUID desktopGuid = {};
-        const HRESULT hr = getMethod<FnGetWindowDesktopId>(
-            virtualDesktopManager_.Get(),
-            VirtualDesktopSlot::GetWindowDesktopId)(virtualDesktopManager_.Get(), hwnd, &desktopGuid);
+        const HRESULT hr = virtualDesktopManager_->GetWindowDesktopId(hwnd, &desktopGuid);
         if (FAILED(hr)) {
             // window no longer available, skip it
             continue;

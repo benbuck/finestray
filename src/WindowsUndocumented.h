@@ -20,9 +20,7 @@
 // Undocumented COM interface method vtable slot numbers
 enum class VirtualDesktopSlot
 {
-    IsWindowOnCurrentVirtualDesktop = 3, // IVirtualDesktopManager, documented interface
     MoveViewToDesktop = 4,
-    GetWindowDesktopId = 4, // IVirtualDesktopManager, documented interface
     GetDesktopId = 4, // IVirtualDesktop, GetId is slot 4 in all supported layouts
     GetCurrentDesktop = 6,
     GetViewForHwnd = 6,
@@ -68,16 +66,6 @@ constexpr GUID IID_VirtualDesktopManagerInternalLegacy = { 0xF31574D6,
                                                            0x4CDC,
                                                            { 0xBD, 0x56, 0x18, 0x27, 0x86, 0x0A, 0xBE, 0xC6 } };
 
-// IVirtualDesktopManager (documented): GetWindowDesktopId = 4
-constexpr GUID CLSID_VirtualDesktopManager = { 0xAA509086,
-                                               0x5CA9,
-                                               0x4C25,
-                                               { 0x8F, 0x95, 0x58, 0x9D, 0x3C, 0x07, 0xB4, 0x8A } };
-constexpr GUID IID_VirtualDesktopManager = { 0xA5CD92FF,
-                                             0x29BE,
-                                             0x454C,
-                                             { 0x8D, 0x04, 0xD8, 0x28, 0x79, 0xFB, 0x3F, 0x1B } };
-
 // IApplicationViewCollection: GetViewForHwnd = 6
 constexpr GUID IID_ApplicationViewCollection = { 0x1841C6D7,
                                                  0x4F9D,
@@ -85,15 +73,9 @@ constexpr GUID IID_ApplicationViewCollection = { 0x1841C6D7,
                                                  { 0xAF, 0x41, 0x87, 0x47, 0x53, 0x8F, 0x10, 0xE5 } };
 
 using FnGetViewForHwnd = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, HWND hwnd, IUnknown ** view);
-using FnIsWindowOnCurrentVirtualDesktop =
-    HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, HWND topLevelWindow, BOOL * onCurrentDesktop);
 using FnMoveViewToDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown * view, IUnknown * desktop);
 using FnGetCurrentDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown ** desktop);
 using FnCreateDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown ** desktop);
 using FnRemoveDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown * desktop, IUnknown * fallbackDesktop);
 using FnSetDesktopName = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown * desktop, HSTRING name);
-using FnGetWindowDesktopId = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, HWND topLevelWindow, GUID * desktopId);
 using FnGetDesktopId = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, GUID * desktopId);
-using FnWindowsCreateStringReference =
-    HRESULT(WINAPI *)(PCWSTR sourceString, UINT32 length, HSTRING_HEADER * hstringHeader, HSTRING * string);
-using FnWindowsDeleteString = HRESULT(WINAPI *)(HSTRING string);
