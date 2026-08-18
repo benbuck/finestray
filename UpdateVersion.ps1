@@ -66,6 +66,9 @@ Set-Content -Path src/AppInfo.h -Value $content
 
 Write-Output "Building"
 .\build-all.bat
+.\analyze-all.bat
+.\cppcheck-all.bat
+.\tidy-all.bat
 
 Write-Output "Starting new version, please exit when done testing"
 .\build\vstudio-msvc\Release\Finestray.exe
