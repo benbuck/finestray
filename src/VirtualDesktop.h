@@ -26,6 +26,7 @@ bool start();
 void stop() noexcept;
 bool minimize(HWND hwnd);
 bool restore(HWND hwnd);
+bool isWindowOnCurrentDesktop(HWND hwnd);
 
 // Returns the windows that were hidden on the hidden virtual desktop if the
 // desktop was removed by the user, resetting internal state so a fresh desktop

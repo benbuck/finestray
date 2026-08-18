@@ -23,6 +23,7 @@
 #include "MenuHandleWrapper.h"
 #include "Resource.h"
 #include "StringUtility.h"
+#include "VirtualDesktop.h"
 #include "WindowIcon.h"
 #include "WindowInfo.h"
 #include "WindowTracker.h"
@@ -76,7 +77,7 @@ bool show(HWND hwnd, MinimizePlacement minimizePlacement)
 
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
         WindowTracker::enumerate([&](const WindowTracker::Item & item) {
-            if (item.visible_) {
+            if (item.visible_ && VirtualDesktop::isWindowOnCurrentDesktop(item.hwnd_)) {
                 DEBUG_PRINTF("adding visible window: %#x - '%s'\n", item.hwnd_, item.title_.c_str());
                 visibleWindows_.push_back(item.hwnd_);
             } else if (item.minimized_) {

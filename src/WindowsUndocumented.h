@@ -20,6 +20,7 @@
 // Undocumented COM interface method vtable slot numbers
 enum class VirtualDesktopSlot
 {
+    IsWindowOnCurrentVirtualDesktop = 3, // IVirtualDesktopManager, documented interface
     MoveViewToDesktop = 4,
     GetWindowDesktopId = 4, // IVirtualDesktopManager, documented interface
     GetDesktopId = 4, // IVirtualDesktop, GetId is slot 4 in all supported layouts
@@ -84,6 +85,8 @@ constexpr GUID IID_ApplicationViewCollection = { 0x1841C6D7,
                                                  { 0xAF, 0x41, 0x87, 0x47, 0x53, 0x8F, 0x10, 0xE5 } };
 
 using FnGetViewForHwnd = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, HWND hwnd, IUnknown ** view);
+using FnIsWindowOnCurrentVirtualDesktop =
+    HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, HWND topLevelWindow, BOOL * onCurrentDesktop);
 using FnMoveViewToDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown * view, IUnknown * desktop);
 using FnGetCurrentDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown ** desktop);
 using FnCreateDesktop = HRESULT(STDMETHODCALLTYPE *)(IUnknown * object, IUnknown ** desktop);

@@ -357,6 +357,31 @@ bool restore(HWND hwnd)
     return moved;
 }
 
+bool isWindowOnCurrentDesktop(HWND hwnd)
+{
+    if (!initialized_ && !start()) {
+        WARNING_PRINTF("failed to start virtual desktop services, assuming window %#x is on the current desktop\n", hwnd);
+        return true;
+    }
+
+    if (!virtualDesktopManager_) {
+        DEBUG_PRINTF("virtual desktop manager unavailable, assuming window %#x is on the current desktop\n", hwnd);
+        return true;
+    }
+
+    BOOL onCurrentDesktop = FALSE;
+    const HRESULT hr = getMethod<FnIsWindowOnCurrentVirtualDesktop>(
+        virtualDesktopManager_.Get(),
+        VirtualDesktopSlot::IsWindowOnCurrentVirtualDesktop)(
+        virtualDesktopManager_.Get(), hwnd, &onCurrentDesktop);
+    if (FAILED(hr)) {
+        WARNING_PRINTF("failed to determine desktop for window %#x: 0x%08X\n", hwnd, hr);
+        return true;
+    }
+
+    return onCurrentDesktop != FALSE;
+}
+
 std::vector<HWND> checkHiddenDesktopRemoved()
 {
     std::vector<HWND> affected;
