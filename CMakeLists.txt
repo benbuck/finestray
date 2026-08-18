@@ -178,27 +178,7 @@ target_compile_options(Finestray
 
             # Analyze compile options
             $<$<CONFIG:Analyze>:
-                #--analyze # enable static analysis
-                -Xclang=-analyzer-output=text
-
-                # to see the full list: clang-tidy -list-checks -checks=*
-                -Xclang=-analyzer-checker=apiModeling
-                -Xclang=-analyzer-checker=core
-                -Xclang=-analyzer-checker=cplusplus
-                -Xclang=-analyzer-checker=deadcode
-                -Xclang=-analyzer-checker=nullability
-                -Xclang=-analyzer-checker=optin.core
-                -Xclang=-analyzer-checker=optin.cplusplus
-                #-Xclang=-analyzer-checker=optin.mpi
-                #-Xclang=-analyzer-checker=optin.osx
-                -Xclang=-analyzer-checker=optin.performance
-                -Xclang=-analyzer-checker=optin.portability
-                -Xclang=-analyzer-checker=optin.taint
-                #-Xclang=-analyzer-checker=osx
-                -Xclang=-analyzer-checker=security
-                -Xclang=-analyzer-checker=unix
-                -Xclang=-analyzer-checker=valist
-                -Xclang=-analyzer-checker=webkit
+                --analyze # enable static analysis
             >
         >
 )

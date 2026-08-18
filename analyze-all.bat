@@ -28,15 +28,6 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 echo ---------------------------------------------------------------
-echo Running ninja-clang-build.bat Analyze
-call ninja-clang-build.bat Analyze
-if %ERRORLEVEL% NEQ 0 (
-    echo Analysis failed
-    exit /b %ERRORLEVEL%
-)
-
-echo.
-echo ---------------------------------------------------------------
 echo Running vstudio-msvc-build.bat Analyze
 call vstudio-msvc-build.bat Analyze
 if %ERRORLEVEL% NEQ 0 (
@@ -44,13 +35,25 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
-echo.
-echo ---------------------------------------------------------------
-echo Running vstudio-clang-build.bat Analyze
-call vstudio-clang-build.bat Analyze
-if %ERRORLEVEL% NEQ 0 (
-    echo Analysis failed
-    exit /b %ERRORLEVEL%
-)
+:: Clang analysis is done with clang-tidy (see tidy-*.bat)
+:: You can run these, but you will get link errors since it creates plist files instead of object files
+::
+:: echo.
+:: echo ---------------------------------------------------------------
+:: echo Running ninja-clang-build.bat Analyze
+:: call ninja-clang-build.bat Analyze
+:: if %ERRORLEVEL% NEQ 0 (
+::     echo Analysis failed
+::     exit /b %ERRORLEVEL%
+:: )
+::
+:: echo.
+:: echo ---------------------------------------------------------------
+:: echo Running vstudio-clang-build.bat Analyze
+:: call vstudio-clang-build.bat Analyze
+:: if %ERRORLEVEL% NEQ 0 (
+::     echo Analysis failed
+::     exit /b %ERRORLEVEL%
+:: )
 
 popd
