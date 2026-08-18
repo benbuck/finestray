@@ -9,7 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Minimize UWP app windows to the tray using a hidden virtual desktop
+## [0.5] - 2026-08-17
+
+- Add more script calls to UpdateVersion.ps1
+- Remove documented apis from WindowsUndocumented.h
+- ContextMenu visible windows current desktop check
+- Remove win10 shortcut TODO item
+- Don't run clang analyze builds
+- Add zed config files
+- Use explicit c++ 23 standard
+- Fix launch failure with clang build
+- Update cJSON to v1.7.19
+- Add .codebook.toml for spell checking
+- Split cppcheck-all.bat from analyze-all.bat
+- Fix clang-tidy issues
+- Add clang-tidy scripts
+- Minor build script improvements
+- Minor cmake improvements
+- Add --parallel to all cmake builds
+- Minor markdown file formatting fixes
+- Fix icons for UWP and packaged apps
+- Add error handling to WindowsTracker start()
+- Support tray minimize for UWP windows
+- Add .cache dir to .gitignore
+- Fix some clang analyzer issues
+- Add .editorconfig
+- Improve stealth window detection
+- Restore polling
+- Fix noexcept issues
+- Fix const-ness issues
+- Add analyze-all.bat
+- Fix missing debug print newlines
+- Improve minimize event debug logging
+- Fix buffer allocation logic in Log.cpp
+- Add clang crash and settings window TODO items
+- Minor debug print improvements
+- Better window tracking for add/change events
+- Improve last error handling
+- Move getWindowGext() helper to WindowInfo::getTitle()
+- Minor debug print improvements
+- Remove auto-update from TODO list
+- Minor debug print adjustments
+- Remove winget github workflow, update release checklist
+- Link to correct version of README for help
+- Split app data from Finestray.rc to AppInfo.h
 
 ## [0.4] - 2025-05-21
 
@@ -64,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public pre-release
 
-[unreleased]: https://github.com/benbuck/finestray/compare/v0.4...HEAD
+[unreleased]: https://github.com/benbuck/finestray/compare/v0.5...HEAD
+[0.5]: https://github.com/benbuck/finestray/compare/v0.4...v0.5
 [0.4]: https://github.com/benbuck/finestray/compare/v0.3...v0.4
 [0.3]: https://github.com/benbuck/finestray/compare/v0.2...v0.3
 [0.2]: https://github.com/benbuck/finestray/compare/v0.1...v0.2
