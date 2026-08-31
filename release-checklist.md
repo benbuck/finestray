@@ -57,6 +57,9 @@
         - Create winget-pkgs github issue
         - Resolve issue with pull request including new manifests
 
+- Check VirusTotal detections for the release artifacts
+    - Scan both Finestray.exe and Finestray-[new version]-win64.exe at https://www.virustotal.com
+
 ## Legal
 
 Copyright &copy; 2020 [Benbuck Nason](https://github.com/benbuck)
