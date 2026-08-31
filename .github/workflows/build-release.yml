@@ -32,11 +32,14 @@ jobs:
       - name: Add MSBuild to path
         uses: microsoft/setup-msbuild@v3
 
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
       - name: Build
         run: .\vstudio-msvc-build.bat Release
 
       - name: Create portable artifact digest
-        run: $files = Get-ChildItem -Path .\build\vstudio-msvc\Release -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
+        run: $files = Get-ChildItem -Path .\build\vstudio-msvc\Release -Filter "Finestray.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
 
       - name: Create portable artifact
         uses: actions/upload-artifact@v7
@@ -45,18 +48,18 @@ jobs:
           path: build/vstudio-msvc/Release/Finestray.exe*
 
       - name: Create installer artifact digest
-        run: $files = Get-ChildItem -Path .\build\vstudio-msvc -Filter "*.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
+        run: $files = Get-ChildItem -Path .\build\vstudio-msvc\Release -Filter "Finestray-*-win64.exe"; foreach ($file in $files) { $hash = Get-FileHash $file.FullName; Out-File -FilePath "$($hash.Path).sha256" -InputObject $hash.Hash }
 
       - name: Create installer artifact
         uses: actions/upload-artifact@v7
         with:
           name: installer
-          path: build/vstudio-msvc/Finestray-*-win64.exe*
+          path: build/vstudio-msvc/Release/Finestray-*-win64.exe*
 
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
           artifactErrorsFailBuild: true
-          artifacts: "build/vstudio-msvc/Release/Finestray.exe*, build/vstudio-msvc/Finestray-*-win64.exe*"
+          artifacts: "build/vstudio-msvc/Release/Finestray.exe*, build/vstudio-msvc/Release/Finestray-*-win64.exe*"
           generateReleaseNotes: true

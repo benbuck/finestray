@@ -323,24 +323,6 @@ add_custom_command(
     COMMAND magick -size 16x16 -background none -filter point ${EXIT_IMAGE_SOURCE} -define bmp3:alpha=true BMP3:${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
 )
 
-# create installer header image (used at top of most installer screens)
-add_custom_command(
-    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp"
-    DEPENDS ${APP_IMAGE_SOURCE}
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
-    COMMAND magick -size 150x57 -define gradient:direction=east gradient:grey50-white ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
-    COMMAND magick composite -background none -geometry 40x40+15+8 ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp BMP3:${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
-)
-
-# create installer welcome image (used at left side of installer welcome screen)
-add_custom_command(
-    COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp"
-    DEPENDS ${APP_IMAGE_SOURCE}
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
-    COMMAND magick -size 164x314 -define gradient:direction=east gradient:grey50-white ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
-    COMMAND magick composite -background none -geometry 100x100+15+45 ${APP_IMAGE_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp BMP3:${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
-)
-
 # create icon for README.md
 add_custom_command(
     COMMENT "Converting ${APP_IMAGE_SOURCE} to ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png"
@@ -362,8 +344,6 @@ add_custom_target(
         ${CMAKE_CURRENT_BINARY_DIR}/restore.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/settings.bmp
         ${CMAKE_CURRENT_BINARY_DIR}/exit.bmp
-        ${CMAKE_CURRENT_BINARY_DIR}/installer_header.bmp
-        ${CMAKE_CURRENT_BINARY_DIR}/installer_welcome.bmp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/images/icon.png
 )
 
@@ -372,32 +352,6 @@ install(
     RUNTIME
     DESTINATION .
 )
-
-set(CPACK_GENERATOR "NSIS64")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Finestray")
-set(CPACK_PACKAGE_VENDOR "Benbuck Nason")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_EXECUTABLES "Finestray" "Finestray" )
-
-# NSIS options
-set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMSTARTUP\\\\Finestray.lnk' '$INSTDIR\\\\Finestray.exe'")
-set(CPACK_NSIS_DEFINES_LIST
-    "RequestExecutionLevel user"
-    "InstallDir \\\"$LOCALAPPDATA\\\\${CPACK_PACKAGE_INSTALL_DIRECTORY}\\\""
-)
-string (REPLACE ";" " \n" CPACK_NSIS_DEFINES "${CPACK_NSIS_DEFINES_LIST}")
-set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMSTARTUP\\\\Finestray.lnk'")
-set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "Exec '\\\"$INSTDIR\\\\Finestray.exe\\\"'")
-set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete '$INSTDIR\\\\Finestray.json'\nDelete '$INSTDIR\\\\Finestray.log'")
-set(CPACK_NSIS_INSTALLED_ICON_NAME "Finestray.exe")
-set(CPACK_NSIS_MUI_HEADERIMAGE "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_header.bmp")
-set(CPACK_NSIS_HELP_LINK "https://github.com/benbuck/finestray/")
-set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
-set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "${CMAKE_CURRENT_BINARY_DIR}\\\\installer_welcome.bmp")
-
-include(CPack)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Finestray)

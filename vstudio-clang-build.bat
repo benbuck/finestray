@@ -19,7 +19,7 @@ set BUILD_CONFIG=%1
 if "%BUILD_CONFIG%"=="" set BUILD_CONFIG=Debug
 
 :: set up build dir
-set BUILD_DIR=%dp0%build\vstudio-clang
+set BUILD_DIR=%~dp0%build\vstudio-clang
 if not exist %BUILD_DIR% mkdir %BUILD_DIR%
 pushd %BUILD_DIR%
 
@@ -29,9 +29,22 @@ cmake -T ClangCL -A x64 ..\..
 :: build (with parallel builds)
 cmake --build . --config %BUILD_CONFIG% --parallel
 
-:: for release builds, also make the package
+:: for release builds, also make the installer
 if "%BUILD_CONFIG%"=="Release" (
-    cmake --build . --config %BUILD_CONFIG% --target PACKAGE --parallel
+    set ISCC=ISCC.exe
+    where !ISCC! >nul 2>nul
+    if errorlevel 1 (
+        if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" (
+            set ISCC="%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+        ) else if exist "%ProgramData%\chocolatey\bin\ISCC.exe" (
+            set ISCC="%ProgramData%\chocolatey\bin\ISCC.exe"
+        ) else (
+            echo ISCC.exe not found. Install Inno Setup 6 from https://jrsoftware.org/isinfo.php
+            exit /b 1
+        )
+    )
+    echo "!ISCC!" "%~dp0%installer\Finestray.iss" /DAppExePath="!BUILD_DIR!\Release\Finestray.exe" /DIconPath="!BUILD_DIR!\Finestray.ico"
+    "!ISCC!" "%~dp0%installer\Finestray.iss" /DAppExePath="!BUILD_DIR!\Release\Finestray.exe" /DIconPath="!BUILD_DIR!\Finestray.ico"
 )
 
 popd

@@ -79,7 +79,7 @@ Start-Sleep -Seconds 2
 
 # note that this is not the final installer, the real one will be built by github actions
 Write-Output "Starting new installer, please exit when done installing"
-$out = Invoke-Expression ".\build\vstudio-msvc\Finestray-$newVersion-win64.exe" | Out-String
+$out = Invoke-Expression ".\build\vstudio-msvc\Release\Finestray-$newVersion-win64.exe" | Out-String
 Write-Output $out
 
 Write-Output "Updating version in git"
