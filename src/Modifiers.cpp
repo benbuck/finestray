@@ -20,10 +20,8 @@
 namespace
 {
 
-inline bool isKeyDown(int key) noexcept
-{
-    return (narrow_cast<UINT>(GetKeyState(key)) & 0x8000U) != 0;
-}
+bool isKeyDown(int key) noexcept;
+bool isKeyDownAsync(int key) noexcept;
 
 } // anonymous namespace
 
@@ -68,3 +66,56 @@ bool modifiersActive(UINT modifiers) noexcept
 
     return true;
 }
+
+// Same as modifiersActive(), but checks the physical key state via GetAsyncKeyState().
+bool modifiersActiveAsync(UINT modifiers) noexcept
+{
+    if (!modifiers) {
+        return false;
+    }
+
+    if (modifiers & ~(narrow_cast<UINT>(MOD_ALT) | narrow_cast<UINT>(MOD_CONTROL) | narrow_cast<UINT>(MOD_SHIFT))) {
+        return false;
+    }
+
+    if (modifiers & narrow_cast<UINT>(MOD_ALT)) {
+        if (!isKeyDownAsync(VK_MENU) && !isKeyDownAsync(VK_LMENU) && !isKeyDownAsync(VK_RMENU)) {
+            return false;
+        }
+    }
+
+    if (modifiers & narrow_cast<UINT>(MOD_CONTROL)) {
+        if (!isKeyDownAsync(VK_CONTROL) && !isKeyDownAsync(VK_LCONTROL) && !isKeyDownAsync(VK_RCONTROL)) {
+            return false;
+        }
+    }
+
+    if (modifiers & narrow_cast<UINT>(MOD_SHIFT)) {
+        if (!isKeyDownAsync(VK_SHIFT) && !isKeyDownAsync(VK_LSHIFT) && !isKeyDownAsync(VK_RSHIFT)) {
+            return false;
+        }
+    }
+
+    if (modifiers & narrow_cast<UINT>(MOD_WIN)) {
+        if (!isKeyDownAsync(VK_LWIN) && !isKeyDownAsync(VK_RWIN)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+namespace
+{
+
+bool isKeyDown(int key) noexcept
+{
+    return (narrow_cast<UINT>(GetKeyState(key)) & 0x8000U) != 0;
+}
+
+bool isKeyDownAsync(int key) noexcept
+{
+    return (narrow_cast<UINT>(GetAsyncKeyState(key)) & 0x8000U) != 0;
+}
+
+} // anonymous namespace

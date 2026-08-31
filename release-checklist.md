@@ -2,6 +2,8 @@
 
 - Update images in README.md
 
+- Update "uses" versions in .github/workflows
+
 - Update CHANGELOG.md
   Add section near top for high level changes
   Add sections at bottom for detailed change logging

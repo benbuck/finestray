@@ -66,6 +66,10 @@ add_executable(Finestray WIN32
     src/Modifiers.cpp
     src/Modifiers.h
     src/ModuleHandleWrapper.h
+    src/Monitor.cpp
+    src/Monitor.h
+    src/MouseTracker.cpp
+    src/MouseTracker.h
     src/Path.cpp
     src/Path.h
     src/Resource.h

@@ -18,3 +18,4 @@
 #include <Windows.h>
 
 bool modifiersActive(UINT modifiers) noexcept;
+bool modifiersActiveAsync(UINT modifiers) noexcept;

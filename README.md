@@ -51,10 +51,12 @@ to their normal placement:
   their prior locations.
 - **Menu hotkey**:
   Press the configurable hotkey (typically Alt+Ctrl+Shift+Home) to show the [Context menu](#context-menu).
+- **Right-click minimize**:
+  Hold down the override modifier (typically Alt+Ctrl+Shift) and right-click on the title bar of a window to minimize
+  it to the tray.
 - **Override modifier**:
-  Press and hold the configurable key combination (typically Alt+Ctrl+Shift), and then click on the minimize button of a
-  window to minimize it to the tray. See the [Auto-tray settings](#auto-tray-settings) section for additional
-  functionality of the override modifier.
+  Press and hold the configurable key combination (typically Alt+Ctrl+Shift) to override auto-tray behavior. See the
+  [Auto-tray settings](#auto-tray-settings) section for additional functionality of the override modifier.
 - **Tray Icons**:
   If you click on the main tray icon for Finestray itself, it will show the [Settings](#settings) window, and if you
   click it again it will hide the Settings window.
@@ -246,10 +248,14 @@ window identification features.
 ## Limitations
 
 UWP app windows (also known as Windows Store apps) can not be minimized the same way that normal windows are. Because of
-this, they are instead "minimized" to the tray by moving them to a hidden virtual desktop, and are moved back to the
+this, they are instead fake-minimized to the tray by moving them to a hidden virtual desktop, and are moved back to the
 current virtual desktop when restored. This means that a hidden virtual desktop (named "Finestray") is created when the
 first UWP app window is minimized to the tray, and is removed when the last one is restored. Note that this virtual
 desktop appears in Task View (Win+Tab) while it exists.
+
+The title bar minimize feature works by using a low-level mouse hook, and so it cannot be used on windows that run with
+higher privileges than Finestray itself (e.g. windows owned by programs running as administrator). The hotkey methods
+can still be used to minimize those windows.
 
 Some software may create windows that do not adhere to the typical behavior for minimizing, and may not be compatible
 with Finestray.

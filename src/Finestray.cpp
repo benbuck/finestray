@@ -27,6 +27,8 @@
 #include "Log.h"
 #include "MenuHandleWrapper.h"
 #include "Modifiers.h"
+#include "Monitor.h"
+#include "MouseTracker.h"
 #include "Path.h"
 #include "Resource.h"
 #include "Settings.h"
@@ -85,6 +87,8 @@ void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
+bool onMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+POINT hitTestPoint(HWND hwnd, POINT physicalPt);
 bool readSettingsFromFile(const std::string & fileName, Settings & settings);
 bool writeSettingsToFile(const std::string & fileName, const Settings & settings);
 void showSettingsDialog();
@@ -109,6 +113,7 @@ Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
+volatile PVOID lastHit_ {};
 
 } // anonymous namespace
 
@@ -258,6 +263,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
+    DEBUG_PRINTF("starting mouse tracker\n");
+    if (!MouseTracker::start(onMouseHook)) {
+        ERROR_PRINTF("failed to start mouse tracker\n");
+    }
+
     DEBUG_PRINTF("starting\n");
     err = start();
     if (err) {
@@ -296,6 +306,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     trayIcon_.destroy();
     stop();
     VirtualDesktop::stop();
+    MouseTracker::stop();
     WindowTracker::stop();
     settingsDialogWindow_.destroy();
     appWindow_.destroy();
@@ -486,6 +497,14 @@ LRESULT wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
             }
+            break;
+        }
+
+        // message from the right-click title bar watcher
+        case WM_RIGHTCLICKTITLEBAR: {
+            HWND rclickHwnd = reinterpret_cast<HWND>(lParam);
+            INFO_PRINTF("right-click minimizing window: %#x\n", rclickHwnd);
+            minimizeWindow(rclickHwnd, MinimizePersistence::Never);
             break;
         }
 
@@ -852,6 +871,89 @@ void onMinimizeEvent(
             minimizeWindow(hwnd, minimizePersistence);
         }
     }
+}
+
+bool onMouseHook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    static_cast<void>(nCode); // HC_ACTION already checked by MouseTracker
+
+    if ((wParam == WM_RBUTTONDOWN) || (wParam == WM_RBUTTONUP)) {
+        const MSLLHOOKSTRUCT * const msllHookStruct = reinterpret_cast<const MSLLHOOKSTRUCT *>(lParam);
+        if (msllHookStruct) {
+            HWND hwnd = WindowFromPhysicalPoint(msllHookStruct->pt);
+            const POINT pt = hitTestPoint(hwnd, msllHookStruct->pt);
+            DWORD_PTR hitTestResult = HTNOWHERE;
+            const LPARAM ptParam = MAKELPARAM(pt.x, pt.y);
+            if (SendMessageTimeoutA(hwnd, WM_NCHITTEST, 0, ptParam, SMTO_ABORTIFHUNG, 20, &hitTestResult) != 0) {
+                if ((hitTestResult == HTCAPTION) && modifiersActiveAsync(modifiersOverride_)) {
+                    if (wParam == WM_RBUTTONDOWN) {
+                        InterlockedExchangePointer(&lastHit_, hwnd);
+                        // swallow the click so the window never sees it
+                        return true;
+                    }
+
+                    if (InterlockedCompareExchangePointer(&lastHit_, nullptr, hwnd) == hwnd) {
+                        HWND messageHwnd = appWindow_.hwnd();
+                        if (messageHwnd &&
+                            PostMessageA(messageHwnd, WM_RIGHTCLICKTITLEBAR, 0, reinterpret_cast<LPARAM>(hwnd))) {
+                            // swallow the click so the window never sees it
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            InterlockedExchangePointer(&lastHit_, nullptr);
+        }
+    }
+
+    return false;
+}
+
+POINT hitTestPoint(HWND hwnd, POINT physicalPt)
+{
+    DPI_AWARENESS_CONTEXT context = GetWindowDpiAwarenessContext(hwnd);
+    if (!context) {
+        WARNING_PRINTF("failed to get window DPI awareness context: %s\n", StringUtility::lastErrorString().c_str());
+        return physicalPt;
+    }
+
+    MonitorInfo monitorInfo = {};
+    if (!monitorGetInfo(hwnd, monitorInfo)) {
+        WARNING_PRINTF("failed to get monitor info for window %#x\n", hwnd);
+        return physicalPt;
+    }
+
+    const bool systemAware = AreDpiAwarenessContextsEqual(context, DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+    if (!systemAware) {
+        if (!AreDpiAwarenessContextsEqual(context, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) &&
+            !AreDpiAwarenessContextsEqual(context, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
+            return monitorPointPhysicalToLogical(physicalPt, monitorInfo);
+        }
+
+        return physicalPt;
+    }
+
+    const UINT systemDpi = GetDpiForSystem();
+    if (!systemDpi) {
+        WARNING_PRINTF("failed to get system DPI: %s\n", StringUtility::lastErrorString().c_str());
+        return physicalPt;
+    }
+
+    const int sys = narrow_cast<int>(systemDpi);
+    const int logW = narrow_cast<int>(monitorInfo.logicalWidth);
+    const int logH = narrow_cast<int>(monitorInfo.logicalHeight);
+    const int physW = narrow_cast<int>(monitorInfo.physicalWidth);
+    const int physH = narrow_cast<int>(monitorInfo.physicalHeight);
+
+    const LONG systemOriginX = narrow_cast<LONG>(MulDiv(monitorInfo.logicalOrigin.x, sys, 96));
+    const LONG systemOriginY = narrow_cast<LONG>(MulDiv(monitorInfo.logicalOrigin.y, sys, 96));
+    const LONG dxSystem = narrow_cast<LONG>(
+        MulDiv(narrow_cast<int>(MulDiv(physicalPt.x - monitorInfo.physicalOrigin.x, sys, 96)), logW, physW));
+    const LONG dySystem = narrow_cast<LONG>(
+        MulDiv(narrow_cast<int>(MulDiv(physicalPt.y - monitorInfo.physicalOrigin.y, sys, 96)), logH, physH));
+
+    return { systemOriginX + dxSystem, systemOriginY + dySystem };
 }
 
 bool readSettingsFromFile(const std::string & fileName, Settings & settings)
