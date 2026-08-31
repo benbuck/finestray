@@ -17,6 +17,7 @@
 // NOLINTBEGIN(*-macro-*)
 
 #define APP_NAME "Finestray"
+#define APP_NAME_W L"Finestray"
 #define APP_VERSION 0, 5, 0, 0
 #define APP_VERSION_STRING "0.5.0.0"
 #define APP_VERSION_STRING_SIMPLE "0.5"
