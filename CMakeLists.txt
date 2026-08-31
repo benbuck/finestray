@@ -239,7 +239,6 @@ target_link_libraries(Finestray
         Comctl32.lib
         ShLwApi.lib
         dwmapi.lib
-        ntdll.lib
         runtimeobject.lib
 )
 

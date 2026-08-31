@@ -78,12 +78,23 @@ T getMethod(const IUnknown * object, VirtualDesktopSlot slot) noexcept
 
 unsigned int getWindowsBuild() noexcept
 {
-    VersionInfo versionInfo = {};
-    versionInfo.size = sizeof(versionInfo);
-    if (RtlGetVersion(&versionInfo) != 0) {
+    char buffer[32] = {};
+    DWORD size = narrow_cast<DWORD>(sizeof(buffer) - 1);
+
+    const LSTATUS result = RegGetValueA(
+        HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+        "CurrentBuildNumber",
+        RRF_RT_REG_SZ,
+        nullptr,
+        buffer,
+        &size);
+    if (result != ERROR_SUCCESS) {
+        WARNING_PRINTF("failed to get windows version build number: 0x%08X\n", result);
         return 0;
     }
-    return versionInfo.buildNumber;
+
+    return narrow_cast<unsigned int>(strtoul(buffer, nullptr, 10));
 }
 
 void removeHiddenDesktop() noexcept

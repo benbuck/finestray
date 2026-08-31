@@ -32,17 +32,6 @@ enum class VirtualDesktopSlot
 };
 
 // ntdll exports RtlGetVersion, but it is not declared in the Windows SDK headers
-struct VersionInfo
-{
-    ULONG size;
-    ULONG majorVersion;
-    ULONG minorVersion;
-    ULONG buildNumber;
-    ULONG platformId;
-    WCHAR servicePack[128];
-};
-
-extern "C" LONG WINAPI RtlGetVersion(VersionInfo * versionInfo);
 
 constexpr GUID CLSID_ImmersiveShell = { 0xC2F03A33, 0x21F5, 0x47FA, { 0xB4, 0xBB, 0x15, 0x63, 0x62, 0xA2, 0xF2, 0x39 } };
 
