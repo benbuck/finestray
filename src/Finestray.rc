@@ -47,6 +47,7 @@ BEGIN
     IDS_TRAY_EVENT_OPEN_AND_MINIMIZE "Open and Minimize"
     IDS_MINIMIZE_PERSISTENCE_NEVER   "Never"
     IDS_MINIMIZE_PERSISTENCE_ALWAYS  "Always"
+    IDS_ERROR_ALREADY_RUNNING        APP_NAME " is already running"
     IDS_ERROR_INIT_COM               "Failed to initialize COM"
     IDS_ERROR_INIT_COMMON_CONTROLS   "Failed to initialize common controls"
     IDS_ERROR_REGISTER_WINDOW_CLASS  "Error creating window class"

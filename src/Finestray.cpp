@@ -144,11 +144,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     INFO_PRINTF("launching %s %s (%s)\n", APP_NAME, APP_VERSION_STRING_SIMPLE, APP_DATE);
 
     // check if already running
-    HWND oldHwnd = FindWindowA(APP_NAME, nullptr);
-    if (oldHwnd) {
-        INFO_PRINTF("already running\n");
-        SendMessageA(oldHwnd, WM_SHOWSETTINGS, 0, 0);
-        return 0;
+    if (FindWindowA(className_, nullptr)) {
+        errorMessage(IDS_ERROR_ALREADY_RUNNING);
+        return IDS_ERROR_ALREADY_RUNNING;
     }
 
     DEBUG_PRINTF("initializing COM\n");

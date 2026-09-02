@@ -41,22 +41,23 @@
 #define IDS_MINIMIZE_PERSISTENCE_ALWAYS           234
 
 // error strings
-#define IDS_ERROR_INIT_COM                        301
-#define IDS_ERROR_INIT_COMMON_CONTROLS            302
-#define IDS_ERROR_REGISTER_WINDOW_CLASS           303
-#define IDS_ERROR_CREATE_WINDOW                   304
-#define IDS_ERROR_PARSE_HOTKEY                    305
-#define IDS_ERROR_REGISTER_HOTKEY                 306
-#define IDS_ERROR_PARSE_MODIFIER                  307
-#define IDS_ERROR_PARSE_REGEX                     308
-#define IDS_ERROR_REGISTER_MODIFIER               309
-#define IDS_ERROR_REGISTER_EVENTHOOK              310
-#define IDS_ERROR_START_WINDOW_TRACKER            311
-#define IDS_ERROR_CREATE_TRAY_ICON                312
-#define IDS_ERROR_CREATE_MENU                     313
-#define IDS_ERROR_CREATE_DIALOG                   314
-#define IDS_ERROR_LOAD_SETTINGS                   315
-#define IDS_ERROR_SAVE_SETTINGS                   316
+#define IDS_ERROR_ALREADY_RUNNING                 301
+#define IDS_ERROR_INIT_COM                        302
+#define IDS_ERROR_INIT_COMMON_CONTROLS            303
+#define IDS_ERROR_REGISTER_WINDOW_CLASS           304
+#define IDS_ERROR_CREATE_WINDOW                   305
+#define IDS_ERROR_PARSE_HOTKEY                    306
+#define IDS_ERROR_REGISTER_HOTKEY                 307
+#define IDS_ERROR_PARSE_MODIFIER                  308
+#define IDS_ERROR_PARSE_REGEX                     309
+#define IDS_ERROR_REGISTER_MODIFIER               310
+#define IDS_ERROR_REGISTER_EVENTHOOK              311
+#define IDS_ERROR_START_WINDOW_TRACKER            312
+#define IDS_ERROR_CREATE_TRAY_ICON                313
+#define IDS_ERROR_CREATE_MENU                     314
+#define IDS_ERROR_CREATE_DIALOG                   315
+#define IDS_ERROR_LOAD_SETTINGS                   316
+#define IDS_ERROR_SAVE_SETTINGS                   317
 
 // bitmaps
 #define IDB_APP                                   401
