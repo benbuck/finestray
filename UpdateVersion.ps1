@@ -73,7 +73,7 @@ Write-Output "Building"
 Write-Output "Starting new version, please exit when done testing"
 .\build\vstudio-msvc\Release\Finestray.exe
 Start-Sleep -Seconds 2
-# invoke twice to display the settings dialog
+# invoke twice to display the error message
 .\build\vstudio-msvc\Release\Finestray.exe
 Start-Sleep -Seconds 2
 
