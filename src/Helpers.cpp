@@ -33,7 +33,7 @@ bool isOwnedWindow(HWND hwnd) noexcept;
 
 HINSTANCE getInstance() noexcept
 {
-    return GetModuleHandle(nullptr);
+    return GetModuleHandleA(nullptr);
 }
 
 std::string getResourceString(unsigned int id)

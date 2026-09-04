@@ -27,7 +27,7 @@ namespace Bitmap
 
 BitmapHandleWrapper getResource(unsigned int id)
 {
-    HINSTANCE hinstance = GetModuleHandle(nullptr);
+    HINSTANCE hinstance = getInstance();
     BitmapHandleWrapper bitmap(static_cast<HBITMAP>(LoadImageA(hinstance, MAKEINTRESOURCEA(id), IMAGE_BITMAP, 0, 0, 0)));
     if (!bitmap) {
         WARNING_PRINTF(
