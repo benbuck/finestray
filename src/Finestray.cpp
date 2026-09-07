@@ -42,6 +42,10 @@
 #include "WindowInfo.h"
 #include "WindowMessage.h"
 #include "WindowTracker.h"
+#if defined(FINESTRAY_TEST_ENABLED)
+#include "test/UnitTests.h"
+#endif
+
 
 // Windows
 #include <CommCtrl.h>
@@ -139,6 +143,22 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     crtDbgFlag &= ~_CRTDBG_CHECK_CRT_DF;
     _CrtSetDbgFlag(crtDbgFlag);
     // NOLINTEND
+#endif
+
+    // Fast, UI-free unit tests run on every Debug launch with no CLI needed.
+    // Fail-fast (assert + message box + non-zero exit) so failures are noticed.
+    // Must run before the single-instance check so test failures are never
+    // masked by (or disturb) an already-running instance.
+#if defined(FINESTRAY_TEST_ENABLED)
+    if (!Test::runStartupUnitTests()) {
+        assert(false && "debug startup unit tests failed");
+        MessageBoxA(
+            nullptr,
+            "Finestray Debug startup unit tests FAILED. See debug output for details. Exiting.",
+            APP_NAME,
+            MB_ICONERROR | MB_OK);
+        return 1;
+    }
 #endif
 
     INFO_PRINTF("launching %s %s (%s)\n", APP_NAME, APP_VERSION_STRING_SIMPLE, APP_DATE);

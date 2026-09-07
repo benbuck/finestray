@@ -13,5 +13,8 @@ https://github.com/benbuck/finestray/PRIVACY.md
 Finestray uses the cJSON library for JSON parsing, which is available under an "MIT" license
 https://github.com/DaveGamble/cJSON
 
+Finestray uses the doctest library for unit testing, which is available under an "MIT" license
+https://github.com/doctest/doctest
+
 Finestray uses some Google Noto Emoji for image artwork, which is available under an "OFL 1.1" license
 https://github.com/googlefonts/noto-emoji

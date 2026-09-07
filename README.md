@@ -269,4 +269,6 @@ Please see the [privacy policy](PRIVACY.md) for information about privacy concer
 
 Finestray uses the [cJSON library](https://github.com/DaveGamble/cJSON) for JSON parsing.
 
+Finestray uses the [doctest library](https://github.com/doctest/doctest) for unit testing.
+
 Finestray uses some [Google Noto Emoji](https://github.com/googlefonts/noto-emoji) for image artwork.

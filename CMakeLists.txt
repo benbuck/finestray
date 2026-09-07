@@ -95,7 +95,24 @@ add_executable(Finestray WIN32
     src/WindowMessage.h
     src/WindowsUndocumented.h
     src/WinEventHookHandleWrapper.h
+
+    $<$<CONFIG:Debug>:src/test/TestCases_StringUtility.cpp>
+    $<$<CONFIG:Debug>:src/test/TestCases_Enums.cpp>
+    $<$<CONFIG:Debug>:src/test/TestCases_Hotkey.cpp>
+    $<$<CONFIG:Debug>:src/test/TestCases_Settings.cpp>
+    $<$<CONFIG:Debug>:src/test/UnitTestsMain.cpp>
+
     ${CMAKE_CURRENT_BINARY_DIR}/Finestray.ico
+)
+
+# Single guard shared by the test sources above and the call site in
+# src/Finestray.cpp. Keyed off CONFIG, NOT NDEBUG/_DEBUG: custom configs like
+# Analyze define neither NDEBUG nor _DEBUG, so an NDEBUG-based call-site guard
+# compiles the call in while the Debug-only sources above are excluded,
+# producing unresolved-external link errors (LNK2019).
+target_compile_definitions(Finestray
+    PRIVATE
+        $<$<CONFIG:Debug>:FINESTRAY_TEST_ENABLED>
 )
 
 set_target_properties(Finestray
@@ -235,15 +252,26 @@ target_link_options(Finestray
 )
 
 include(cJSON.cmake)
+include(doctest.cmake)
 
 target_link_libraries(Finestray
     PRIVATE
         cJSON
 
+        # header-only doctest, Debug only (startup unit tests, no CLI needed)
+        $<$<CONFIG:Debug>:doctest>
+
         Comctl32.lib
         ShLwApi.lib
         dwmapi.lib
         runtimeobject.lib
+)
+
+# Test TUs need src/ on the include path (they live in src/test/ while app
+# headers are included by bare name). Debug-only so other builds are untouched.
+target_include_directories(Finestray
+    PRIVATE
+        $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
 set(APP_IMAGE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/images/finestray.svg)
