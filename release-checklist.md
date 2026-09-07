@@ -8,33 +8,37 @@
   Add section near top for high level changes
   Add sections at bottom for detailed change logging
 
-- Update version information:
+- run UpdateVersion.ps1 [oldVersion] [newVersion]
 
-    - AppInfo.h
+    - or manually do these:
 
-        - APP_VERSION
-        - APP_VERSION_STRING
-        - APP_VERSION_STRING_SIMPLE
-        - APP_DATE
+        - Update version information:
 
-    - CMakeLists.txt
-        - VERSION
+            - AppInfo.h
 
-    - README.md
-        - Installer file name
+                - APP_VERSION
+                - APP_VERSION_STRING
+                - APP_VERSION_STRING_SIMPLE
+                - APP_DATE
 
-- Commit above changes
+            - CMakeLists.txt
+                - VERSION
 
-- Build and check everything:
-    - build-all.bat
-    - analyze-all.bat
-    - cppcheck-all.bat
-    - tidy-all.bat
+            - README.md
+                - Installer file name
 
-- Test app and installer
+        - Build and check everything:
+            - build-all.bat
+            - analyze-all.bat
+            - cppcheck-all.bat
+            - tidy-all.bat
 
-- Add git tag
-    - git tag v[VERSION]
+        - Commit above changes
+
+        - Test app and installer
+
+        - Add git tag
+            - git tag v[VERSION]
 
 - Push with tag, push branch
   git push origin main:main --tags
