@@ -1,0 +1,75 @@
+# Copyright 2020 Benbuck Nason
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Test publish winget package (dry run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to test publish (e.g. v0.5)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  winget-dryrun:
+    name: Winget dry run (no submit)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Resolve installer URL and version
+        id: resolve
+        run: |
+          $wingetPackage = "Benbuck.Finestray"
+          Write-Output "package=$wingetPackage" >> $env:GITHUB_OUTPUT
+
+          $requestedTag = "${{ inputs.tag }}"
+          if ([string]::IsNullOrEmpty($requestedTag)) {
+            Write-Error "No tag given and no matching vX.Y release found."
+            exit 1
+          }
+
+          $version = $requestedTag -replace '^v', ''
+          $tagWithV = "v$version"
+          $installerUrl = "https://github.com/benbuck/finestray/releases/download/$tagWithV/Finestray-$version-win64.exe"
+
+          try {
+            Invoke-WebRequest -Uri $installerUrl -Method Head | Out-Null
+          } catch {
+            Write-Error "Installer URL not reachable: $installerUrl"
+            exit 1
+          }
+
+          Write-Output "Installer URL: $installerUrl"
+          Write-Output "Version: $version"
+          Write-Output "installer-url=$installerUrl" >> $env:GITHUB_OUTPUT
+          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Generate winget manifests (no submit)
+        run: |
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          New-Item -ItemType Directory -Path out -Force | Out-Null
+          .\wingetcreate.exe update "${{ steps.resolve.outputs.package }}" --version "${{ steps.resolve.outputs.version }}" --urls "${{ steps.resolve.outputs.installer-url }}" --out out
+          Get-ChildItem out -Recurse | Select-Object FullName, Length
+
+      - name: Upload generated manifests
+        uses: actions/upload-artifact@v7
+        with:
+          name: winget-manifests
+          path: out/**/*.yaml

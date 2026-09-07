@@ -42,12 +42,20 @@
 - Update [release notes](https://github.com/benbuck/finestray/releases)
 
 - Deploy winget package
-    - Using github workflow
-    - Using wingetcreate:
-      wingetcreate update Benbuck.Finestray --version [new version] --urls https://github.com/benbuck/finestray/releases/download/v[new version]/Finestray-[new version]-win64.exe
-    - manually clone winget-pkgs repo (https://github.com/microsoft/winget-pkgs.git) and add manifests for new version of Benbuck.Finestray
-    - Create winget-pkgs github issue
-    - Resolve issue with pull request including new manifests
+    - Auto-submits winget-pkgs PR on release publish via .github/workflows/publish-winget.yml
+        - If it fails, re-run it manually from Actions
+        - Run the dry-run workflow (Test winget package) to inspect manifests
+        - FINESTRAY_WINGET secret:
+            - GitHub classic PAT with `repo` scope
+            - Renew at Settings > Developer settings > Tokens (classic)
+            - Paste into repo Settings > Secrets > Actions
+    - Fallback:
+        - wingetcreate update Benbuck.Finestray --version [new version] --urls https://github.com/benbuck/finestray/releases/download/v[new version]/Finestray-[new version]-win64.exe --submit --token [PAT]
+    - Manual fallback:
+        - Clone winget-pkgs repo (https://github.com/microsoft/winget-pkgs.git)
+        - Add manifests for new version of Benbuck.Finestray
+        - Create winget-pkgs github issue
+        - Resolve issue with pull request including new manifests
 
 ## Legal
 
