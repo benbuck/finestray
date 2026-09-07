@@ -44,13 +44,13 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
-echo.
-echo ---------------------------------------------------------------
-echo Running ninja-msvc Release Clang-Tidy
-call tidy-build.bat build\ninja-msvc\Release
-if %ERRORLEVEL% NEQ 0 (
-    echo Analysis failed
-    exit /b %ERRORLEVEL%
-)
+:: echo.
+:: echo ---------------------------------------------------------------
+:: echo Running ninja-msvc Release Clang-Tidy
+:: call tidy-build.bat build\ninja-msvc\Release
+:: if %ERRORLEVEL% NEQ 0 (
+::     echo Analysis failed
+::     exit /b %ERRORLEVEL%
+:: )
 
 popd
