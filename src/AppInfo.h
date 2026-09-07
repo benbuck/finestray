@@ -18,10 +18,10 @@
 
 #define APP_NAME "Finestray"
 #define APP_NAME_W L"Finestray"
-#define APP_VERSION 0, 5, 0, 0
-#define APP_VERSION_STRING "0.5.0.0"
-#define APP_VERSION_STRING_SIMPLE "0.5"
-#define APP_DATE "2026-08-17"
+#define APP_VERSION 0, 6, 0, 0
+#define APP_VERSION_STRING "0.6.0.0"
+#define APP_VERSION_STRING_SIMPLE "0.6"
+#define APP_DATE "2026-09-07"
 #define APP_COPYRIGHT "Copyright 2020 Benbuck Nason"
 
 // NOLINTEND(*-macro-*)

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6] - 2026-09-07
+
+- Improve portable mode support by reordering directory preference
+- When already running, show an error instead of the settings dialog
+- Switch from NSIS to Inno for installer
+- Add support for minimizing by right clicking the title bar while holding the override modifier
+- Remember window maximize state for restore
+
 ## [0.5] - 2026-08-17
 
 - Support tray minimize for UWP windows
@@ -70,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public pre-release
 
-[unreleased]: https://github.com/benbuck/finestray/compare/v0.5...HEAD
+[unreleased]: https://github.com/benbuck/finestray/compare/v0.6...HEAD
+[0.6]: https://github.com/benbuck/finestray/compare/v0.5...v0.6
 [0.5]: https://github.com/benbuck/finestray/compare/v0.4...v0.5
 [0.4]: https://github.com/benbuck/finestray/compare/v0.3...v0.4
 [0.3]: https://github.com/benbuck/finestray/compare/v0.2...v0.3
