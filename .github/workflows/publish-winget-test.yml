@@ -41,8 +41,12 @@ jobs:
 
           $requestedTag = "${{ inputs.tag }}"
           if ([string]::IsNullOrEmpty($requestedTag)) {
-            Write-Error "No tag given and no matching vX.Y release found."
-            exit 1
+            $github = Invoke-RestMethod -uri "https://api.github.com/repos/benbuck/finestray/releases"
+            $requestedTag = ($github | Where-Object { $_.tag_name -match '^v\d+\.\d+$' } | Select-Object -ExpandProperty tag_name -First 1)
+            if ([string]::IsNullOrEmpty($requestedTag)) {
+              Write-Error "No tag given and no matching vX.Y release found."
+              exit 1
+            }
           }
 
           $version = $requestedTag -replace '^v', ''

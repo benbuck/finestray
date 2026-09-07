@@ -48,8 +48,12 @@ jobs:
             $requestedTag = "${{ github.event.release.tag_name }}"
           }
           if ([string]::IsNullOrEmpty($requestedTag)) {
-             Write-Error "No tag given and no matching vX.Y release found."
-             exit 1
+            $github = Invoke-RestMethod -uri "https://api.github.com/repos/benbuck/finestray/releases"
+            $requestedTag = ($github | Where-Object { $_.tag_name -match '^v\d+\.\d+$' } | Select-Object -ExpandProperty tag_name -First 1)
+            if ([string]::IsNullOrEmpty($requestedTag)) {
+              Write-Error "No tag given and no matching vX.Y release found."
+              exit 1
+            }
           }
 
           $version = $requestedTag -replace '^v', ''
@@ -67,6 +71,23 @@ jobs:
           Write-Output "Version: $version"
           Write-Output "installer-url=$installerUrl" >> $env:GITHUB_OUTPUT
           Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Sync winget-pkgs fork
+        run: |
+          if ([string]::IsNullOrEmpty($env:WINGET_TOKEN)) {
+            Write-Output "No token, skipping fork sync (submit step will report the missing secret)."
+            exit 0
+          }
+          # Self-heal the "forked repository could not be synced" submit failure:
+          # fast-forward benbuck/winget-pkgs master to upstream before wingetcreate runs.
+          # Non-fatal: wingetcreate will surface any remaining submit problem.
+          try {
+            $body = @{ branch = "master" } | ConvertTo-Json
+            Invoke-RestMethod -Method Post -Uri "https://api.github.com/repos/benbuck/winget-pkgs/merge-upstream" -Headers @{ Authorization = "Bearer $env:WINGET_TOKEN" } -Body $body -ContentType "application/json" | Out-Null
+            Write-Output "Fork synced with upstream."
+          } catch {
+            Write-Output "Fork sync skipped (may already be in sync)."
+          }
 
       - name: Submit winget package
         run: |

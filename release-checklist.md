@@ -46,8 +46,8 @@
 - Update [release notes](https://github.com/benbuck/finestray/releases)
 
 - Deploy winget package
-    - Auto-submits winget-pkgs PR on release publish via .github/workflows/publish-winget.yml
-        - If it fails, re-run it manually from Actions
+    - Auto-submits winget-pkgs PR on release publish via .github/workflows/publish-winget.yml (requires FINESTRAY_WINGET secret, else trigger manually from Actions)
+        - If submit fails with a fork-sync error, sync https://github.com/benbuck/winget-pkgs with upstream and re-run
         - Run the dry-run workflow (Test winget package) to inspect manifests
         - FINESTRAY_WINGET secret:
             - GitHub classic PAT with `repo` scope
