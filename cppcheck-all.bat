@@ -19,6 +19,10 @@ pushd %~dp0
 
 set CPPCHECK_OPTIONS=-j %NUMBER_OF_PROCESSORS% --check-level=exhaustive --enable=all --inconclusive --inline-suppr --library=windows --platform=win32A --quiet --safety --suppress=checkersReport --suppress=missingIncludeSystem  --suppress=*:cJSON.c
 
+if not exist build-cppcheck (
+    mkdir build-cppcheck
+)
+
 echo.
 echo ---------------------------------------------------------------
 echo Running Finestray Cppcheck
