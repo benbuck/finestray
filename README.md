@@ -116,9 +116,7 @@ The available settings correspond to some of the above features. The settings ar
   `C:\Users\Your-Name\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`) which which launches the Finestray
   executable when you log into Windows.
 - **Enable log file**:
-  This toggles whether Finestray saves logging information to a file or not. If enabled, Finestray first tries to save
-  the log file to `%LOCALAPPDATA%\\Finestray\\Finestray.log`, and if that's not possible it saves in the same location
-  as the Finestray application.
+  This toggles whether Finestray saves logging information to a file or not.
 - **Minimize placement**:
   This controls where to place minimized windows minimized using Finestray. The choices are:
     - **Tray**: the window will get an icon in the tray.
@@ -163,9 +161,10 @@ At the bottom of the Settings dialog are six buttons: Help, About, Reset, Exit, 
 - **OK**:
   Closes the Settings window and saves settings.
 
-Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save them to
-`%LOCALAPPDATA%\\Finestray\\Finestray.json`, and if that's not possible it saves them in the same location as the
-Finestray application.
+Settings are automatically stored in a file called "Finestray.json". Finestray first tries to save the file to the same
+location as the Finestray application, and if that's not possible (for example if that directory is not writable) it
+saves them to `%LOCALAPPDATA%\\Finestray\\Finestray.json`. If logging is enabled, the log file is saved to the same
+directory as the settings file, and is called "Finestray.log".
 
 ### Modifiers and Hotkeys
 
