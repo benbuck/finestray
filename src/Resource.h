@@ -78,7 +78,7 @@
 #define IDC_HOTKEY_MINIMIZE                      1006
 #define IDC_HOTKEY_MINIMIZE_ALL                  1007
 #define IDC_HOTKEY_RESTORE                       1008
-#define IDC_HOTKEY_RESTORE_ALL                   1019
+#define IDC_HOTKEY_RESTORE_ALL                   1009
 #define IDC_HOTKEY_MENU                          1010
 #define IDC_MODIFIER_OVERRIDE                    1011
 #define IDC_AUTO_TRAY_LIST                       1012
@@ -88,7 +88,7 @@
 #define IDC_AUTO_TRAY_EVENT_OPEN                 1016
 #define IDC_AUTO_TRAY_EVENT_MINIMIZE             1017
 #define IDC_AUTO_TRAY_EVENT_OPEN_AND_MINIMIZE    1018
-#define IDC_AUTO_TRAY_PERSIST_NEVER              1029
+#define IDC_AUTO_TRAY_PERSIST_NEVER              1019
 #define IDC_AUTO_TRAY_PERSIST_ALWAYS             1020
 #define IDC_AUTO_TRAY_ITEM_UPDATE                1021
 #define IDC_AUTO_TRAY_ITEM_ADD                   1022
