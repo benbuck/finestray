@@ -26,11 +26,11 @@
 #include <wrl/client.h>
 
 // Standard library
-#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
+#include <ranges>
 #include <span>
 #include <vector>
 

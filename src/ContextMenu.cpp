@@ -14,7 +14,6 @@
 
 // App
 #include "ContextMenu.h"
-
 #include "AppInfo.h"
 #include "Bitmap.h"
 #include "BitmapHandleWrapper.h"

@@ -15,17 +15,13 @@
 // App
 #include "AboutDialog.h"
 #include "AppInfo.h"
-#include "Bitmap.h"
-#include "BitmapHandleWrapper.h"
 #include "COMLibraryWrapper.h"
 #include "ContextMenu.h"
 #include "File.h"
-#include "HandleWrapper.h"
 #include "Helpers.h"
 #include "Hotkey.h"
 #include "IconHandleWrapper.h"
 #include "Log.h"
-#include "MenuHandleWrapper.h"
 #include "Modifiers.h"
 #include "Monitor.h"
 #include "MouseTracker.h"
@@ -38,14 +34,12 @@
 #include "VirtualDesktop.h"
 #include "WinEventHookHandleWrapper.h"
 #include "WindowHandleWrapper.h"
-#include "WindowIcon.h"
 #include "WindowInfo.h"
 #include "WindowMessage.h"
 #include "WindowTracker.h"
 #if defined(FINESTRAY_TEST_ENABLED)
 #include "test/UnitTests.h"
 #endif
-
 
 // Windows
 #include <CommCtrl.h>
@@ -55,10 +49,8 @@
 
 // Standard library
 #include <cassert>
-#include <ranges>
 #include <regex>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace

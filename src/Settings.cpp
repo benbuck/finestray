@@ -14,7 +14,6 @@
 
 // App
 #include "Settings.h"
-#include "AppInfo.h"
 #include "CJsonWrapper.h"
 #include "File.h"
 #include "Helpers.h"
