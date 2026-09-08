@@ -118,19 +118,18 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
         return;
     }
 
-    item.maximized_ = IsZoomed(hwnd) != FALSE;
-
-    // UWP app windows (ApplicationFrameWindow) do not stay hidden when hidden with ShowWindow,
-    // so minimize them to a hidden virtual desktop instead
     if (isUwpWindow(hwnd)) {
-        // move to virtual desktop
+        // UWP app windows (ApplicationFrameWindow) do not stay hidden when hidden with ShowWindow,
+        // so "minimize" them by moving them to a hidden virtual desktop instead
         if (!VirtualDesktop::minimize(hwnd)) {
             ERROR_PRINTF("failed to minimize UWP window %#x to hidden virtual desktop\n", hwnd);
         }
     } else {
         // minimize and hide window
         // return values intentionally ignored, ShowWindow returns previous visibility
-        ShowWindow(hwnd, SW_MINIMIZE);
+        if (!IsIconic(hwnd)) {
+            ShowWindow(hwnd, SW_MINIMIZE);
+        }
         ShowWindow(hwnd, SW_HIDE);
 
         if (isWindowUserVisible(hwnd)) {
@@ -181,9 +180,12 @@ void restore(HWND hwnd)
     const Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
         WARNING_PRINTF("unknown window restored %#x\n", hwnd);
+
         // show and restore window
         // return value intentionally ignored, ShowWindow returns previous visibility
-        ShowWindow(hwnd, SW_SHOWNORMAL);
+        ShowWindow(hwnd, SW_SHOW);
+        ShowWindow(hwnd, SW_RESTORE);
+
         // make window foreground
         // return value intentionally ignored, SetForegroundWindow returns whether brought to foreground
         SetForegroundWindow(hwnd);
@@ -197,12 +199,14 @@ void restore(HWND hwnd)
         VirtualDesktop::restore(hwnd);
         if (IsIconic(hwnd)) {
             // return value intentionally ignored, ShowWindow returns previous visibility
-            ShowWindow(hwnd, item.maximized_ ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+            ShowWindow(hwnd, SW_SHOW);
+            ShowWindow(hwnd, SW_RESTORE);
         }
     } else {
         // show and restore window
         // return value intentionally ignored, ShowWindow returns previous visibility
-        ShowWindow(hwnd, item.maximized_ ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+        ShowWindow(hwnd, SW_SHOW);
+        ShowWindow(hwnd, SW_RESTORE);
 
         if (!isWindowUserVisible(hwnd)) {
             ERROR_PRINTF("window is not visible after restore: %#x\n", hwnd);

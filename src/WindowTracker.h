@@ -37,7 +37,6 @@ struct Item
     std::string title_;
     bool visible_ {};
     bool minimized_ {};
-    bool maximized_ {};
     MinimizePersistence minimizePersistence_ { MinimizePersistence::Never };
     std::shared_ptr<TrayIcon> trayIcon_;
 };
