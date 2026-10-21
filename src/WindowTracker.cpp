@@ -104,19 +104,24 @@ void stop() noexcept
     items_.clear();
     itemIndex_.clear();
 
-    if (debounceTimerActive_) {
-        if (!KillTimer(messageHwnd_, debounceTimerId_)) {
-            ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+    // The message window may already have been destroyed during shutdown, in
+    // which case its timers were destroyed with it.
+    if (messageHwnd_ && IsWindow(messageHwnd_)) {
+        if (debounceTimerActive_) {
+            if (!KillTimer(messageHwnd_, debounceTimerId_)) {
+                ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+            }
         }
-        debounceTimerActive_ = false;
+
+        if (timer_) {
+            if (!KillTimer(messageHwnd_, timer_)) {
+                ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+            }
+        }
     }
 
-    if (timer_) {
-        if (!KillTimer(messageHwnd_, timer_)) {
-            ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
-        }
-        timer_ = 0;
-    }
+    debounceTimerActive_ = false;
+    timer_ = 0;
 
     addWindowCallback_ = nullptr;
     messageHwnd_ = nullptr;
