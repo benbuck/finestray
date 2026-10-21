@@ -48,6 +48,8 @@ struct TrackedWindow
 
 HWND messageHwnd_;
 UINT pollMillis_;
+// Allow the system to coalesce the poll timer with other timers.
+constexpr ULONG timerToleranceMillis_ = 50;
 void (*addWindowCallback_)(HWND);
 UINT_PTR timer_;
 Items items_;
@@ -77,9 +79,9 @@ bool start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
 
     if (pollMillis_ > 0) {
         DEBUG_PRINTF("WindowTracker setting poll timer to %u\n", pollMillis_);
-        timer_ = SetTimer(messageHwnd_, 1, pollMillis_, timerProc);
+        timer_ = SetCoalescableTimer(messageHwnd_, 1, pollMillis_, timerProc, timerToleranceMillis_);
         if (!timer_) {
-            ERROR_PRINTF("SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+            ERROR_PRINTF("SetCoalescableTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
             return false;
         }
     }
