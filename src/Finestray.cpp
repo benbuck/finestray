@@ -804,11 +804,9 @@ void minimizeAllWindows()
 {
     std::vector<HWND> windowsToMinimize;
 
-    WindowTracker::enumerate([&windowsToMinimize](const WindowTracker::Item & item) {
-        if (item.visible_ && !item.minimized_) {
-            DEBUG_PRINTF("minimizing window: %#x\n", item.hwnd_);
-            windowsToMinimize.push_back(item.hwnd_);
-        }
+    WindowTracker::enumerateVisibleWindows([&windowsToMinimize](HWND hwnd) {
+        DEBUG_PRINTF("minimizing window: %#x\n", hwnd);
+        windowsToMinimize.push_back(hwnd);
         return true;
     });
 

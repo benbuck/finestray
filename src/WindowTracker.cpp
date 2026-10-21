@@ -69,6 +69,7 @@ void updateItem(WindowTracker::Item & item, bool visible);
 void updateItemTitle(WindowTracker::Item & item);
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
+BOOL CALLBACK enumVisibleWindowsProc(HWND hwnd, LPARAM lParam);
 void restoreRemovedVirtualDesktopWindows();
 
 } // anonymous namespace
@@ -385,6 +386,20 @@ void reverseEnumerate(const std::function<bool(const Item &)> & callback)
     enumerating_ = false;
 }
 
+void enumerateVisibleWindows(const std::function<bool(HWND)> & callback)
+{
+    std::vector<HWND> windows;
+    if (!EnumWindows(enumVisibleWindowsProc, reinterpret_cast<LPARAM>(&windows))) {
+        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    for (HWND hwnd : windows) {
+        if (!callback(hwnd)) {
+            break;
+        }
+    }
+}
+
 } // namespace WindowTracker
 
 namespace
@@ -551,6 +566,17 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 
     std::vector<TrackedWindow> & windows = *reinterpret_cast<std::vector<TrackedWindow> *>(lParam);
     windows.push_back(TrackedWindow { hwnd, visible });
+    return TRUE;
+}
+
+BOOL CALLBACK enumVisibleWindowsProc(HWND hwnd, LPARAM lParam)
+{
+    if (!isWindowUserVisible(hwnd) || !VirtualDesktop::isWindowOnCurrentDesktop(hwnd)) {
+        return TRUE;
+    }
+
+    std::vector<HWND> & windows = *reinterpret_cast<std::vector<HWND> *>(lParam);
+    windows.push_back(hwnd);
     return TRUE;
 }
 

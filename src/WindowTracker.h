@@ -52,5 +52,6 @@ void updateMinimizePlacement(MinimizePlacement minimizePlacement);
 bool isMinimized(HWND hwnd);
 void enumerate(const std::function<bool(const Item &)> & callback);
 void reverseEnumerate(const std::function<bool(const Item &)> & callback);
+void enumerateVisibleWindows(const std::function<bool(HWND)> & callback);
 
 } // namespace WindowTracker

@@ -22,7 +22,6 @@
 #include "MenuHandleWrapper.h"
 #include "Resource.h"
 #include "StringUtility.h"
-#include "VirtualDesktop.h"
 #include "WindowIcon.h"
 #include "WindowInfo.h"
 #include "WindowTracker.h"
@@ -75,11 +74,14 @@ bool show(HWND hwnd, MinimizePlacement minimizePlacement)
     std::vector<BitmapHandleWrapper> bitmaps;
 
     if (minimizePlacementIncludesMenu(minimizePlacement)) {
+        WindowTracker::enumerateVisibleWindows([&](HWND window) {
+            DEBUG_PRINTF("adding visible window: %#x - '%s'\n", window, WindowInfo::getTitle(window).c_str());
+            visibleWindows_.push_back(window);
+            return true;
+        });
+
         WindowTracker::enumerate([&](const WindowTracker::Item & item) {
-            if (item.visible_ && VirtualDesktop::isWindowOnCurrentDesktop(item.hwnd_)) {
-                DEBUG_PRINTF("adding visible window: %#x - '%s'\n", item.hwnd_, item.title_.c_str());
-                visibleWindows_.push_back(item.hwnd_);
-            } else if (item.minimized_) {
+            if (item.minimized_) {
                 DEBUG_PRINTF("adding minimized window: %#x - '%s'\n", item.hwnd_, item.title_.c_str());
                 minimizedWindows_.push_back(item.hwnd_);
             }
