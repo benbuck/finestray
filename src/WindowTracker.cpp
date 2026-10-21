@@ -38,6 +38,12 @@ namespace
 
 using Items = std::list<WindowTracker::Item>;
 
+struct TrackedWindow
+{
+    HWND hwnd_ {};
+    bool visible_ {};
+};
+
 HWND messageHwnd_;
 UINT pollMillis_;
 void (*addWindowCallback_)(HWND);
@@ -46,8 +52,8 @@ Items items_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
-Items::iterator addItem(HWND hwnd);
-void updateItem(WindowTracker::Item & item, HWND hwnd);
+Items::iterator addItem(HWND hwnd, bool visible);
+void updateItem(WindowTracker::Item & item, bool visible);
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 void restoreRemovedVirtualDesktopWindows();
@@ -110,12 +116,13 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
     if (it == items_.end()) {
         // A window can be shown and minimized faster than the tracking scan
         // runs, so start tracking it on demand.
-        if (!isWindowUserVisible(hwnd)) {
+        const bool visible = isWindowUserVisible(hwnd);
+        if (!visible) {
             DEBUG_PRINTF("not minimizing unknown window %#x\n", hwnd);
             return;
         }
         DEBUG_PRINTF("tracking window %#x on demand\n", hwnd);
-        it = addItem(hwnd);
+        it = addItem(hwnd, visible);
     }
 
     Item & item = *it;
@@ -340,10 +347,9 @@ Items::iterator findWindow(HWND hwnd)
     });
 }
 
-Items::iterator addItem(HWND hwnd)
+Items::iterator addItem(HWND hwnd, bool visible)
 {
     const std::string title = WindowInfo::getTitle(hwnd);
-    const bool visible = isWindowUserVisible(hwnd);
     DEBUG_PRINTF("window added %#x - '%s' (%s)\n", hwnd, title.c_str(), visible ? "visible" : "invisible");
 
     assert(!enumerating_);
@@ -386,17 +392,16 @@ void restoreRemovedVirtualDesktopWindows()
     }
 }
 
-void updateItem(WindowTracker::Item & item, HWND hwnd)
+void updateItem(WindowTracker::Item & item, bool visible)
 {
-    const bool visible = isWindowUserVisible(hwnd);
     if (item.visible_ != visible) {
-        DEBUG_PRINTF("\tchanged window %#x visibility: to %s\n", hwnd, StringUtility::boolToCString(visible));
+        DEBUG_PRINTF("\tchanged window %#x visibility: to %s\n", item.hwnd_, StringUtility::boolToCString(visible));
         item.visible_ = visible;
     }
 
-    const std::string title = WindowInfo::getTitle(hwnd);
+    const std::string title = WindowInfo::getTitle(item.hwnd_);
     if (item.title_ != title) {
-        DEBUG_PRINTF("\tchanged window %#x title: to %s\n", hwnd, title.c_str());
+        DEBUG_PRINTF("\tchanged window %#x title: to %s\n", item.hwnd_, title.c_str());
         item.title_ = title;
         if (item.trayIcon_) {
             item.trayIcon_->updateTip(item.title_);
@@ -410,14 +415,17 @@ VOID timerProc(
     UINT_PTR /* unnamedParam3 */,
     DWORD /* unnamedParam4 */)
 {
-    std::vector<HWND> newWindows;
+    std::vector<TrackedWindow> newWindows;
     if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&newWindows))) {
         ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
     for (Items::iterator it = items_.begin(); it != items_.end();) {
-        const std::vector<HWND>::const_iterator nit = std::ranges::find(newWindows, it->hwnd_);
+        const std::vector<TrackedWindow>::const_iterator nit =
+            std::ranges::find_if(newWindows, [hwnd = it->hwnd_](const TrackedWindow & trackedWindow) {
+                return trackedWindow.hwnd_ == hwnd;
+            });
         if (nit != newWindows.end()) {
             ++it;
         } else {
@@ -426,18 +434,21 @@ VOID timerProc(
     }
 
     // check for added windows
-    for (HWND hwnd : newWindows) {
-        if (findWindow(hwnd) == items_.end()) {
-            addItem(hwnd);
+    for (const TrackedWindow & trackedWindow : newWindows) {
+        if (findWindow(trackedWindow.hwnd_) == items_.end()) {
+            addItem(trackedWindow.hwnd_, trackedWindow.visible_);
             if (addWindowCallback_) {
-                addWindowCallback_(hwnd);
+                addWindowCallback_(trackedWindow.hwnd_);
             }
         }
     }
 
     // check for changed window titles or visibility
-    for (WindowTracker::Item & item : items_) {
-        updateItem(item, item.hwnd_);
+    for (const TrackedWindow & trackedWindow : newWindows) {
+        const Items::iterator it = findWindow(trackedWindow.hwnd_);
+        if (it != items_.end()) {
+            updateItem(*it, trackedWindow.visible_);
+        }
     }
 
     // restore any windows that were on the hidden virtual desktop if the user removed it
@@ -449,16 +460,20 @@ BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
     // Track windows we minimized to the tray even though they are hidden,
     // otherwise only track windows the user can currently see.
     bool tracked = WindowTracker::isMinimized(hwnd);
-    if (!tracked && IsWindowVisible(hwnd)) {
-        tracked = !isWindowStealth(hwnd);
+    bool visible = false;
+    if (tracked) {
+        visible = isWindowUserVisible(hwnd);
+    } else if (IsWindowVisible(hwnd)) {
+        visible = !isWindowStealth(hwnd);
+        tracked = visible;
     }
 
     if (!tracked) {
         return TRUE;
     }
 
-    std::vector<HWND> & windows = *reinterpret_cast<std::vector<HWND> *>(lParam);
-    windows.push_back(hwnd);
+    std::vector<TrackedWindow> & windows = *reinterpret_cast<std::vector<TrackedWindow> *>(lParam);
+    windows.push_back(TrackedWindow { hwnd, visible });
     return TRUE;
 }
 
