@@ -83,6 +83,14 @@ void onMinimizeEvent(
     LONG idChild,
     DWORD dwEventThread,
     DWORD dwmsEventTime);
+void onTrackableEvent(
+    HWINEVENTHOOK hwineventhook,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD dwEventThread,
+    DWORD dwmsEventTime);
 bool onMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 POINT hitTestPoint(HWND hwnd, POINT physicalPt);
 bool readSettingsFromFile(const std::string & fileName, Settings & settings);
@@ -273,6 +281,25 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         return IDS_ERROR_REGISTER_EVENTHOOK;
     }
 
+    DEBUG_PRINTF("registering event hooks to monitor window tracking events\n");
+    WinEventHookHandleWrapper showHideEventHook(
+        SetWinEventHook(EVENT_OBJECT_DESTROY, EVENT_OBJECT_HIDE, nullptr, onTrackableEvent, 0, 0, WINEVENT_OUTOFCONTEXT));
+    if (!showHideEventHook) {
+        WARNING_PRINTF("failed to hook show/hide events: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    WinEventHookHandleWrapper nameEventHook(
+        SetWinEventHook(EVENT_OBJECT_NAMECHANGE, EVENT_OBJECT_NAMECHANGE, nullptr, onTrackableEvent, 0, 0, WINEVENT_OUTOFCONTEXT));
+    if (!nameEventHook) {
+        WARNING_PRINTF("failed to hook name events: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
+    WinEventHookHandleWrapper cloakEventHook(
+        SetWinEventHook(EVENT_OBJECT_CLOAKED, EVENT_OBJECT_UNCLOAKED, nullptr, onTrackableEvent, 0, 0, WINEVENT_OUTOFCONTEXT));
+    if (!cloakEventHook) {
+        WARNING_PRINTF("failed to hook cloak events: %s\n", StringUtility::lastErrorString().c_str());
+    }
+
     DEBUG_PRINTF("starting mouse tracker\n");
     if (!MouseTracker::start(onMouseHook)) {
         ERROR_PRINTF("failed to start mouse tracker\n");
@@ -291,7 +318,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    if (!WindowTracker::start(appWindow_, settings_.pollInterval_, onAddWindow)) {
+    if (!WindowTracker::start(appWindow_, onAddWindow)) {
         errorMessage(IDS_ERROR_START_WINDOW_TRACKER);
         return IDS_ERROR_START_WINDOW_TRACKER;
     }
@@ -312,6 +339,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     // if there are any minimized windows, restore them
     restoreAllWindows();
 
+    cloakEventHook.destroy();
+    nameEventHook.destroy();
+    showHideEventHook.destroy();
     minimizeEventHook.destroy();
     trayIcon_.destroy();
     stop();
@@ -880,6 +910,30 @@ void onMinimizeEvent(
             DEBUG_PRINTF("\tminimizing\n");
             minimizeWindow(hwnd, minimizePersistence);
         }
+    }
+}
+
+void onTrackableEvent(
+    HWINEVENTHOOK /* hwineventhook */,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD /* dwEventThread */,
+    DWORD /* dwmsEventTime */)
+{
+    if ((hwnd == nullptr) || (idObject != OBJID_WINDOW) || (idChild != 0)) {
+        return;
+    }
+
+    switch (event) {
+        case EVENT_OBJECT_NAMECHANGE: WindowTracker::updateTitle(hwnd); break;
+        case EVENT_OBJECT_SHOW:
+        case EVENT_OBJECT_HIDE:
+        case EVENT_OBJECT_DESTROY:
+        case EVENT_OBJECT_CLOAKED:
+        case EVENT_OBJECT_UNCLOAKED: WindowTracker::requestScan(); break;
+        default: break;
     }
 }
 

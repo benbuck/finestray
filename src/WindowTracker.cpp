@@ -47,11 +47,17 @@ struct TrackedWindow
 };
 
 HWND messageHwnd_;
-UINT pollMillis_;
-// Allow the system to coalesce the poll timer with other timers.
-constexpr ULONG timerToleranceMillis_ = 50;
 void (*addWindowCallback_)(HWND);
 UINT_PTR timer_;
+bool debounceTimerActive_ {};
+
+constexpr UINT_PTR backstopTimerId_ = 1;
+constexpr UINT_PTR debounceTimerId_ = 2;
+constexpr UINT scanDebounceMillis_ = 200;
+constexpr UINT scanBackstopMillis_ = 30000;
+// Allow the system to coalesce the backstop timer with other timers.
+constexpr ULONG timerToleranceMillis_ = 50;
+
 Items items_;
 ItemIndex itemIndex_;
 std::vector<TrackedWindow> trackedWindows_;
@@ -60,6 +66,7 @@ bool enumerating_;
 Items::iterator findWindow(HWND hwnd);
 Items::iterator addItem(HWND hwnd, bool visible);
 void updateItem(WindowTracker::Item & item, bool visible);
+void updateItemTitle(WindowTracker::Item & item);
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 void restoreRemovedVirtualDesktopWindows();
@@ -69,22 +76,22 @@ void restoreRemovedVirtualDesktopWindows();
 namespace WindowTracker
 {
 
-bool start(HWND messageHwnd, UINT pollMillis, void (*addWindowCallback)(HWND))
+bool start(HWND messageHwnd, void (*addWindowCallback)(HWND))
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
     messageHwnd_ = messageHwnd;
-    pollMillis_ = pollMillis;
     addWindowCallback_ = addWindowCallback;
 
-    if (pollMillis_ > 0) {
-        DEBUG_PRINTF("WindowTracker setting poll timer to %u\n", pollMillis_);
-        timer_ = SetCoalescableTimer(messageHwnd_, 1, pollMillis_, timerProc, timerToleranceMillis_);
-        if (!timer_) {
-            ERROR_PRINTF("SetCoalescableTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
-            return false;
-        }
+    DEBUG_PRINTF("WindowTracker setting backstop timer to %u ms\n", scanBackstopMillis_);
+    timer_ = SetCoalescableTimer(messageHwnd_, backstopTimerId_, scanBackstopMillis_, timerProc, timerToleranceMillis_);
+    if (!timer_) {
+        ERROR_PRINTF("SetCoalescableTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+        return false;
     }
+
+    // Populate the tracked window list without waiting for the backstop.
+    requestScan();
 
     return true;
 }
@@ -97,6 +104,13 @@ void stop() noexcept
     items_.clear();
     itemIndex_.clear();
 
+    if (debounceTimerActive_) {
+        if (!KillTimer(messageHwnd_, debounceTimerId_)) {
+            ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+        }
+        debounceTimerActive_ = false;
+    }
+
     if (timer_) {
         if (!KillTimer(messageHwnd_, timer_)) {
             ERROR_PRINTF("KillTimer() failed: %ld\n", GetLastError());
@@ -105,8 +119,32 @@ void stop() noexcept
     }
 
     addWindowCallback_ = nullptr;
-    pollMillis_ = 0;
     messageHwnd_ = nullptr;
+}
+
+void requestScan() noexcept
+{
+    if (!messageHwnd_ || debounceTimerActive_) {
+        return;
+    }
+
+    debounceTimerActive_ = true;
+    if (!SetTimer(messageHwnd_, debounceTimerId_, scanDebounceMillis_, timerProc)) {
+        debounceTimerActive_ = false;
+        WARNING_PRINTF("could not request window scan, SetTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
+    }
+}
+
+void updateTitle(HWND hwnd)
+{
+    assert(!enumerating_);
+
+    const Items::iterator it = findWindow(hwnd);
+    if ((it == items_.end()) || !it->trayIcon_) {
+        return;
+    }
+
+    updateItemTitle(*it);
 }
 
 void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistence minimizePersistence)
@@ -407,6 +445,18 @@ void restoreRemovedVirtualDesktopWindows()
     }
 }
 
+void updateItemTitle(WindowTracker::Item & item)
+{
+    assert(item.trayIcon_);
+
+    const std::string title = WindowInfo::getTitle(item.hwnd_);
+    if (item.title_ != title) {
+        DEBUG_PRINTF("\tchanged window %#x title: to %s\n", item.hwnd_, title.c_str());
+        item.title_ = title;
+        item.trayIcon_->updateTip(item.title_);
+    }
+}
+
 void updateItem(WindowTracker::Item & item, bool visible)
 {
     if (item.visible_ != visible) {
@@ -415,21 +465,27 @@ void updateItem(WindowTracker::Item & item, bool visible)
     }
 
     if (item.trayIcon_) {
-        const std::string title = WindowInfo::getTitle(item.hwnd_);
-        if (item.title_ != title) {
-            DEBUG_PRINTF("\tchanged window %#x title: to %s\n", item.hwnd_, title.c_str());
-            item.title_ = title;
-            item.trayIcon_->updateTip(item.title_);
-        }
+        updateItemTitle(item);
     }
 }
 
-VOID timerProc(
-    HWND /* unnamedParam1 */,
-    UINT /* unnamedParam2 */,
-    UINT_PTR /* unnamedParam3 */,
-    DWORD /* unnamedParam4 */)
+VOID timerProc(HWND /* unnamedParam1 */, UINT /* unnamedParam2 */, UINT_PTR timerId, DWORD /* unnamedParam4 */)
 {
+    const bool backstop = (timerId == backstopTimerId_);
+
+    if (timerId == debounceTimerId_) {
+        debounceTimerActive_ = false;
+        if (!KillTimer(messageHwnd_, debounceTimerId_)) {
+            WARNING_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+        }
+    } else if (backstop && debounceTimerActive_) {
+        // The backstop scan will cover any pending debounce.
+        if (!KillTimer(messageHwnd_, debounceTimerId_)) {
+            WARNING_PRINTF("KillTimer() failed: %ld\n", GetLastError());
+        }
+        debounceTimerActive_ = false;
+    }
+
     trackedWindows_.clear();
     if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&trackedWindows_))) {
         ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
