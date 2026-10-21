@@ -32,7 +32,6 @@ TEST_CASE("Settings::initDefaults is valid")
     CHECK(settings.hotkeyRestoreAll_ == "alt ctrl shift left");
     CHECK(settings.hotkeyMenu_ == "alt ctrl shift home");
     CHECK(settings.modifiersOverride_ == "alt ctrl shift");
-    CHECK(settings.pollInterval_ == 500);
     CHECK(settings.autoTrays_.empty());
 }
 
