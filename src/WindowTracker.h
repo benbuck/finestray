@@ -25,7 +25,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
 class TrayIcon;
 
@@ -41,7 +40,7 @@ struct Item
     std::shared_ptr<TrayIcon> trayIcon_;
 };
 
-bool start(HWND messageHwnd, void (*addWindowCallback)(HWND));
+bool start(HWND messageHwnd);
 void stop() noexcept;
 void requestScan() noexcept;
 void updateTitle(HWND hwnd);
@@ -49,6 +48,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
 void restore(HWND hwnd);
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement);
 void updateMinimizePlacement(MinimizePlacement minimizePlacement);
+bool isTracked(HWND hwnd);
 bool isMinimized(HWND hwnd);
 void enumerate(const std::function<bool(const Item &)> & callback);
 void reverseEnumerate(const std::function<bool(const Item &)> & callback);

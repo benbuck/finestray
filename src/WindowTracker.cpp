@@ -24,7 +24,6 @@
 #include "WindowMessage.h"
 
 // Standard library
-#include <algorithm>
 #include <cassert>
 #include <iterator>
 #include <list>
@@ -40,14 +39,7 @@ namespace
 using Items = std::list<WindowTracker::Item>;
 using ItemIndex = std::unordered_map<HWND, Items::iterator>;
 
-struct TrackedWindow
-{
-    HWND hwnd_ {};
-    bool visible_ {};
-};
-
 HWND messageHwnd_;
-void (*addWindowCallback_)(HWND);
 UINT_PTR timer_;
 bool debounceTimerActive_ {};
 
@@ -60,15 +52,13 @@ constexpr ULONG timerToleranceMillis_ = 50;
 
 Items items_;
 ItemIndex itemIndex_;
-std::vector<TrackedWindow> trackedWindows_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
-Items::iterator addItem(HWND hwnd, bool visible);
-void updateItem(WindowTracker::Item & item, bool visible);
+Items::iterator addItem(HWND hwnd);
 void updateItemTitle(WindowTracker::Item & item);
+void reconcileItems();
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
-BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
 BOOL CALLBACK enumVisibleWindowsProc(HWND hwnd, LPARAM lParam);
 void restoreRemovedVirtualDesktopWindows();
 
@@ -77,12 +67,11 @@ void restoreRemovedVirtualDesktopWindows();
 namespace WindowTracker
 {
 
-bool start(HWND messageHwnd, void (*addWindowCallback)(HWND))
+bool start(HWND messageHwnd)
 {
     DEBUG_PRINTF("WindowTracker starting\n");
 
     messageHwnd_ = messageHwnd;
-    addWindowCallback_ = addWindowCallback;
 
     DEBUG_PRINTF("WindowTracker setting backstop timer to %u ms\n", scanBackstopMillis_);
     timer_ = SetCoalescableTimer(messageHwnd_, backstopTimerId_, scanBackstopMillis_, timerProc, timerToleranceMillis_);
@@ -90,9 +79,6 @@ bool start(HWND messageHwnd, void (*addWindowCallback)(HWND))
         ERROR_PRINTF("SetCoalescableTimer() failed: %s\n", StringUtility::lastErrorString().c_str());
         return false;
     }
-
-    // Populate the tracked window list without waiting for the backstop.
-    requestScan();
 
     return true;
 }
@@ -124,7 +110,6 @@ void stop() noexcept
     debounceTimerActive_ = false;
     timer_ = 0;
 
-    addWindowCallback_ = nullptr;
     messageHwnd_ = nullptr;
 }
 
@@ -165,15 +150,15 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
 
     Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
-        // A window can be shown and minimized faster than the tracking scan
-        // runs, so start tracking it on demand.
+        // A window can be shown and minimized before it is tracked, so start
+        // tracking it on demand.
         const bool visible = isWindowUserVisible(hwnd);
         if (!visible) {
             DEBUG_PRINTF("not minimizing unknown window %#x\n", hwnd);
             return;
         }
         DEBUG_PRINTF("tracking window %#x on demand\n", hwnd);
-        it = addItem(hwnd, visible);
+        it = addItem(hwnd);
     }
 
     Item & item = *it;
@@ -286,7 +271,9 @@ void restore(HWND hwnd)
     item.minimized_ = false;
     item.visible_ = true;
     if (item.minimizePersistence_ == MinimizePersistence::Never) {
-        item.trayIcon_.reset();
+        itemIndex_.erase(hwnd);
+        items_.erase(it);
+        return;
     }
 
     // put the item at the front of the list so the next restore is in reverse order of minimize
@@ -358,6 +345,13 @@ bool isMinimized(HWND hwnd)
     return it->minimized_;
 }
 
+bool isTracked(HWND hwnd)
+{
+    assert(!enumerating_);
+
+    return findWindow(hwnd) != items_.end();
+}
+
 void enumerate(const std::function<bool(const Item &)> & callback)
 {
     enumerating_ = true;
@@ -417,17 +411,17 @@ Items::iterator findWindow(HWND hwnd)
     return it->second;
 }
 
-Items::iterator addItem(HWND hwnd, bool visible)
+Items::iterator addItem(HWND hwnd)
 {
     const std::string title = WindowInfo::getTitle(hwnd);
-    DEBUG_PRINTF("window added %#x - '%s' (%s)\n", hwnd, title.c_str(), visible ? "visible" : "invisible");
+    DEBUG_PRINTF("window added %#x - '%s'\n", hwnd, title.c_str());
 
     assert(!enumerating_);
 
     WindowTracker::Item item;
     item.hwnd_ = hwnd;
     item.title_ = title;
-    item.visible_ = visible;
+    item.visible_ = true;
     items_.push_back(item);
 
     const Items::iterator it = std::prev(items_.end());
@@ -455,7 +449,9 @@ void restoreRemovedVirtualDesktopWindows()
         item.minimized_ = false;
         item.visible_ = true;
         if (item.minimizePersistence_ == MinimizePersistence::Never) {
-            item.trayIcon_.reset();
+            itemIndex_.erase(hwnd);
+            items_.erase(it);
+            continue;
         }
 
         // put the item at the front of the list so the next restore is in reverse order of minimize
@@ -477,15 +473,48 @@ void updateItemTitle(WindowTracker::Item & item)
     }
 }
 
-void updateItem(WindowTracker::Item & item, bool visible)
+void reconcileItems()
 {
-    if (item.visible_ != visible) {
-        DEBUG_PRINTF("\tchanged window %#x visibility: to %s\n", item.hwnd_, StringUtility::boolToCString(visible));
-        item.visible_ = visible;
-    }
+    assert(!enumerating_);
 
-    if (item.trayIcon_) {
-        updateItemTitle(item);
+    for (Items::iterator it = items_.begin(); it != items_.end();) {
+        WindowTracker::Item & item = *it;
+
+        if (!IsWindow(item.hwnd_)) {
+            DEBUG_PRINTF("\tremoved destroyed window %#x\n", item.hwnd_);
+            itemIndex_.erase(item.hwnd_);
+            it = items_.erase(it);
+            continue;
+        }
+
+        const bool visible = isWindowUserVisible(item.hwnd_);
+        if (item.minimized_) {
+            if (visible) {
+                // the window was restored without going through Finestray
+                DEBUG_PRINTF("\twindow %#x was restored externally\n", item.hwnd_);
+                if (item.minimizePersistence_ == MinimizePersistence::Never) {
+                    itemIndex_.erase(item.hwnd_);
+                    it = items_.erase(it);
+                    continue;
+                }
+                item.minimized_ = false;
+                item.visible_ = true;
+            } else {
+                item.visible_ = false;
+            }
+        } else if (!visible) {
+            // a persistent tray icon whose window is gone or hidden
+            DEBUG_PRINTF("\tremoved hidden window %#x\n", item.hwnd_);
+            itemIndex_.erase(item.hwnd_);
+            it = items_.erase(it);
+            continue;
+        }
+
+        if (item.trayIcon_) {
+            updateItemTitle(item);
+        }
+
+        ++it;
     }
 }
 
@@ -506,67 +535,14 @@ VOID timerProc(HWND /* unnamedParam1 */, UINT /* unnamedParam2 */, UINT_PTR time
         debounceTimerActive_ = false;
     }
 
-    trackedWindows_.clear();
-    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&trackedWindows_))) {
-        ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
-    }
-
-    // check for removed windows
-    for (Items::iterator it = items_.begin(); it != items_.end();) {
-        const std::vector<TrackedWindow>::const_iterator nit =
-            std::ranges::find_if(trackedWindows_, [hwnd = it->hwnd_](const TrackedWindow & trackedWindow) {
-                return trackedWindow.hwnd_ == hwnd;
-            });
-        if (nit != trackedWindows_.end()) {
-            ++it;
-        } else {
-            itemIndex_.erase(it->hwnd_);
-            it = items_.erase(it);
-        }
-    }
-
-    // check for added windows
-    for (const TrackedWindow & trackedWindow : trackedWindows_) {
-        if (findWindow(trackedWindow.hwnd_) == items_.end()) {
-            addItem(trackedWindow.hwnd_, trackedWindow.visible_);
-            if (addWindowCallback_) {
-                addWindowCallback_(trackedWindow.hwnd_);
-            }
-        }
-    }
-
-    // check for changed window titles or visibility
-    for (const TrackedWindow & trackedWindow : trackedWindows_) {
-        const Items::iterator it = findWindow(trackedWindow.hwnd_);
-        if (it != items_.end()) {
-            updateItem(*it, trackedWindow.visible_);
-        }
+    if (items_.empty()) {
+        return;
     }
 
     // restore any windows that were on the hidden virtual desktop if the user removed it
     restoreRemovedVirtualDesktopWindows();
-}
 
-BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
-{
-    // Track windows we minimized to the tray even though they are hidden,
-    // otherwise only track windows the user can currently see.
-    bool tracked = WindowTracker::isMinimized(hwnd);
-    bool visible = false;
-    if (tracked) {
-        visible = isWindowUserVisible(hwnd);
-    } else if (IsWindowVisible(hwnd)) {
-        visible = !isWindowStealth(hwnd);
-        tracked = visible;
-    }
-
-    if (!tracked) {
-        return TRUE;
-    }
-
-    std::vector<TrackedWindow> & windows = *reinterpret_cast<std::vector<TrackedWindow> *>(lParam);
-    windows.push_back(TrackedWindow { hwnd, visible });
-    return TRUE;
+    reconcileItems();
 }
 
 BOOL CALLBACK enumVisibleWindowsProc(HWND hwnd, LPARAM lParam)

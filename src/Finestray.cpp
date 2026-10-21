@@ -51,6 +51,7 @@
 #include <cassert>
 #include <regex>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace
@@ -74,7 +75,7 @@ void minimizeWindow(HWND hwnd, MinimizePersistence minimizePersistence);
 void restoreAllWindows();
 void restoreWindow(HWND hwnd);
 void restoreLastWindow();
-void onAddWindow(HWND hwnd);
+void maybeAutoTrayOnOpen(HWND hwnd);
 void onMinimizeEvent(
     HWINEVENTHOOK hwineventhook,
     DWORD event,
@@ -117,6 +118,7 @@ Hotkey hotkeyRestoreAll_;
 Hotkey hotkeyMenu_;
 UINT modifiersOverride_;
 UINT taskbarCreatedMessage_;
+std::unordered_set<HWND> autoTrayHandled_;
 volatile PVOID lastHit_ {};
 
 } // anonymous namespace
@@ -265,7 +267,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
     DEBUG_PRINTF("registering event hook to monitor minimize events\n");
     WinEventHookHandleWrapper minimizeEventHook(SetWinEventHook(
         EVENT_SYSTEM_MINIMIZESTART,
-        EVENT_SYSTEM_MINIMIZESTART,
+        EVENT_SYSTEM_MINIMIZEEND,
         nullptr,
         onMinimizeEvent,
         0,
@@ -318,9 +320,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hinstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
     }
 
-    if (!WindowTracker::start(appWindow_, onAddWindow)) {
+    if (!WindowTracker::start(appWindow_)) {
         errorMessage(IDS_ERROR_START_WINDOW_TRACKER);
         return IDS_ERROR_START_WINDOW_TRACKER;
+    }
+
+    if (!settings_.autoTrays_.empty()) {
+        DEBUG_PRINTF("checking existing windows for auto-tray\n");
+        WindowTracker::enumerateVisibleWindows([](HWND hwnd) {
+            maybeAutoTrayOnOpen(hwnd);
+            return true;
+        });
     }
 
     DEBUG_PRINTF("running message loop\n");
@@ -817,6 +827,7 @@ void minimizeAllWindows()
 
 void minimizeWindow(HWND hwnd, MinimizePersistence minimizePersistence)
 {
+    autoTrayHandled_.insert(hwnd);
     WindowTracker::minimize(hwnd, settings_.minimizePlacement_, minimizePersistence);
 }
 
@@ -860,19 +871,51 @@ void restoreLastWindow()
     }
 }
 
-void onAddWindow(HWND hwnd)
+void maybeAutoTrayOnOpen(HWND hwnd)
 {
-    DEBUG_PRINTF("added window: %#x\n", hwnd);
-
-    MinimizePersistence minimizePersistence = MinimizePersistence::None;
-    if (windowShouldAutoTray(hwnd, TrayEvent::Open, &minimizePersistence)) {
-        if (modifiersActive(modifiersOverride_)) {
-            DEBUG_PRINTF("\tmodifier active, not minimizing\n");
-        } else {
-            DEBUG_PRINTF("\tminimizing\n");
-            minimizeWindow(hwnd, minimizePersistence);
-        }
+    if (settings_.autoTrays_.empty()) {
+        return;
     }
+
+    if (!hwnd || (hwnd == appWindow_.hwnd()) || (hwnd == settingsDialogWindow_.hwnd())) {
+        return;
+    }
+
+    // Shell events also fire for child windows; only top-level windows are
+    // candidates for auto-tray.
+    if (GetAncestor(hwnd, GA_ROOT) != hwnd) {
+        return;
+    }
+
+    // Once a window has been managed, or opened while a rule matched, don't
+    // minimize it again just because it was restored or its title changed.
+    if (WindowTracker::isTracked(hwnd)) {
+        autoTrayHandled_.insert(hwnd);
+        return;
+    }
+
+    if (autoTrayHandled_.contains(hwnd)) {
+        return;
+    }
+
+    if (!isWindowUserVisible(hwnd) || !VirtualDesktop::isWindowOnCurrentDesktop(hwnd)) {
+        return;
+    }
+
+    DEBUG_PRINTF("checking opened window for auto-tray: %#x\n", hwnd);
+    MinimizePersistence minimizePersistence = MinimizePersistence::None;
+    if (!windowShouldAutoTray(hwnd, TrayEvent::Open, &minimizePersistence)) {
+        return;
+    }
+
+    if (modifiersActive(modifiersOverride_)) {
+        DEBUG_PRINTF("\tmodifier active, not minimizing\n");
+        autoTrayHandled_.insert(hwnd);
+        return;
+    }
+
+    DEBUG_PRINTF("\tminimizing\n");
+    minimizeWindow(hwnd, minimizePersistence);
 }
 
 void onMinimizeEvent(
@@ -884,6 +927,12 @@ void onMinimizeEvent(
     DWORD /* dwEventThread */,
     DWORD /* dwmsEventTime */)
 {
+    if (event == EVENT_SYSTEM_MINIMIZEEND) {
+        // A window restored outside Finestray may no longer be managed.
+        WindowTracker::requestScan();
+        return;
+    }
+
     if (event != EVENT_SYSTEM_MINIMIZESTART) {
         WARNING_PRINTF("unexpected non-minimize event %#x\n", event);
         return;
@@ -925,12 +974,31 @@ void onTrackableEvent(
     }
 
     switch (event) {
-        case EVENT_OBJECT_NAMECHANGE: WindowTracker::updateTitle(hwnd); break;
-        case EVENT_OBJECT_SHOW:
+        case EVENT_OBJECT_NAMECHANGE: {
+            WindowTracker::updateTitle(hwnd);
+            maybeAutoTrayOnOpen(hwnd);
+            break;
+        }
+
+        case EVENT_OBJECT_SHOW: {
+            maybeAutoTrayOnOpen(hwnd);
+            WindowTracker::requestScan();
+            break;
+        }
+
+        case EVENT_OBJECT_DESTROY: {
+            autoTrayHandled_.erase(hwnd);
+            WindowTracker::requestScan();
+            break;
+        }
+
         case EVENT_OBJECT_HIDE:
-        case EVENT_OBJECT_DESTROY:
         case EVENT_OBJECT_CLOAKED:
-        case EVENT_OBJECT_UNCLOAKED: WindowTracker::requestScan(); break;
+        case EVENT_OBJECT_UNCLOAKED: {
+            WindowTracker::requestScan();
+            break;
+        }
+
         default: break;
     }
 }
