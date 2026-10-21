@@ -26,6 +26,7 @@
 // Standard library
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <list>
 #include <memory>
 #include <ranges>
@@ -45,7 +46,7 @@ Items items_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
-void addItem(HWND hwnd);
+Items::iterator addItem(HWND hwnd);
 void updateItem(WindowTracker::Item & item, HWND hwnd);
 VOID timerProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam);
@@ -105,10 +106,16 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
     // were on it before minimizing this one
     restoreRemovedVirtualDesktopWindows();
 
-    const Items::iterator it = findWindow(hwnd);
+    Items::iterator it = findWindow(hwnd);
     if (it == items_.end()) {
-        DEBUG_PRINTF("not minimizing unknown window %#x\n", hwnd);
-        return;
+        // A window can be shown and minimized faster than the tracking scan
+        // runs, so start tracking it on demand.
+        if (!isWindowUserVisible(hwnd)) {
+            DEBUG_PRINTF("not minimizing unknown window %#x\n", hwnd);
+            return;
+        }
+        DEBUG_PRINTF("tracking window %#x on demand\n", hwnd);
+        it = addItem(hwnd);
     }
 
     Item & item = *it;
@@ -333,7 +340,7 @@ Items::iterator findWindow(HWND hwnd)
     });
 }
 
-void addItem(HWND hwnd)
+Items::iterator addItem(HWND hwnd)
 {
     const std::string title = WindowInfo::getTitle(hwnd);
     const bool visible = isWindowUserVisible(hwnd);
@@ -346,6 +353,8 @@ void addItem(HWND hwnd)
     item.title_ = title;
     item.visible_ = visible;
     items_.push_back(item);
+
+    return std::prev(items_.end());
 }
 
 void restoreRemovedVirtualDesktopWindows()
@@ -437,9 +446,14 @@ VOID timerProc(
 
 BOOL enumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    // ignore windows that can't be visible to the user, unless we're tracking
-    // them as minimized in the tray
-    if (isWindowStealth(hwnd) && !WindowTracker::isMinimized(hwnd)) {
+    // Track windows we minimized to the tray even though they are hidden,
+    // otherwise only track windows the user can currently see.
+    bool tracked = WindowTracker::isMinimized(hwnd);
+    if (!tracked && IsWindowVisible(hwnd)) {
+        tracked = !isWindowStealth(hwnd);
+    }
+
+    if (!tracked) {
         return TRUE;
     }
 
