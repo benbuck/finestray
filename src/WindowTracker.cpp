@@ -31,12 +31,14 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace
 {
 
 using Items = std::list<WindowTracker::Item>;
+using ItemIndex = std::unordered_map<HWND, Items::iterator>;
 
 struct TrackedWindow
 {
@@ -49,6 +51,8 @@ UINT pollMillis_;
 void (*addWindowCallback_)(HWND);
 UINT_PTR timer_;
 Items items_;
+ItemIndex itemIndex_;
+std::vector<TrackedWindow> trackedWindows_;
 bool enumerating_;
 
 Items::iterator findWindow(HWND hwnd);
@@ -89,6 +93,7 @@ void stop() noexcept
 
     assert(!enumerating_);
     items_.clear();
+    itemIndex_.clear();
 
     if (timer_) {
         if (!KillTimer(messageHwnd_, timer_)) {
@@ -183,6 +188,7 @@ void minimize(HWND hwnd, MinimizePlacement minimizePlacement, MinimizePersistenc
     // move item to end of list so restore order is reverse of minimize order
     items_.push_back(item);
     items_.erase(it);
+    itemIndex_[hwnd] = std::prev(items_.end());
 }
 
 void restore(HWND hwnd)
@@ -240,6 +246,7 @@ void restore(HWND hwnd)
     // put the item at the front of the list so the next restore is in reverse order of minimize
     items_.push_front(item);
     items_.erase(it);
+    itemIndex_[hwnd] = items_.begin();
 }
 
 void addAllMinimizedToTray(MinimizePlacement minimizePlacement)
@@ -342,9 +349,12 @@ Items::iterator findWindow(HWND hwnd)
 {
     assert(!enumerating_);
 
-    return std::ranges::find_if(items_, [hwnd](const WindowTracker::Item & item) {
-        return item.hwnd_ == hwnd;
-    });
+    const ItemIndex::iterator it = itemIndex_.find(hwnd);
+    if (it == itemIndex_.end()) {
+        return items_.end();
+    }
+
+    return it->second;
 }
 
 Items::iterator addItem(HWND hwnd, bool visible)
@@ -360,7 +370,9 @@ Items::iterator addItem(HWND hwnd, bool visible)
     item.visible_ = visible;
     items_.push_back(item);
 
-    return std::prev(items_.end());
+    const Items::iterator it = std::prev(items_.end());
+    itemIndex_[hwnd] = it;
+    return it;
 }
 
 void restoreRemovedVirtualDesktopWindows()
@@ -389,6 +401,7 @@ void restoreRemovedVirtualDesktopWindows()
         // put the item at the front of the list so the next restore is in reverse order of minimize
         items_.push_front(item);
         items_.erase(it);
+        itemIndex_[hwnd] = items_.begin();
     }
 }
 
@@ -415,26 +428,27 @@ VOID timerProc(
     UINT_PTR /* unnamedParam3 */,
     DWORD /* unnamedParam4 */)
 {
-    std::vector<TrackedWindow> newWindows;
-    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&newWindows))) {
+    trackedWindows_.clear();
+    if (!EnumWindows(enumWindowsProc, reinterpret_cast<LPARAM>(&trackedWindows_))) {
         ERROR_PRINTF("could not list windows: EnumWindows() failed: %s\n", StringUtility::lastErrorString().c_str());
     }
 
     // check for removed windows
     for (Items::iterator it = items_.begin(); it != items_.end();) {
         const std::vector<TrackedWindow>::const_iterator nit =
-            std::ranges::find_if(newWindows, [hwnd = it->hwnd_](const TrackedWindow & trackedWindow) {
+            std::ranges::find_if(trackedWindows_, [hwnd = it->hwnd_](const TrackedWindow & trackedWindow) {
                 return trackedWindow.hwnd_ == hwnd;
             });
-        if (nit != newWindows.end()) {
+        if (nit != trackedWindows_.end()) {
             ++it;
         } else {
+            itemIndex_.erase(it->hwnd_);
             it = items_.erase(it);
         }
     }
 
     // check for added windows
-    for (const TrackedWindow & trackedWindow : newWindows) {
+    for (const TrackedWindow & trackedWindow : trackedWindows_) {
         if (findWindow(trackedWindow.hwnd_) == items_.end()) {
             addItem(trackedWindow.hwnd_, trackedWindow.visible_);
             if (addWindowCallback_) {
@@ -444,7 +458,7 @@ VOID timerProc(
     }
 
     // check for changed window titles or visibility
-    for (const TrackedWindow & trackedWindow : newWindows) {
+    for (const TrackedWindow & trackedWindow : trackedWindows_) {
         const Items::iterator it = findWindow(trackedWindow.hwnd_);
         if (it != items_.end()) {
             updateItem(*it, trackedWindow.visible_);
