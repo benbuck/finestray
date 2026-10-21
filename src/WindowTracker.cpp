@@ -399,11 +399,11 @@ void updateItem(WindowTracker::Item & item, bool visible)
         item.visible_ = visible;
     }
 
-    const std::string title = WindowInfo::getTitle(item.hwnd_);
-    if (item.title_ != title) {
-        DEBUG_PRINTF("\tchanged window %#x title: to %s\n", item.hwnd_, title.c_str());
-        item.title_ = title;
-        if (item.trayIcon_) {
+    if (item.trayIcon_) {
+        const std::string title = WindowInfo::getTitle(item.hwnd_);
+        if (item.title_ != title) {
+            DEBUG_PRINTF("\tchanged window %#x title: to %s\n", item.hwnd_, title.c_str());
+            item.title_ = title;
             item.trayIcon_->updateTip(item.title_);
         }
     }
